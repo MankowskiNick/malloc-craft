@@ -24,9 +24,9 @@ int main() {
 
     // Vertex Buffer Object
     VBO vbo = create_vbo(0, 3, 3 * sizeof(float), 0);
-    buffer_data(&vbo, GL_STATIC_DRAW, vertices, sizeof(vertices));
-    use_vbo(&vbo);
-    
+    buffer_data(vbo, GL_STATIC_DRAW, vertices, sizeof(vertices));
+    use_vbo(vbo);
+
     shader* frag_shader = create_shader("shader/shader.frag", GL_FRAGMENT_SHADER);
     shader* vert_shader = create_shader("shader/shader.vert", GL_VERTEX_SHADER);
 

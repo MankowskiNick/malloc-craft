@@ -16,25 +16,25 @@ VBO create_vbo(int location, int size, int stride, int offset) {
     return vbo;
 }
 
-void use_vbo(VBO* vbo) {
-    glBindBuffer(GL_ARRAY_BUFFER, vbo->id);
-    glVertexAttribPointer(vbo->location, 
-                            vbo->size,
+void use_vbo(VBO vbo) {
+    glBindBuffer(GL_ARRAY_BUFFER, vbo.id);
+    glVertexAttribPointer(vbo.location, 
+                            vbo.size,
                             GL_FLOAT,
                             GL_FALSE, 
-                            vbo->stride, 
-                            (void*)(vbo->offset));
-    glEnableVertexAttribArray(vbo->location);
+                            vbo.stride, 
+                            (void*)(vbo.offset));
+    glEnableVertexAttribArray(vbo.location);
 }
 
-void buffer_data(VBO* vbo, uint usage, void* data, uint data_size) {
-    glBindBuffer(GL_ARRAY_BUFFER, vbo->id);
+void buffer_data(VBO vbo, uint usage, void* data, uint data_size) {
+    glBindBuffer(GL_ARRAY_BUFFER, vbo.id);
     glBufferData(GL_ARRAY_BUFFER, 
                     data_size,
                     data,
                     usage);
 }
 
-void delete_vbo(VBO* vbo) {
-    glDeleteBuffers(1, &(vbo->id));
+void delete_vbo(VBO vbo) {
+    glDeleteBuffers(1, &(vbo.id));
 }

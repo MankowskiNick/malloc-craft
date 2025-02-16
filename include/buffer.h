@@ -13,8 +13,8 @@ typedef struct {
 } VBO;
 
 VBO create_vbo(int location, int size, int stride, int offset);
-void buffer_data(VBO* vbo, uint usage, void* data, uint data_size);
-void delete_vbo(VBO* vbo);
-void use_vbo(VBO* vbo);
+void buffer_data(VBO vbo, uint usage, void* data, uint data_size);
+void delete_vbo(VBO vbo);
+void use_vbo(VBO vbo);
 
 #endif
