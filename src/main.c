@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <window.h>
+#include <shader.h>
 
 
 int main() {
-
-    GLFWwindow* window = create_window("OpenGL", 800, 600);
+    GLFWwindow* window = create_window("c-craft", 800, 600);
+    if (!window || !load_gl()) {
+        return -1;
+    }
 
     float vertices[] = {
         -0.5f, -0.5f, 0.0f,
@@ -25,40 +28,14 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);  
     
+    shader* frag_shader = create_shader("shader/shader.frag", GL_FRAGMENT_SHADER);
+    shader* vert_shader = create_shader("shader/shader.vert", GL_VERTEX_SHADER);
 
-    // Vertex shader
-    const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0";
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
+    shader_program* program = create_program(vert_shader, frag_shader);
+    glUseProgram(program->id);
 
-    // Fragment shader    
-    const char *fragmentShaderSource = "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\0";
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glUseProgram(shaderProgram);
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    delete_shader(frag_shader);
+    delete_shader(vert_shader);
 
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
@@ -69,6 +46,8 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    delete_program(program);
 
     glfwDestroyWindow(window);
     glfwTerminate();

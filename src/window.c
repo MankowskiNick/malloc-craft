@@ -2,8 +2,7 @@
 #include <stdio.h>
 
 GLFWwindow* create_window(char* title, int width, int height) {
-    if (!glfwInit())
-    {
+    if (!glfwInit()) {
         printf("GLFW initialization failed\n");
         return NULL;
     }
@@ -14,13 +13,15 @@ GLFWwindow* create_window(char* title, int width, int height) {
         printf("Window or OpenGL context creation failed\n");
         return NULL;
     }
-
     glfwMakeContextCurrent(window);
 
+    return window;
+}
+
+int load_gl() {
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         printf("Failed to initialize GLAD\n");
-        return NULL;
+        return 0;
     }
-
-    return window;
+    return 1;
 }
