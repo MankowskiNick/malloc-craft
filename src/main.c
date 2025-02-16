@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <window.h>
 #include <shader.h>
+#include <buffer.h>
+#include <util.h>
 
 
 int main() {
@@ -21,21 +23,19 @@ int main() {
     glBindVertexArray(VAO);
 
     // Vertex Buffer Object
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);  
+    VBO vbo = create_vbo(0, 3, 3 * sizeof(float), 0);
+    buffer_data(&vbo, GL_STATIC_DRAW, vertices, sizeof(vertices));
+    use_vbo(&vbo);
     
     shader* frag_shader = create_shader("shader/shader.frag", GL_FRAGMENT_SHADER);
     shader* vert_shader = create_shader("shader/shader.vert", GL_VERTEX_SHADER);
 
     shader_program* program = create_program(vert_shader, frag_shader);
-    glUseProgram(program->id);
+    use_program(program);
 
     delete_shader(frag_shader);
     delete_shader(vert_shader);
+
 
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);

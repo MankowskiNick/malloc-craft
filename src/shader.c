@@ -80,3 +80,7 @@ void delete_program(shader_program* program) {
     glDeleteProgram(program->id);
     free(program);
 }
+
+void use_program(shader_program* program) {
+    glUseProgram(program->id);
+}
