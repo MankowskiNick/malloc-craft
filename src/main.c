@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <window.h>
 #include <shader.h>
-#include <buffer.h>
+#include <vao.h>
+#include <vbo.h>
 #include <util.h>
 
 
 int main() {
-    GLFWwindow* window = create_window("c-craft", 800, 600);
+    GLFWwindow* window = create_window("malloc-craft", 800, 600);
     if (!window || !load_gl()) {
         return -1;
     }
@@ -18,6 +19,8 @@ int main() {
     };
 
     // Vertex Array Object
+    // VAO vao = create_vao();
+    // bind_vao(vao);
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
