@@ -15,8 +15,8 @@ void r_init() {
     vbo = create_vbo(GL_STATIC_DRAW);
 
     // shaders and program
-    shader frag_shader = create_shader("shader/shader.frag", GL_FRAGMENT_SHADER);
-    shader vert_shader = create_shader("shader/shader.vert", GL_VERTEX_SHADER);
+    shader frag_shader = create_shader("res/shaders/shader.frag", GL_FRAGMENT_SHADER);
+    shader vert_shader = create_shader("res/shaders/shader.vert", GL_VERTEX_SHADER);
 
     shader_program program = create_program(vert_shader, frag_shader);
     use_program(program);
