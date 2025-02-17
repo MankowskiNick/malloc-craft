@@ -2,7 +2,7 @@
 #include <glad/glad.h>
 
 VAO create_vao() {
-    unsigned int id;
+    uint id;
     glGenVertexArrays(1, &id);
     VAO vao = {
         .id = id
