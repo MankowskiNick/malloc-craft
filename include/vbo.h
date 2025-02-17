@@ -6,13 +6,11 @@
 
 typedef struct {
     uint id;
-    uint location;
-    uint size;
-    uint offset;
-    uint stride;
+    uint usage;
 } VBO;
 
-VBO create_vbo(int location, int size, int stride, int offset);
+VBO create_vbo(uint usage);
+void add_attrib(VBO* vbo, uint location, uint size, uint offset, uint stride);
 void buffer_data(VBO vbo, uint usage, void* data, uint data_size);
 void delete_vbo(VBO vbo);
 void use_vbo(VBO vbo);

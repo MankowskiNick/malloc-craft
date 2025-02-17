@@ -11,6 +11,10 @@ VAO create_vao() {
     return vao;
 }
 
+void delete_vao(VAO vao) {
+    glDeleteVertexArrays(1, &vao.id);
+}
+
 void bind_vao(VAO vao) {
     glBindVertexArray(vao.id);
 }

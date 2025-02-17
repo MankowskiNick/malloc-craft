@@ -8,6 +8,7 @@ typedef struct {
 } VAO;
 
 VAO create_vao();
+void delete_vao(VAO vao);
 void bind_vao(VAO vao);
 
 #endif

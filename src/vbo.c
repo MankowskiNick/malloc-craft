@@ -2,15 +2,12 @@
 #include <glad/glad.h>
 #include <stdio.h>
 
-VBO create_vbo(int location, int size, int stride, int offset) {
+VBO create_vbo(uint usage) {
     uint id;
     glGenBuffers(1, &id);
     VBO vbo = {
         .id = id,
-        .location = location,
-        .size = size,
-        .stride = stride,
-        .offset = offset
+        .usage = usage
     };
 
     return vbo;
@@ -18,13 +15,16 @@ VBO create_vbo(int location, int size, int stride, int offset) {
 
 void use_vbo(VBO vbo) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo.id);
-    glVertexAttribPointer(vbo.location, 
-                            vbo.size,
+}
+
+void add_attrib(VBO* vbo, uint location, uint size, uint offset, uint stride) {
+    glVertexAttribPointer(location, 
+                            size,
                             GL_FLOAT,
                             GL_FALSE, 
-                            vbo.stride, 
-                            (void*)(vbo.offset));
-    glEnableVertexAttribArray(vbo.location);
+                            stride, 
+                            (void*)(offset));
+    glEnableVertexAttribArray(location);
 }
 
 void buffer_data(VBO vbo, uint usage, void* data, uint data_size) {
