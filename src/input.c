@@ -95,7 +95,7 @@ void handle_release(int key) {
     // search for key in stack
     while (cur != NULL && cur->key != key) {
         prev = cur;
-        cur = key_stack->next;
+        cur = cur->next;
     }
 
     // not found - return
