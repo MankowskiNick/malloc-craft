@@ -16,11 +16,7 @@ key_entry* key_stack;
 
 camera* cam;
 
-void update_pos(camera* cam, int key) {
-    vec3 front, up, right;
-    glm_normalize_to(cam->front, front);
-    glm_normalize_to(cam->up, up);
-    glm_vec3_cross(front, up, right);
+void update_pos(int key, vec3 front, vec3 right) {
     float dx = 0.0f, dy = 0.0f, dz = 0.0f;
     switch(key) {
         case GLFW_KEY_W:
@@ -53,22 +49,39 @@ void update_pos(camera* cam, int key) {
             break;
     }
 
-    update_position(cam, (float[3]){dx, dy, dz});
+    update_camera_pos(cam, (float[3]){dx, dy, dz});
+}
+
+void update_position() {
+    key_entry* cur = key_stack;
+    while(cur != NULL) {
+        vec3 front, up, right;
+        glm_normalize_to(cam->front, front);
+        glm_normalize_to(cam->up, up);
+        glm_vec3_cross(front, up, right);
+
+        update_pos(cur->key, front, right);
+        cur = cur->next;
+    }
 }
 
 void update_camera() {
+    update_position();
+    update_orientation(cam);
+}
+
+
+
+void handle_press(int key) {
+    // check for existing entry
     key_entry* cur = key_stack;
     while(cur != NULL) {
-        update_pos(cam, cur->key);
+        if (cur->key == key)
+            return;
         cur = cur->next;
     }
 
-    update_orientation(cam);
-    
-    printf("Position: (%f, %f, %f)\n", cam->position[0], cam->position[1], cam->position[2]);
-}
-
-void handle_press(int key) {
+    // new entry
     key_entry* new_entry = malloc(sizeof(key_entry));
     new_entry->key = key;
     new_entry->next = key_stack;
@@ -79,14 +92,18 @@ void handle_release(int key) {
     key_entry* cur = key_stack;
     key_entry* prev = NULL;
 
+    // search for key in stack
     while (cur != NULL && cur->key != key) {
         prev = cur;
         cur = key_stack->next;
     }
 
-    if (cur == NULL)
+    // not found - return
+    if (cur == NULL) {
         return;
+    }
 
+    // remove key from stack
     if (prev == NULL) {
         key_stack = cur->next;
     }
@@ -95,6 +112,8 @@ void handle_release(int key) {
     }
     free(cur);
 }
+
+
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     switch(action) {
@@ -119,6 +138,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     cam->yaw += dx * SENSITIVITY;
     cam->pitch -= dy * SENSITIVITY;
 }
+
+
 
 void i_init(GLFWwindow* window, camera* player_cam) {
     key_stack = NULL;

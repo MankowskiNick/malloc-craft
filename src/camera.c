@@ -34,7 +34,7 @@ void update_orientation(camera* cam) {
     glm_vec3_copy(front, cam->front);
 }
 
-void update_position(camera* cam, float direction[3]) {
+void update_camera_pos(camera* cam, float direction[3]) {
     cam->position[0] += direction[0];
     cam->position[1] += direction[1];
     cam->position[2] += direction[2];
