@@ -2,13 +2,14 @@
 #include <block.h>
 #include <vbo.h>
 #include <vao.h>
+#include <texture.h>
 
 VAO vao;
 VBO vbo;
 shader_program program;
 
 void r_init(shader_program* program) {
-    // glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
     // buffers
     vao = create_vao();
@@ -24,6 +25,9 @@ void r_init(shader_program* program) {
 
     delete_shader(frag_shader);
     delete_shader(vert_shader);
+
+    // texture
+    t_init();
 }
 
 void r_cleanup() {
@@ -53,6 +57,12 @@ void render(camera cam, shader_program program) {
     uint proj_loc = glGetUniformLocation(program.id, "proj");
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture_atlas.id);
+    uint atlas_loc = glGetUniformLocation(program.id, "atlas");
+    glUniform1i(atlas_loc, 0);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
