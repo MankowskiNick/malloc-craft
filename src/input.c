@@ -42,7 +42,7 @@ void update_pos(int key, vec3 front, vec3 right) {
         case GLFW_KEY_SPACE:
             dy = DELTA_Y;
             break;
-        case GLFW_KEY_LEFT_CONTROL:
+        case GLFW_KEY_LEFT_SHIFT:
             dy = -DELTA_Y;
             break;
         default:
@@ -73,6 +73,15 @@ void update_camera() {
 
 
 void handle_press(int key) {
+    // non movement key presses
+    switch(key) {
+        case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
+            return;
+        default:
+            break;
+    }
+
     // check for existing entry
     key_entry* cur = key_stack;
     while(cur != NULL) {
