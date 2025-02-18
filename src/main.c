@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <window.h>
 #include <render.h>
-
+#include <camera.h>
+#include <input.h>
 
 int main() {
     GLFWwindow* window = create_window("malloc-craft", 800, 600);
@@ -10,10 +11,22 @@ int main() {
         return -1;
     }
 
-    r_init();
+    shader_program program;
+    r_init(&program);
+
+    camera cam = {
+        .position = {1.0f, 1.0f, 1.0f},
+        .up = {0.0f, 1.0f, 0.0f},
+        .front = {1.0f, 0.0f, 0.0f},
+        .yaw = 0.0f,
+        .pitch = 0.0f
+    };
+
+    i_init(window, &cam);
 
     while (!glfwWindowShouldClose(window)) {
-        render();
+        update_camera();
+        render(cam, program);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

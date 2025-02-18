@@ -1,14 +1,15 @@
 #include <render.h>
+#include <block.h>
 #include <vbo.h>
 #include <vao.h>
-#include <shader.h>
-#include <block.h>
 
 VAO vao;
 VBO vbo;
 shader_program program;
 
-void r_init() {
+void r_init(shader_program* program) {
+    // glEnable(GL_DEPTH_TEST);
+
     // buffers
     vao = create_vao();
     bind_vao(vao);
@@ -18,8 +19,8 @@ void r_init() {
     shader frag_shader = create_shader("res/shaders/shader.frag", GL_FRAGMENT_SHADER);
     shader vert_shader = create_shader("res/shaders/shader.vert", GL_VERTEX_SHADER);
 
-    shader_program program = create_program(vert_shader, frag_shader);
-    use_program(program);
+    *program = create_program(vert_shader, frag_shader);
+    use_program(*program);
 
     delete_shader(frag_shader);
     delete_shader(vert_shader);
@@ -35,12 +36,22 @@ void render_cube() {
 
 }
 
-void render() {
+void render(camera cam, shader_program program) {
+
     bind_vao(vao);
     buffer_data(vbo, GL_STATIC_DRAW, CUBE_VERTICES, sizeof(CUBE_VERTICES));
     add_attrib(&vbo, 0, 3, 0, 5 * sizeof(float));
     add_attrib(&vbo, 1, 2, 3 * sizeof(float), 5 * sizeof(float));
     use_vbo(vbo);
+
+    mat4 view, proj;
+    get_view_matrix(cam, &view);
+    uint view_loc = glGetUniformLocation(program.id, "view");
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float*)view);
+    
+    get_projection_matrix(&proj, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+    uint proj_loc = glGetUniformLocation(program.id, "proj");
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glDrawArrays(GL_TRIANGLES, 0, 36);
