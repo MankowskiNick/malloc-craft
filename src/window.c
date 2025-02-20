@@ -10,6 +10,13 @@ typedef struct {
 
 window screen;
 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+    screen.width = width;
+    screen.height = height;
+}
+
+
 GLFWwindow* create_window(char* title, int width, int height) {
     if (!glfwInit()) {
         printf("GLFW initialization failed\n");
@@ -24,6 +31,12 @@ GLFWwindow* create_window(char* title, int width, int height) {
     #endif
 
     GLFWwindow* window = glfwCreateWindow(width, height, title, NULL, NULL);
+    if (!window) {
+        printf("Window creation failed\n");
+        return NULL;
+    }
+
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     screen.width = width;
     screen.height = height;
