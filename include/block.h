@@ -1,6 +1,8 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 
+#include <block_types.h>
+
 #define LEFT   0.0f
 #define RIGHT  1.0f
 #define TOP    2.0f
@@ -9,9 +11,8 @@
 #define BACK   5.0f
 
 typedef struct {
-    uint id;
     int pos[3];
-    float face_atlas_coords[6][2];
+    block_type* type;
 } block;
 
 // Vertex data for a cube
@@ -32,34 +33,37 @@ float CUBE_VERTICES[] = {
     -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, RIGHT,
     -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, RIGHT,
 
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, TOP,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, TOP,
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, TOP,
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, TOP,
+   -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, TOP,
+   -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, TOP,
+   
+   -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, BOTTOM,
+    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, BOTTOM,
+    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, BOTTOM,
+    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, BOTTOM,
+   -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, BOTTOM,
+   -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, BOTTOM,
+
+   0.5f,  0.5f,  0.5f,  0.0f, 1.0f, FRONT,
+   0.5f,  0.5f, -0.5f,  1.0f, 1.0f, FRONT,
+   0.5f, -0.5f, -0.5f,  1.0f, 0.0f, FRONT,
+   0.5f, -0.5f, -0.5f,  1.0f, 0.0f, FRONT,
+   0.5f, -0.5f,  0.5f,  0.0f, 0.0f, FRONT,
+   0.5f,  0.5f,  0.5f,  0.0f, 1.0f, FRONT,
+
     -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, BACK,
     -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, BACK,
     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, BACK,
     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, BACK,
     -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, BACK,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, BACK,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, BACK
+ };
 
-     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, FRONT,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, FRONT,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, FRONT,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, FRONT,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f, FRONT,
-     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, FRONT,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, BOTTOM,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f, BOTTOM,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, BOTTOM,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, BOTTOM,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, BOTTOM,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, BOTTOM,
-
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, TOP,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, TOP,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, TOP,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, TOP,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, TOP,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, TOP
-};
 
 
 #endif

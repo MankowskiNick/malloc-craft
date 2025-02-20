@@ -1,6 +1,6 @@
 
 #define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 256
+#define CHUNK_HEIGHT 16
 
 // #define WIREFRAME
 

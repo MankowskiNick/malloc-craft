@@ -3,6 +3,8 @@
 #include <vbo.h>
 #include <vao.h>
 #include <texture.h>
+#include <block_types.h>
+#include <chunk.h>
 
 #include <settings.h>
 
@@ -42,64 +44,45 @@ void r_cleanup() {
     delete_program(program);
 }
 
-void set_block(block* b, uint id, int x, int y, int z, float face_atlas_coords[6][2]) {
-    b->id = id;
-    b->pos[0] = x;
-    b->pos[1] = y;
-    b->pos[2] = z;   
-    for (int i = 0; i < 6; i++) {
-        b->face_atlas_coords[i][0] = face_atlas_coords[i][0];
-        b->face_atlas_coords[i][1] = face_atlas_coords[i][1];
-    }
-}
-
-void render_block(block b, float* block_data) {
+void render_block(int x_0, int y_0, int z_0, block_type* type, float* block_data) {
     // copy side info to vertices array
     for (int i = 0; i < 36; i ++) {
         
         // unpack vertex
-        float x = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 0];
-        float y = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 1];
-        float z = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 2];
+        float x = x_0 + CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 0];
+        float y = y_0 + CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 1];
+        float z = z_0 + CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 2];
         float tx = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 3];
         float ty = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 4];
         int side = (int)CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 5];
         
         // copy vertex info into vertices array
         int offset = i * 7;
-        block_data[offset + 0] = x + (float)b.pos[0];
-        block_data[offset + 1] = y + (float)b.pos[1];
-        block_data[offset + 2] = z + (float)b.pos[2];
+        block_data[offset + 0] = x;
+        block_data[offset + 1] = y;
+        block_data[offset + 2] = z;
         block_data[offset + 3] = tx;
         block_data[offset + 4] = ty;
-        block_data[offset + 5] = b.face_atlas_coords[side][0];
-        block_data[offset + 6] = b.face_atlas_coords[side][1];
+        block_data[offset + 5] = type->face_atlas_coords[side][0];
+        block_data[offset + 6] = type->face_atlas_coords[side][1];
     }
 }
 
-void render_chunk() {
-    block blocks[CHUNK_SIZE][CHUNK_SIZE];
+void render_chunk(chunk* c) {
+    float block_data[CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT * 36 * 7];
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
-            float face_atlas_coords[6][2] = {
-                {1.0f / 32.0f, 0.0f},
-                {1.0f / 32.0f, 0.0f},
-                {0.0f, 0.0f},
-                {2.0f / 32.0f, 0.0f},
-                {1.0f / 32.0f, 0.0f},
-                {1.0f / 32.0f, 0.0f}
-            };
-            set_block(&blocks[i][j], 1, i, 0, j, face_atlas_coords);
-        }
-    }
-
-    float block_data[CHUNK_SIZE * CHUNK_SIZE * 36 * 7];
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_SIZE; j++) {
-            render_block(
-                blocks[i][j], 
-                &block_data[(i * CHUNK_SIZE + j) * 36 * 7]
-            );
+            for (int k = 0; k < CHUNK_HEIGHT; k++) {
+                if (c->blocks[i][k][j] == NULL) {
+                    continue;
+                }
+                
+                render_block(
+                    i, k, j, 
+                    c->blocks[i][k][j], 
+                    block_data + (i * CHUNK_SIZE * CHUNK_HEIGHT + k * CHUNK_SIZE + j) * 36 * 7
+                );
+            }
         }
     }
 
@@ -110,10 +93,7 @@ void render_chunk() {
     add_attrib(&vbo, 2, 2, 5 * sizeof(float), 7 * sizeof(float));
     use_vbo(vbo);
 
-    glDrawArrays(GL_TRIANGLES, 0, CHUNK_SIZE * CHUNK_SIZE * 36);
-    // wireframe mode
-
-    // glEnableVertexAttribArray(0);
+    glDrawArrays(GL_TRIANGLES, 0, CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT * 36);
 }
 
 void render(camera cam, shader_program program) {
@@ -133,7 +113,25 @@ void render(camera cam, shader_program program) {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    render_chunk();
 
-    // glDrawArrays(GL_TRIANGLES, 0, 36);
+    chunk c = {
+        .pos = {0, 0, 0},
+    };
+    
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        for (int j = 0; j < CHUNK_SIZE; j++) {
+            for (int k = 0; k < CHUNK_HEIGHT; k++) {
+                if (k > 8) {
+                    c.blocks[i][k][j] = &TYPES[0];  // Air block above level 8
+                }
+                else if (k == 8) {
+                    c.blocks[i][k][j] = &TYPES[1];  // Dirt block below level 8
+                }
+                else {
+                    c.blocks[i][k][j] = &TYPES[2];  // Grass block below level 8
+                }
+            }
+        }
+    }
+    render_chunk(&c);
 }
