@@ -46,6 +46,7 @@ void r_cleanup() {
     delete_vao(vao);
     delete_vbo(vbo);
     delete_program(program);
+    t_cleanup();
 }
 
 void render_side(int x_0, int y_0, int z_0, uint side, block_type* type, float* side_data) {
