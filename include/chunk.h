@@ -5,7 +5,7 @@
 #include <block.h>
 
 typedef struct {
-    int pos[3];
+    int x, z;
     block_type* blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
 } chunk;
 

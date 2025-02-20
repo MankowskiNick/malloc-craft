@@ -5,6 +5,7 @@
 #include <texture.h>
 #include <block_types.h>
 #include <chunk.h>
+#include <world.h>
 
 #include <settings.h>
 
@@ -40,6 +41,8 @@ void r_init(shader_program* program) {
 
     // texture
     t_init();
+
+    w_init();
 }
 
 void r_cleanup() {
@@ -79,6 +82,7 @@ int get_side_visible(uint side, block_type* blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHU
                 visible = 1;
             }
             else {
+                block_type* b = blocks[x][y + 1][z];
                 visible = blocks[x][y + 1][z] == NULL;
             }
             break;
@@ -132,10 +136,10 @@ void render_block(
     float** side_data, 
     int* num_sides, 
     int x, int y, int z,
-    block_type* blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE]
+    chunk* c
 ) {
     for (int side = 0; side < 6; side++) {
-        if (!get_side_visible(side, blocks, x, y, z)) {
+        if (!get_side_visible(side, c->blocks, x, y, z)) {
             continue;
         }
 
@@ -143,9 +147,14 @@ void render_block(
         float* tmp = realloc(*side_data, new_side_count * SIDE_OFFSET * sizeof(float));
         assert(tmp != NULL && "Failed to allocate memory for side data");
         *side_data = tmp;
-        block_type* type = blocks[x][y][z];
+        block_type* type = c->blocks[x][y][z];
+
+        int world_x = x + (CHUNK_SIZE * c->x);
+        int world_y = y;
+        int world_z = z + (CHUNK_SIZE * c->z);
+
         render_side(
-            x, y, z, 
+            world_x, world_y, world_z, 
             side, 
             type,
             (*side_data) + (*num_sides) * SIDE_OFFSET
@@ -154,30 +163,17 @@ void render_block(
     }
 }
 
-void render_chunk(chunk* c) {
-    float* side_data = malloc(SIDE_OFFSET * sizeof(float));
-    int num_sides = 0;
+void render_chunk(chunk* c, float** side_data, int* num_sides) {
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (c->blocks[i][k][j] == NULL) {
                     continue;
                 }
-                render_block(&side_data, &num_sides, i, k, j, c->blocks);
+                render_block(side_data, num_sides, i, k, j, c);
             }
         }
     }
-
-    bind_vao(vao);
-    buffer_data(vbo, GL_STATIC_DRAW, side_data, num_sides * SIDE_OFFSET * sizeof(float));
-    add_attrib(&vbo, 0, 3, 0, VBO_WIDTH * sizeof(float));
-    add_attrib(&vbo, 1, 2, 3 * sizeof(float), VBO_WIDTH * sizeof(float));
-    add_attrib(&vbo, 2, 2, 5 * sizeof(float), VBO_WIDTH * sizeof(float));
-    use_vbo(vbo);
-
-    glDrawArrays(GL_TRIANGLES, 0, num_sides * VERTS_PER_SIDE);
-
-    free(side_data);
 }
 
 void render(camera cam, shader_program program) {
@@ -198,24 +194,26 @@ void render(camera cam, shader_program program) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-    chunk c = {
-        .pos = {0, 0, 0},
-    };
-    
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_SIZE; j++) {
-            for (int k = 0; k < CHUNK_HEIGHT; k++) {
-                if (k > 8) {
-                    c.blocks[i][k][j] = NULL;  // Air block above level 8
-                }
-                else if (k == 8) {
-                    c.blocks[i][k][j] = &TYPES[1];  // Dirt block below level 8
-                }
-                else {
-                    c.blocks[i][k][j] = &TYPES[2];  // Grass block below level 8
-                }
+    int num_sides = 0;
+    float* side_data = malloc(SIDE_OFFSET * sizeof(float));
+    for (int i = 0; i < WORLD_SIZE; i++) {
+        for (int j = 0; j < WORLD_SIZE; j++) {
+            float dist = sqrtf(powf(i - cam.position[0] / CHUNK_SIZE, 2) + powf(j - cam.position[2] / CHUNK_SIZE, 2));
+            if (dist <= (float)RENDER_DISTANCE) {
+                chunk* c = get_chunk(i, j);
+                render_chunk(c, &side_data, &num_sides);
             }
         }
     }
-    render_chunk(&c);
+
+    bind_vao(vao);
+    buffer_data(vbo, GL_STATIC_DRAW, side_data, num_sides * SIDE_OFFSET * sizeof(float));
+    add_attrib(&vbo, 0, 3, 0, VBO_WIDTH * sizeof(float));
+    add_attrib(&vbo, 1, 2, 3 * sizeof(float), VBO_WIDTH * sizeof(float));
+    add_attrib(&vbo, 2, 2, 5 * sizeof(float), VBO_WIDTH * sizeof(float));
+    use_vbo(vbo);
+
+    glDrawArrays(GL_TRIANGLES, 0, num_sides * VERTS_PER_SIDE);
+
+    free(side_data);
 }
