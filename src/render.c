@@ -69,31 +69,41 @@ void render_block(int x_0, int y_0, int z_0, block_type* type, float* block_data
 }
 
 void render_chunk(chunk* c) {
-    float block_data[CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT * 36 * 7];
+    uint block_offset = 6 * 6 * 7;
+
+    float* block_data = malloc(block_offset * sizeof(float));
+    int num_blocks = 0;
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (c->blocks[i][k][j] == NULL) {
                     continue;
                 }
-                
+
+                float* tmp = realloc(block_data, (num_blocks + 1) * block_offset * sizeof(float));
+                assert(tmp != NULL && "Failed to allocate memory for block data");
+                block_data = tmp;
+                int offset = num_blocks * block_offset;
                 render_block(
                     i, k, j, 
                     c->blocks[i][k][j], 
-                    block_data + (i * CHUNK_SIZE * CHUNK_HEIGHT + k * CHUNK_SIZE + j) * 36 * 7
+                    block_data + offset
                 );
+                num_blocks++;
             }
         }
     }
 
     bind_vao(vao);
-    buffer_data(vbo, GL_STATIC_DRAW, block_data, sizeof(block_data));
+    buffer_data(vbo, GL_STATIC_DRAW, block_data, num_blocks * block_offset * sizeof(float));
     add_attrib(&vbo, 0, 3, 0, 7 * sizeof(float));
     add_attrib(&vbo, 1, 2, 3 * sizeof(float), 7 * sizeof(float));
     add_attrib(&vbo, 2, 2, 5 * sizeof(float), 7 * sizeof(float));
     use_vbo(vbo);
 
-    glDrawArrays(GL_TRIANGLES, 0, CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT * 36);
+    glDrawArrays(GL_TRIANGLES, 0, num_blocks * 36);
+
+    free(block_data);
 }
 
 void render(camera cam, shader_program program) {
@@ -122,7 +132,7 @@ void render(camera cam, shader_program program) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (k > 8) {
-                    c.blocks[i][k][j] = &TYPES[0];  // Air block above level 8
+                    c.blocks[i][k][j] = NULL;  // Air block above level 8
                 }
                 else if (k == 8) {
                     c.blocks[i][k][j] = &TYPES[1];  // Dirt block below level 8
