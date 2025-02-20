@@ -52,7 +52,7 @@ void r_cleanup() {
     t_cleanup();
 }
 
-void render_side(int x_0, int y_0, int z_0, uint side, block_type* type, float* side_data) {
+void pack_side(int x_0, int y_0, int z_0, uint side, block_type* type, float* side_data) {
     int cube_vertices_offset = side * VERTS_PER_SIDE * CUBE_VERTICES_WIDTH;
     for (int i = 0; i < 6; i++) {
         int index = cube_vertices_offset + i * CUBE_VERTICES_WIDTH;
@@ -74,70 +74,28 @@ void render_side(int x_0, int y_0, int z_0, uint side, block_type* type, float* 
     }
 }
 
-int get_side_visible(uint side, block_type* blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE], int x, int y, int z) {
-    uint visible = 0;
-    switch(side) {
-        case (int)TOP:
-            if (y + 1 >= CHUNK_HEIGHT) {
-                visible = 1;
-            }
-            else {
-                block_type* b = blocks[x][y + 1][z];
-                visible = blocks[x][y + 1][z] == NULL;
-            }
-            break;
-        case (int)BOTTOM:
-            if (y - 1 < 0) {
-                visible = 1;
-            }
-            else {
-                visible = blocks[x][y - 1][z] == NULL;
-            }
-            break;
-        case (int)BACK:
-            if (x - 1 < 0) {
-                visible = 1;
-            }
-            else {
-                visible = blocks[x - 1][y][z] == NULL;
-            }
-            break;
-        case (int)FRONT:
-            if (x + 1 >= CHUNK_SIZE) {
-                visible = 1;
-            }
-            else {
-                visible = blocks[x + 1][y][z] == NULL;
-            }
-            break;
-        case (int)LEFT:
-            if (z - 1 < 0) {
-                visible = 1;
-            }
-            else {
-                visible = blocks[x][y][z - 1] == NULL;
-            }
-            break;
-        case (int)RIGHT:
-            if (z + 1 >= CHUNK_SIZE) {
-                visible = 1;
-            }
-            else {
-                visible = blocks[x][y][z + 1] == NULL;
-            }
-            break;
-        default:
-            visible = 1;
-    }
-    return visible;
-}
-
-void render_block(
-    float** side_data, 
-    int* num_sides, 
+void pack_block(
     int x, int y, int z,
-    chunk* c
+    camera cam,
+    chunk* c,
+    float** side_data, 
+    int* num_sides
 ) {
+    
+    int world_x = x + (CHUNK_SIZE * c->x);
+    int world_y = y;
+    int world_z = z + (CHUNK_SIZE * c->z);
+
+    float dist = sqrtf(
+        powf(world_x - cam.position[0], 2) + 
+        powf(world_y - cam.position[1], 2) + 
+        powf(world_z - cam.position[2], 2)
+    );
+
+    if (dist > (float)RENDER_DISTANCE) {
+        return;
+    }
+
     for (int side = 0; side < 6; side++) {
         if (!get_side_visible(side, c->blocks, x, y, z)) {
             continue;
@@ -149,11 +107,8 @@ void render_block(
         *side_data = tmp;
         block_type* type = c->blocks[x][y][z];
 
-        int world_x = x + (CHUNK_SIZE * c->x);
-        int world_y = y;
-        int world_z = z + (CHUNK_SIZE * c->z);
 
-        render_side(
+        pack_side(
             world_x, world_y, world_z, 
             side, 
             type,
@@ -163,14 +118,15 @@ void render_block(
     }
 }
 
-void render_chunk(chunk* c, float** side_data, int* num_sides) {
+void pack_chunk(camera cam, chunk* c, float** side_data, int* num_sides) {
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (c->blocks[i][k][j] == NULL) {
                     continue;
                 }
-                render_block(side_data, num_sides, i, k, j, c);
+                pack_block(i, k, j, cam, c, side_data, num_sides);
+
             }
         }
     }
@@ -194,14 +150,15 @@ void render(camera cam, shader_program program) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
+    // pack chunks into buffer
     int num_sides = 0;
     float* side_data = malloc(SIDE_OFFSET * sizeof(float));
     for (int i = 0; i < WORLD_SIZE; i++) {
         for (int j = 0; j < WORLD_SIZE; j++) {
             float dist = sqrtf(powf(i - cam.position[0] / CHUNK_SIZE, 2) + powf(j - cam.position[2] / CHUNK_SIZE, 2));
-            if (dist <= (float)RENDER_DISTANCE) {
+            if (dist <= (float)CHUNK_RENDER_DISTANCE) {
                 chunk* c = get_chunk(i, j);
-                render_chunk(c, &side_data, &num_sides);
+                pack_chunk(cam, c, &side_data, &num_sides);
             }
         }
     }
@@ -214,6 +171,5 @@ void render(camera cam, shader_program program) {
     use_vbo(vbo);
 
     glDrawArrays(GL_TRIANGLES, 0, num_sides * VERTS_PER_SIDE);
-
     free(side_data);
 }

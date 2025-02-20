@@ -2,6 +2,7 @@
 #define BLOCK_H
 
 #include <block_types.h>
+#include <settings.h>
 
 #define LEFT   0.0f
 #define RIGHT  1.0f
@@ -19,5 +20,7 @@ typedef struct {
 // v.x v.y v.z t.x t.y side
 #define CUBE_VERTICES_WIDTH 6
 extern float CUBE_VERTICES[];
+
+int get_side_visible(uint side, block_type* blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE], int x, int y, int z);
 
 #endif
