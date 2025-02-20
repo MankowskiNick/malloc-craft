@@ -36,18 +36,40 @@ void r_cleanup() {
     delete_program(program);
 }
 
-void render_cube() {
+void render_block(block b) {
 
+    // copy side info to vertices array
+    float vertices[36 * 7];
+    for (int i = 0; i < 36; i ++) {
+        // unpack vertex
+        float x = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 0];
+        float y = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 1];
+        float z = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 2];
+        float tx = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 3];
+        float ty = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 4];
+        int side = (int)CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 5];
+        
+        // copy vertex info into vertices array
+        vertices[i * 7 + 0] = x;
+        vertices[i * 7 + 1] = y;
+        vertices[i * 7 + 2] = z;
+        vertices[i * 7 + 3] = tx;
+        vertices[i * 7 + 4] = ty;
+        vertices[i * 7 + 5] = b.face_atlas_coords[side][0];
+        vertices[i * 7 + 6] = b.face_atlas_coords[side][1];
+    }
+
+    bind_vao(vao);
+    buffer_data(vbo, GL_STATIC_DRAW, vertices, sizeof(vertices));
+    add_attrib(&vbo, 0, 3, 0, 7 * sizeof(float));
+    add_attrib(&vbo, 1, 2, 3 * sizeof(float), 7 * sizeof(float));
+    add_attrib(&vbo, 2, 2, 5 * sizeof(float), 7 * sizeof(float));
+    use_vbo(vbo);
+
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 void render(camera cam, shader_program program) {
-
-    bind_vao(vao);
-    buffer_data(vbo, GL_STATIC_DRAW, CUBE_VERTICES, sizeof(CUBE_VERTICES));
-    add_attrib(&vbo, 0, 3, 0, 5 * sizeof(float));
-    add_attrib(&vbo, 1, 2, 3 * sizeof(float), 5 * sizeof(float));
-    use_vbo(vbo);
-
     mat4 view, proj;
     get_view_matrix(cam, &view);
     uint view_loc = glGetUniformLocation(program.id, "view");
@@ -64,5 +86,18 @@ void render(camera cam, shader_program program) {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    block b = {
+        .id = 1,
+        .face_atlas_coords = {
+            {1.0f / 32.0f, 0.0f},
+            {1.0f / 32.0f, 0.0f},
+            {0.0f, 0.0f},
+            {2.0f / 32.0f, 0.0f},
+            {1.0f / 32.0f, 0.0f},
+            {1.0f / 32.0f, 0.0f}
+        }
+    };
+    render_block(b);
+    // glDrawArrays(GL_TRIANGLES, 0, 36);
 }

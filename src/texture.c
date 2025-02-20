@@ -8,6 +8,8 @@ atlas texture_atlas;
 
 void t_init() {
     int width, height, num_channels;
+    // flip the image vertically
+    stbi_set_flip_vertically_on_load(1);
     unsigned char *data = stbi_load("res/atlas.png", &width, &height, &num_channels, 0); 
 
     if (!data) {
