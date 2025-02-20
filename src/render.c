@@ -4,12 +4,18 @@
 #include <vao.h>
 #include <texture.h>
 
+#include <settings.h>
+
 VAO vao;
 VBO vbo;
 shader_program program;
 
 void r_init(shader_program* program) {
     glEnable(GL_DEPTH_TEST);
+
+    #ifdef WIREFRAME
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    #endif
 
     // buffers
     vao = create_vao();
@@ -36,11 +42,21 @@ void r_cleanup() {
     delete_program(program);
 }
 
-void render_block(block b) {
+void set_block(block* b, uint id, int x, int y, int z, float face_atlas_coords[6][2]) {
+    b->id = id;
+    b->pos[0] = x;
+    b->pos[1] = y;
+    b->pos[2] = z;   
+    for (int i = 0; i < 6; i++) {
+        b->face_atlas_coords[i][0] = face_atlas_coords[i][0];
+        b->face_atlas_coords[i][1] = face_atlas_coords[i][1];
+    }
+}
 
+void render_block(block b, float* block_data) {
     // copy side info to vertices array
-    float vertices[36 * 7];
     for (int i = 0; i < 36; i ++) {
+        
         // unpack vertex
         float x = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 0];
         float y = CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 1];
@@ -50,23 +66,54 @@ void render_block(block b) {
         int side = (int)CUBE_VERTICES[i * CUBE_VERTICES_WIDTH + 5];
         
         // copy vertex info into vertices array
-        vertices[i * 7 + 0] = x;
-        vertices[i * 7 + 1] = y;
-        vertices[i * 7 + 2] = z;
-        vertices[i * 7 + 3] = tx;
-        vertices[i * 7 + 4] = ty;
-        vertices[i * 7 + 5] = b.face_atlas_coords[side][0];
-        vertices[i * 7 + 6] = b.face_atlas_coords[side][1];
+        int offset = i * 7;
+        block_data[offset + 0] = x + (float)b.pos[0];
+        block_data[offset + 1] = y + (float)b.pos[1];
+        block_data[offset + 2] = z + (float)b.pos[2];
+        block_data[offset + 3] = tx;
+        block_data[offset + 4] = ty;
+        block_data[offset + 5] = b.face_atlas_coords[side][0];
+        block_data[offset + 6] = b.face_atlas_coords[side][1];
+    }
+}
+
+void render_chunk() {
+    block blocks[CHUNK_SIZE][CHUNK_SIZE];
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        for (int j = 0; j < CHUNK_SIZE; j++) {
+            float face_atlas_coords[6][2] = {
+                {1.0f / 32.0f, 0.0f},
+                {1.0f / 32.0f, 0.0f},
+                {0.0f, 0.0f},
+                {2.0f / 32.0f, 0.0f},
+                {1.0f / 32.0f, 0.0f},
+                {1.0f / 32.0f, 0.0f}
+            };
+            set_block(&blocks[i][j], 1, i, 0, j, face_atlas_coords);
+        }
+    }
+
+    float block_data[CHUNK_SIZE * CHUNK_SIZE * 36 * 7];
+    for (int i = 0; i < CHUNK_SIZE; i++) {
+        for (int j = 0; j < CHUNK_SIZE; j++) {
+            render_block(
+                blocks[i][j], 
+                &block_data[(i * CHUNK_SIZE + j) * 36 * 7]
+            );
+        }
     }
 
     bind_vao(vao);
-    buffer_data(vbo, GL_STATIC_DRAW, vertices, sizeof(vertices));
+    buffer_data(vbo, GL_STATIC_DRAW, block_data, sizeof(block_data));
     add_attrib(&vbo, 0, 3, 0, 7 * sizeof(float));
     add_attrib(&vbo, 1, 2, 3 * sizeof(float), 7 * sizeof(float));
     add_attrib(&vbo, 2, 2, 5 * sizeof(float), 7 * sizeof(float));
     use_vbo(vbo);
 
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, CHUNK_SIZE * CHUNK_SIZE * 36);
+    // wireframe mode
+
+    // glEnableVertexAttribArray(0);
 }
 
 void render(camera cam, shader_program program) {
@@ -86,18 +133,7 @@ void render(camera cam, shader_program program) {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    render_chunk();
 
-    block b = {
-        .id = 1,
-        .face_atlas_coords = {
-            {1.0f / 32.0f, 0.0f},
-            {1.0f / 32.0f, 0.0f},
-            {0.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
-            {1.0f / 32.0f, 0.0f},
-            {1.0f / 32.0f, 0.0f}
-        }
-    };
-    render_block(b);
     // glDrawArrays(GL_TRIANGLES, 0, 36);
 }

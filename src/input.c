@@ -1,5 +1,6 @@
 #include <input.h>
 #include <camera.h>
+#include <settings.h>
 #include <cglm/cglm.h>
 
 typedef struct key_entry {

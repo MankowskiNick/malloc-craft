@@ -10,6 +10,7 @@
 
 typedef struct {
     uint id;
+    int pos[3];
     float face_atlas_coords[6][2];
 } block;
 
