@@ -164,6 +164,10 @@ void render(camera cam, shader_program program) {
     float* side_data = malloc(SIDE_OFFSET * sizeof(float));
     assert(side_data != NULL && "Failed to allocate memory for side data");
 
+    int player_chunk_x = (int)(cam.position[0] / CHUNK_SIZE);
+    int player_chunk_z = (int)(cam.position[2] / CHUNK_SIZE);
+    printf("Player chunk: (%d, %d)\n", player_chunk_x, player_chunk_z);
+
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
 

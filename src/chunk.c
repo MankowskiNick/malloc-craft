@@ -133,16 +133,16 @@ int get_side_visible(
             visible = visible && cam.position[1] <= y - 1;
             break;
         case (int)FRONT:
-            visible = visible && cam.position[0] > (x + 1) + c->x * CHUNK_SIZE;
+            visible = visible && cam.position[0] > (x - 1) + c->x * CHUNK_SIZE;
             break;
         case (int)BACK:
-            visible = visible && cam.position[0] <= (x - 1) + c->x * CHUNK_SIZE;
+            visible = visible && cam.position[0] <= (x + 1) + c->x * CHUNK_SIZE;
             break;
         case (int)LEFT:
-            visible = visible && cam.position[2] <= (z - 1) + c->z * CHUNK_SIZE;
+            visible = visible && cam.position[2] <= (z + 1) + c->z * CHUNK_SIZE;
             break;
         case (int)RIGHT:
-            visible = visible && cam.position[2] > (z + 1) + c->z * CHUNK_SIZE;
+            visible = visible && cam.position[2] > (z - 1) + c->z * CHUNK_SIZE;
             break;
         default:
             visible = 0;
