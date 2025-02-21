@@ -135,7 +135,6 @@ void pack_chunk(camera cam, chunk* c, chunk* adj_chunks[4], float** side_data, i
                     continue;
                 }
                 pack_block(i, k, j, cam, c, adj_chunks, side_data, num_sides);
-
             }
         }
     }
