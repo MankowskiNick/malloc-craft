@@ -157,7 +157,7 @@ void mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+    if (action == GLFW_PRESS) {
         uint chunk_x, chunk_z, side;
 
         chunk* c = get_chunk_at(cam->position[0], cam->position[2], &chunk_x, &chunk_z);
@@ -166,19 +166,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         printf("Chunk: %d, %d\n", c->x, c->z);
         printf("Coords within chunk: %i, %i\n\n", chunk_x, chunk_z);
 
-        if (action == GLFW_PRESS) {
-            switch(button) {
-                case GLFW_MOUSE_BUTTON_LEFT:
-                    break_block(*cam);
-                    break;
-                case GLFW_MOUSE_BUTTON_RIGHT:
-                    place_block(*cam);
-                    break;
-                default:
-                    break;
-            }
+        switch(button) {
+            case GLFW_MOUSE_BUTTON_LEFT:
+                break_block(*cam);
+                break;
+            case GLFW_MOUSE_BUTTON_RIGHT:
+                place_block(*cam);
+                break;
+            default:
+                break;
         }
-
     }
 }
 
