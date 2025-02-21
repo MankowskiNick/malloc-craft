@@ -60,16 +60,13 @@ chunk* get_chunk(int x, int z) {
 
     // look for chunk in cache
     while (cur != NULL) {
-        printf("Checking chunk: (%d, %d)\n", cur->c->x, cur->c->z);
         if (cur->c->x == x && cur->c->z == z) {
-            printf("Chunk in cache\n");
             return cur->c;
         }
         cur = cur->next;
     }
 
     // chunk not in cache
-    printf("Chunk not in cache\n");
     chunk* c = malloc(sizeof(chunk));
     c_init(c, x, z);
     add_chunk(c);

@@ -6,12 +6,15 @@
 #include <vao.h>
 #include <texture.h>
 #include <block_types.h>
+#include <assert.h>
 
 #include <settings.h>
 
 #define VBO_WIDTH 7
 #define VERTS_PER_SIDE 6
 #define SIDE_OFFSET VERTS_PER_SIDE * VBO_WIDTH
+
+#define INITIAL_VBO_SIZE 100000
 
 VAO vao;
 VBO vbo;
@@ -107,9 +110,13 @@ void pack_block(
         }
 
         int new_side_count = (*num_sides) + 1;
-        float* tmp = realloc(*side_data, new_side_count * SIDE_OFFSET * sizeof(float));
-        assert(tmp != NULL && "Failed to allocate memory for side data");
-        *side_data = tmp;
+
+        // check if we need to reallocate memory
+        if (new_side_count > INITIAL_VBO_SIZE) {
+            float* tmp = realloc(*side_data, new_side_count * SIDE_OFFSET * sizeof(float));
+            assert(tmp != NULL && "Failed to allocate memory for side data");
+            *side_data = tmp;
+        }
         block_type* type = c->blocks[x][y][z];
 
 
@@ -160,12 +167,12 @@ void render(camera cam, shader_program program) {
 
     // pack chunks into buffer
     int num_sides = 0;
-    float* side_data = malloc(SIDE_OFFSET * sizeof(float));
+    float* side_data = malloc(INITIAL_VBO_SIZE * SIDE_OFFSET * sizeof(float));
     assert(side_data != NULL && "Failed to allocate memory for side data");
 
     int player_chunk_x = (int)(cam.position[0] / CHUNK_SIZE);
     int player_chunk_z = (int)(cam.position[2] / CHUNK_SIZE);
-    printf("Player chunk: (%d, %d)\n", player_chunk_x, player_chunk_z);
+    // printf("Player chunk: (%d, %d)\n", player_chunk_x, player_chunk_z);
 
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
@@ -182,21 +189,6 @@ void render(camera cam, shader_program program) {
             pack_chunk(cam, c, adj_chunks, &side_data, &num_sides);
         }
     }
-    // for (int i = 0; i < WORLD_SIZE; i++) {
-    //     for (int j = 0; j < WORLD_SIZE; j++) {
-    //         float dist = sqrtf(powf(i - cam.position[0] / CHUNK_SIZE, 2) + powf(j - cam.position[2] / CHUNK_SIZE, 2));
-    //         if (dist <= (float)CHUNK_RENDER_DISTANCE) {
-    //             chunk* c = get_chunk(i, j);
-    //             chunk* adj_chunks[4] = {
-    //                 get_chunk(i + 1, j),
-    //                 get_chunk(i - 1, j),
-    //                 get_chunk(i, j - 1),
-    //                 get_chunk(i, j + 1)
-    //             };
-    //             pack_chunk(cam, c, adj_chunks, &side_data, &num_sides);
-    //         }
-    //     }
-    // }
 
     bind_vao(vao);
     buffer_data(vbo, GL_STATIC_DRAW, side_data, num_sides * SIDE_OFFSET * sizeof(float));
@@ -204,6 +196,8 @@ void render(camera cam, shader_program program) {
     add_attrib(&vbo, 1, 2, 3 * sizeof(float), VBO_WIDTH * sizeof(float));
     add_attrib(&vbo, 2, 2, 5 * sizeof(float), VBO_WIDTH * sizeof(float));
     use_vbo(vbo);
+
+    // printf("Num sides: %d\n", num_sides);
 
     glDrawArrays(GL_TRIANGLES, 0, num_sides * VERTS_PER_SIDE);
     free(side_data);
