@@ -16,3 +16,4 @@
 #define SENSITIVITY 0.01f
 
 #define MAX_REACH 5.0f
+#define RAY_STEP 0.05f

@@ -172,6 +172,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                     break_block(*cam);
                     break;
                 case GLFW_MOUSE_BUTTON_RIGHT:
+                    place_block(*cam);
                     break;
                 default:
                     break;
