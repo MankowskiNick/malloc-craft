@@ -1,13 +1,10 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 
+#include <block_models.h>
 #include <settings.h>
-#include <block.h>
+#include <camera.h>
 
-typedef struct {
-    int x, z;
-    block_type* blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
-} chunk;
 
 void c_init(chunk* c, int x, int z);
 

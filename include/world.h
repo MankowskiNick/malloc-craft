@@ -1,7 +1,7 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include <chunk.h>
+#include <block_models.h>
 #include <settings.h>
 
 void w_init();

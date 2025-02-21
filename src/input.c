@@ -1,7 +1,14 @@
 #include <input.h>
+#include <block_models.h>
+#include <block.h>
+#include <world.h>
 #include <camera.h>
 #include <settings.h>
 #include <cglm/cglm.h>
+
+#ifndef PI
+    #define PI 3.141592653
+#endif
 
 typedef struct key_entry {
     int key;
@@ -73,7 +80,7 @@ void update_camera() {
 
 
 
-void handle_press(int key) {
+void handle_keypress(int key) {
     // non movement key presses
     switch(key) {
         case GLFW_KEY_ESCAPE:
@@ -98,7 +105,7 @@ void handle_press(int key) {
     key_stack = new_entry;
 }
 
-void handle_release(int key) {
+void handle_keyrelease(int key) {
     key_entry* cur = key_stack;
     key_entry* prev = NULL;
 
@@ -124,21 +131,24 @@ void handle_release(int key) {
 }
 
 
+void handle_mousemove(double xpos, double ypos) {
+}
+
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     switch(action) {
         case GLFW_PRESS:
-            handle_press(key);
+            handle_keypress(key);
             break;
         case GLFW_RELEASE:
-            handle_release(key);
+            handle_keyrelease(key);
             break;
         default:
             break;
     }
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+void mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
     double dx = xpos - mouse.x;
     double dy = ypos - mouse.y;
 
@@ -149,14 +159,49 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     cam->pitch -= dy * SENSITIVITY;
 }
 
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    // get chunk and adjacent chunks
+    int x = (int)(cam->position[0] / CHUNK_SIZE);
+    int z = (int)(cam->position[2] / CHUNK_SIZE);
+    chunk* c = get_chunk(x, z);
+    chunk* adj[4] = {
+        get_chunk(x + 1, z),
+        get_chunk(x - 1, z),
+        get_chunk(x, z + 1),
+        get_chunk(x, z - 1)
+    };
 
+    // determine based on camera yaw
+    int side = 0;
+    if (cam->yaw < PI/4 || cam->yaw > 7*PI/4) {
+        side = FRONT;
+    }
+    else if (cam->yaw < 3*PI/4) {
+        side = RIGHT;
+    }
+    else if (cam->yaw < 5*PI/4) {
+        side = BACK;
+    }
+    else {
+        side = LEFT;
+    }
+
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        break_block(*cam, c, adj[side]);
+        
+    }
+    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+        place_block(*cam, c, adj[side], &TYPES[2]);
+    }
+}
 
 void i_init(GLFWwindow* window, camera* player_cam) {
     key_stack = NULL;
 
     // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
     glfwSetKeyCallback(window, key_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetCursorPosCallback(window, mouse_move_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
 
     cam = player_cam;
 }

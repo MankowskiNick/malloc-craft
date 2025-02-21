@@ -1,8 +1,8 @@
 #include <world.h>
-#include <stdlib.h>
-
-#include <stdio.h>
 #include <chunk.h>
+
+#include <stdlib.h>
+#include <stdio.h>
 
 #define CHUNK_CACHE_SIZE 2048
 

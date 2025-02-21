@@ -1,11 +1,10 @@
 #include <render.h>
+#include <block.h>
 #include <chunk.h>
 #include <world.h>
-#include <block.h>
 #include <vbo.h>
 #include <vao.h>
 #include <texture.h>
-#include <block_types.h>
 #include <assert.h>
 
 #include <settings.h>
