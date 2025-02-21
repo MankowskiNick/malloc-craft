@@ -102,7 +102,7 @@ void pack_block(
         if (side < 4) {
             adj = adj_chunks[side];
         }
-        if (!get_side_visible(x, y, z, side, c, adj)) {
+        if (!get_side_visible(cam, x, y, z, side, c, adj)) {
             continue;
         }
 
@@ -124,6 +124,10 @@ void pack_block(
 }
 
 void pack_chunk(camera cam, chunk* c, chunk* adj_chunks[4], float** side_data, int* num_sides) {
+    if (c == NULL) {
+        return;
+    }
+
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
@@ -143,7 +147,7 @@ void render(camera cam, shader_program program) {
     uint view_loc = glGetUniformLocation(program.id, "view");
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float*)view);
     
-    get_projection_matrix(&proj, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+    get_projection_matrix(&proj, 45.0f, 800.0f / 600.0f, 0.1f, RENDER_DISTANCE);
     uint proj_loc = glGetUniformLocation(program.id, "proj");
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 
@@ -158,21 +162,38 @@ void render(camera cam, shader_program program) {
     // pack chunks into buffer
     int num_sides = 0;
     float* side_data = malloc(SIDE_OFFSET * sizeof(float));
-    for (int i = 0; i < WORLD_SIZE; i++) {
-        for (int j = 0; j < WORLD_SIZE; j++) {
-            float dist = sqrtf(powf(i - cam.position[0] / CHUNK_SIZE, 2) + powf(j - cam.position[2] / CHUNK_SIZE, 2));
-            if (dist <= (float)CHUNK_RENDER_DISTANCE) {
-                chunk* c = get_chunk(i, j);
-                chunk* adj_chunks[4] = {
-                    get_chunk(i + 1, j),
-                    get_chunk(i - 1, j),
-                    get_chunk(i, j - 1),
-                    get_chunk(i, j + 1)
-                };
-                pack_chunk(cam, c, adj_chunks, &side_data, &num_sides);
-            }
+    assert(side_data != NULL && "Failed to allocate memory for side data");
+
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+
+            int x = (int)(cam.position[0] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + i;
+            int z = (int)(cam.position[2] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + j;
+            chunk* c = get_chunk(x, z);
+            chunk* adj_chunks[4] = {
+                get_chunk(x + 1, z),
+                get_chunk(x - 1, z),
+                get_chunk(x, z - 1),
+                get_chunk(x, z + 1)
+            };
+            pack_chunk(cam, c, adj_chunks, &side_data, &num_sides);
         }
     }
+    // for (int i = 0; i < WORLD_SIZE; i++) {
+    //     for (int j = 0; j < WORLD_SIZE; j++) {
+    //         float dist = sqrtf(powf(i - cam.position[0] / CHUNK_SIZE, 2) + powf(j - cam.position[2] / CHUNK_SIZE, 2));
+    //         if (dist <= (float)CHUNK_RENDER_DISTANCE) {
+    //             chunk* c = get_chunk(i, j);
+    //             chunk* adj_chunks[4] = {
+    //                 get_chunk(i + 1, j),
+    //                 get_chunk(i - 1, j),
+    //                 get_chunk(i, j - 1),
+    //                 get_chunk(i, j + 1)
+    //             };
+    //             pack_chunk(cam, c, adj_chunks, &side_data, &num_sides);
+    //         }
+    //     }
+    // }
 
     bind_vao(vao);
     buffer_data(vbo, GL_STATIC_DRAW, side_data, num_sides * SIDE_OFFSET * sizeof(float));
