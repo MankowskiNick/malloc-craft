@@ -14,3 +14,5 @@
 #define DELTA_Y 0.2f
 #define DELTA_Z 0.2f
 #define SENSITIVITY 0.01f
+
+#define MAX_REACH 5.0f

@@ -1,60 +1,57 @@
 #include <block.h>
+#include <world.h>
+#include <cglm/cglm.h>
 
 
 // TODO: implement actual DDA algorithm
-void get_block_coords(camera cam, chunk* c, chunk* adj, int* x, int* y, int* z, uint* side) {
-    // use dda to get block coords
-    float ray[3] = {cam.front[0], cam.front[1], cam.front[2]};
-    float pos[3] = {cam.position[0], cam.position[1], cam.position[2]};
+void get_block_coords(camera cam, uint* x, uint* y, uint* z, chunk** chunk_out) {
+    vec3 position = {cam.position[0], cam.position[1], cam.position[2]};
+    vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
+    glm_normalize_to(dir, dir);
+
     float t = 0.0f;
 
-    while (t < 10.0f) {
-        int x_ = (int)pos[0] % (CHUNK_SIZE);
-        int y_ = (int)pos[1];
-        int z_ = (int)pos[2] % (CHUNK_SIZE);
+    while (t < MAX_REACH) {
+        t += 0.005f;
 
-        if (x_ >= 0 && x_ < CHUNK_SIZE && y_ >= 0 && y_ < CHUNK_HEIGHT && z_ >= 0 && z_ < CHUNK_SIZE) {
-            if (c->blocks[x_][y_][z_] != NULL) {
-                *x = x_;
-                *y = y_;
-                *z = z_;
-                return;
-            }
+        vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
+
+        uint chunk_x, chunk_z;
+        chunk* c = get_chunk_at(pos[0], pos[2], &chunk_x, &chunk_z);
+
+        if (c->blocks[chunk_x][(int)pos[1]][chunk_z] != NULL) {
+            *x = chunk_x;
+            *y = (int)pos[1];
+            *z = chunk_z;
+            *chunk_out = c;
+            return;
         }
-
-        pos[0] += ray[0];
-        pos[1] += ray[1];
-        pos[2] += ray[2];
-        t += 0.0001f;
     }
-
     *x = -1;
     *y = -1;
     *z = -1;
+    *chunk_out = NULL;
 }
 
-void break_block(camera cam, chunk* c, chunk* adj) {
-    int x, y, z;
-    uint side;
-    get_block_coords(cam, c, adj, &x, &y, &z, &side);
-
-    if (x == -1 || y == -1 || z == -1) {
+void break_block(camera cam) {
+    uint x, y, z;
+    chunk* c = NULL;
+    get_block_coords(cam, &x, &y, &z, &c);
+    
+    if (x == -1 || y == -1 || z == -1 || c == NULL) {
         return;
     }
-    if (c->blocks[x][y][z] != NULL) {
-        c->blocks[x][y][z] = NULL;
-    }
+
+    c->blocks[x][y][z] = NULL;
 }
 
-void place_block(camera cam, chunk* c, chunk* adj, block_type* type) {
-    int x, y, z;
+void place_block(camera cam) {
+    uint x, y, z;
     uint side;
-    get_block_coords(cam, c, adj, &x, &y, &z, &side);
+    chunk* c = get_chunk_at(cam.position[0], cam.position[2], &x, &z);
 
-    if (x == -1 || y == -1 || z == -1) {
-        return;
-    }
-    c->blocks[x][y + 1][z] = type;
+
+
 }
 
 
