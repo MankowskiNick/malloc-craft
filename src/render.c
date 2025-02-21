@@ -1,11 +1,11 @@
 #include <render.h>
+#include <chunk.h>
+#include <world.h>
 #include <block.h>
 #include <vbo.h>
 #include <vao.h>
 #include <texture.h>
 #include <block_types.h>
-#include <chunk.h>
-#include <world.h>
 
 #include <settings.h>
 
@@ -78,6 +78,7 @@ void pack_block(
     int x, int y, int z,
     camera cam,
     chunk* c,
+    chunk* adj_chunks[4], // front, back, left, right
     float** side_data, 
     int* num_sides
 ) {
@@ -97,7 +98,11 @@ void pack_block(
     }
 
     for (int side = 0; side < 6; side++) {
-        if (!get_side_visible(side, c->blocks, x, y, z)) {
+        chunk* adj = NULL;
+        if (side < 4) {
+            adj = adj_chunks[side];
+        }
+        if (!get_side_visible(x, y, z, side, c, adj)) {
             continue;
         }
 
@@ -118,14 +123,14 @@ void pack_block(
     }
 }
 
-void pack_chunk(camera cam, chunk* c, float** side_data, int* num_sides) {
+void pack_chunk(camera cam, chunk* c, chunk* adj_chunks[4], float** side_data, int* num_sides) {
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (c->blocks[i][k][j] == NULL) {
                     continue;
                 }
-                pack_block(i, k, j, cam, c, side_data, num_sides);
+                pack_block(i, k, j, cam, c, adj_chunks, side_data, num_sides);
 
             }
         }
@@ -158,7 +163,13 @@ void render(camera cam, shader_program program) {
             float dist = sqrtf(powf(i - cam.position[0] / CHUNK_SIZE, 2) + powf(j - cam.position[2] / CHUNK_SIZE, 2));
             if (dist <= (float)CHUNK_RENDER_DISTANCE) {
                 chunk* c = get_chunk(i, j);
-                pack_chunk(cam, c, &side_data, &num_sides);
+                chunk* adj_chunks[4] = {
+                    get_chunk(i + 1, j),
+                    get_chunk(i - 1, j),
+                    get_chunk(i, j - 1),
+                    get_chunk(i, j + 1)
+                };
+                pack_chunk(cam, c, adj_chunks, &side_data, &num_sides);
             }
         }
     }
