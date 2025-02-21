@@ -6,6 +6,8 @@
 
 #define CHUNK_CACHE_SIZE 2048
 
+#define mod(x, y) fmod(x, y) < 0 ? fmod(x, y) + (y) : fmod(x,y)
+
 
 typedef struct node {
     chunk* c;
@@ -54,6 +56,20 @@ void add_chunk(chunk* c) {
     world[index] = n;
 }
 
+void w_init() {
+    for (int i = 0; i < CHUNK_CACHE_SIZE; i++) {
+        world[i] = NULL;
+    }
+}
+
+void w_cleanup() {
+    for (int i = 0; i < CHUNK_CACHE_SIZE; i++) {
+        if (world[i] != NULL) {
+            free_node(world[i]);
+        }
+    }
+}
+
 chunk* get_chunk(int x, int z) {
     uint index = hash(x, z);
     node* cur = world[index];
@@ -73,16 +89,24 @@ chunk* get_chunk(int x, int z) {
     return c;
 }
 
-void w_init() {
-    for (int i = 0; i < CHUNK_CACHE_SIZE; i++) {
-        world[i] = NULL;
+chunk* get_chunk_at(float x, float z, uint* chunk_x, uint* chunk_z) {
+    
+    // adjust for negative coordinates
+    if (x < 0) {
+        x -= CHUNK_SIZE;
     }
-}
+    if (z < 0) {
+        z -= CHUNK_SIZE;
+    }
+    // Calculate chunk coordinates
+    int cx = (int)(x / CHUNK_SIZE);
+    int cz = (int)(z / CHUNK_SIZE);
 
-void w_cleanup() {
-    for (int i = 0; i < CHUNK_CACHE_SIZE; i++) {
-        if (world[i] != NULL) {
-            free_node(world[i]);
-        }
-    }
+    chunk* c = get_chunk(cx, cz);
+
+    // Calculate coordinate within chunk
+    *chunk_x = (int)(mod(x, CHUNK_SIZE));
+    *chunk_z = (int)(mod(z, CHUNK_SIZE));
+
+    return c;
 }
