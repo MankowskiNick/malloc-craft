@@ -15,11 +15,6 @@ typedef struct key_entry {
     struct key_entry* next;
 } key_entry;
 
-typedef struct {
-    double x, y;
-} mouse_capture;
-
-mouse_capture mouse = {0.0f, 0.0f};
 key_entry* key_stack;
 
 camera* cam;
@@ -146,14 +141,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
-    double dx = xpos - mouse.x;
-    double dy = ypos - mouse.y;
+    double dx = xpos - WIDTH / 2;//mouse.x;
+    double dy = ypos - HEIGHT / 2;//mouse.y;
 
-    mouse.x = xpos;
-    mouse.y = ypos;
+    // mouse.x = xpos;
+    // mouse.y = ypos;
 
     cam->yaw += dx * SENSITIVITY;
     cam->pitch -= dy * SENSITIVITY;
+
+    glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -181,6 +178,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 void i_init(GLFWwindow* window, camera* player_cam) {
     key_stack = NULL;
+
+    // lock cursor to center of window
 
     // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
     glfwSetKeyCallback(window, key_callback);

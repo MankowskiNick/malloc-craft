@@ -77,7 +77,7 @@ void place_block(camera cam) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[3];
+    c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[4];
 }
 
 
@@ -129,51 +129,63 @@ block_type TYPES[] = {
             {3.0f / 32.0f, 0.0f},
             {3.0f / 32.0f, 0.0f},
         }
+    },
+    {
+        .id = 4,
+        .name = "weezer",
+        .face_atlas_coords = {
+            
+            {4.0f / 32.0f, 0.0f},
+            {4.0f / 32.0f, 0.0f},
+            {4.0f / 32.0f, 0.0f},
+            {4.0f / 32.0f, 0.0f},
+            {5.0f / 32.0f, 0.0f},
+            {5.0f / 32.0f, 0.0f},
+        }
     }
 };
 
 float CUBE_VERTICES[] = {
-
-    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, FRONT,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, FRONT,
-    0.5f, -0.5f, -0.5f,  1.0f, 0.0f, FRONT,
-    0.5f, -0.5f, -0.5f,  1.0f, 0.0f, FRONT,
-    0.5f, -0.5f,  0.5f,  0.0f, 0.0f, FRONT,
-    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, FRONT,
+    1.0f,  1.0f,  1.0f,  0.0f, 1.0f, FRONT,
+    1.0f,  1.0f,  0.0f,  1.0f, 1.0f, FRONT,
+    1.0f,  0.0f,  0.0f,  1.0f, 0.0f, FRONT,
+    1.0f,  0.0f,  0.0f,  1.0f, 0.0f, FRONT,
+    1.0f,  0.0f,  1.0f,  0.0f, 0.0f, FRONT,
+    1.0f,  1.0f,  1.0f,  0.0f, 1.0f, FRONT,
  
-     -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, BACK,
-     -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, BACK,
-     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, BACK,
-     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, BACK,
-     -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, BACK,
-     -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, BACK,
+    0.0f,  1.0f,  1.0f,  0.0f, 1.0f, BACK,
+    0.0f,  1.0f,  0.0f,  1.0f, 1.0f, BACK,
+    0.0f,  0.0f,  0.0f,  1.0f, 0.0f, BACK,
+    0.0f,  0.0f,  0.0f,  1.0f, 0.0f, BACK,
+    0.0f,  0.0f,  1.0f,  0.0f, 0.0f, BACK,
+    0.0f,  1.0f,  1.0f,  0.0f, 1.0f, BACK,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, LEFT,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, LEFT,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, LEFT,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, LEFT,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, LEFT,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, LEFT,
+    0.0f,  0.0f,  0.0f,  0.0f, 0.0f, LEFT,
+    1.0f,  0.0f,  0.0f,  1.0f, 0.0f, LEFT,
+    1.0f,  1.0f,  0.0f,  1.0f, 1.0f, LEFT,
+    1.0f,  1.0f,  0.0f,  1.0f, 1.0f, LEFT,
+    0.0f,  1.0f,  0.0f,  0.0f, 1.0f, LEFT,
+    0.0f,  0.0f,  0.0f,  0.0f, 0.0f, LEFT,
 
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, RIGHT,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, RIGHT,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, RIGHT,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, RIGHT,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, RIGHT,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, RIGHT,
+    0.0f,  0.0f,  1.0f,  0.0f, 0.0f, RIGHT,
+    1.0f,  0.0f,  1.0f,  1.0f, 0.0f, RIGHT,
+    1.0f,  1.0f,  1.0f,  1.0f, 1.0f, RIGHT,
+    1.0f,  1.0f,  1.0f,  1.0f, 1.0f, RIGHT,
+    0.0f,  1.0f,  1.0f,  0.0f, 1.0f, RIGHT,
+    0.0f,  0.0f,  1.0f,  0.0f, 0.0f, RIGHT,
 
 
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, TOP,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, TOP,
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, TOP,
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, TOP,
-   -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, TOP,
-   -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, TOP,
+    0.0f,  1.0f,  0.0f,  0.0f, 1.0f, TOP,
+    1.0f,  1.0f,  0.0f,  1.0f, 1.0f, TOP,
+    1.0f,  1.0f,  1.0f,  1.0f, 0.0f, TOP,
+    1.0f,  1.0f,  1.0f,  1.0f, 0.0f, TOP,
+    0.0f,  1.0f,  1.0f,  0.0f, 0.0f, TOP,
+    0.0f,  1.0f,  0.0f,  0.0f, 1.0f, TOP,
    
-   -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, BOTTOM,
-    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, BOTTOM,
-    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, BOTTOM,
-    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, BOTTOM,
-   -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, BOTTOM,
-   -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, BOTTOM
+    0.0f,  0.0f,  0.0f,  0.0f, 1.0f, BOTTOM,
+    1.0f,  0.0f,  0.0f,  1.0f, 1.0f, BOTTOM,
+    1.0f,  0.0f,  1.0f,  1.0f, 0.0f, BOTTOM,
+    1.0f,  0.0f,  1.0f,  1.0f, 0.0f, BOTTOM,
+    0.0f,  0.0f,  1.0f,  0.0f, 0.0f, BOTTOM,
+    0.0f,  0.0f,  0.0f,  0.0f, 1.0f, BOTTOM
  };
