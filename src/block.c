@@ -9,20 +9,13 @@ void get_block_coords(camera cam, chunk* c, chunk* adj, int* x, int* y, int* z, 
     float t = 0.0f;
 
     while (t < 10.0f) {
-        int x_ = (int)pos[0] % (2 * CHUNK_SIZE);
+        int x_ = (int)pos[0] % (CHUNK_SIZE);
         int y_ = (int)pos[1];
-        int z_ = (int)pos[2] % (2 * CHUNK_SIZE);
+        int z_ = (int)pos[2] % (CHUNK_SIZE);
 
         if (x_ >= 0 && x_ < CHUNK_SIZE && y_ >= 0 && y_ < CHUNK_HEIGHT && z_ >= 0 && z_ < CHUNK_SIZE) {
             if (c->blocks[x_][y_][z_] != NULL) {
                 *x = x_;
-                *y = y_;
-                *z = z_;
-                return;
-            }
-        } else if (adj != NULL && x_ >= CHUNK_SIZE && x_ < CHUNK_SIZE * 2 && y_ >= 0 && y_ < CHUNK_HEIGHT && z_ >= 0 && z_ < CHUNK_SIZE) {
-            if (adj->blocks[x_ - CHUNK_SIZE][y_][z_] != NULL) {
-                *x = x_ - CHUNK_SIZE;
                 *y = y_;
                 *z = z_;
                 return;
@@ -32,7 +25,7 @@ void get_block_coords(camera cam, chunk* c, chunk* adj, int* x, int* y, int* z, 
         pos[0] += ray[0];
         pos[1] += ray[1];
         pos[2] += ray[2];
-        t += 0.01f;
+        t += 0.0001f;
     }
 
     *x = -1;
@@ -61,9 +54,7 @@ void place_block(camera cam, chunk* c, chunk* adj, block_type* type) {
     if (x == -1 || y == -1 || z == -1) {
         return;
     }
-    // if (c->blocks[x][y][z] == NULL) { // temporarily just add above
-        c->blocks[x][y + 1][z] = type;
-    // }
+    c->blocks[x][y + 1][z] = type;
 }
 
 

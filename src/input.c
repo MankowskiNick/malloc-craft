@@ -67,6 +67,7 @@ void update_position() {
         glm_normalize_to(cam->front, front);
         glm_normalize_to(cam->up, up);
         glm_vec3_cross(front, up, right);
+        glm_normalize_to(right, right);
 
         update_pos(cur->key, front, right);
         cur = cur->next;
