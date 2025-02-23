@@ -1,39 +1,35 @@
 #include <chunk.h>
+#include <noise.h>
 
-void c_init(chunk* c, int x, int z) {
+void chunk_create(chunk* c, int x, int z) {
     if (c == NULL) {
         c = malloc(sizeof(chunk));
     }
 
-    // c->id = id;
     c->x = x;
     c->z = z;
-    
+
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
+            // get perlin noise at this point
+            float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
+            float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
+            float y_ = n_get(x_, z_) * 5.0f;
+
+            int y = (int)(y_) + 16;
+
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
-                if (k > 7) {
+                if (k > y) {
                     c->blocks[i][k][j] = NULL;  // Air block above level 8
                 }
-                else if (k == 7) {
+                else if (k == y) {
                     c->blocks[i][k][j] = &TYPES[1];  // Dirt block below level 8
                 }
-                else if (k > 4) {
+                else if (k > y - 3) {
                     c->blocks[i][k][j] = &TYPES[2];  // Grass block below level 8
                 }
                 else {
                     c->blocks[i][k][j] = &TYPES[3];  // Stone block below level 8
-                }
-            }
-        }
-    }
-
-    //make a circular hole in the middle of the chunk at ground level
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_SIZE; j++) {
-            for (int k = 0; k < CHUNK_HEIGHT; k++) {
-                if (sqrt(pow(i - CHUNK_SIZE / 2, 2) + pow(j - CHUNK_SIZE / 2, 2) + pow(k - 8, 2)) < 4) {
-                    c->blocks[i][k][j] = NULL;
                 }
             }
         }

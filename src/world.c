@@ -84,7 +84,7 @@ chunk* get_chunk(int x, int z) {
 
     // chunk not in cache
     chunk* c = malloc(sizeof(chunk));
-    c_init(c, x, z);
+    chunk_create(c, x, z);
     add_chunk(c);
     return c;
 }
