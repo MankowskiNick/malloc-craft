@@ -6,7 +6,7 @@
 #include <camera.h>
 
 
-void c_init(chunk* c, int x, int z);
+void chunk_create(chunk* c, int x, int z);
 
 int get_side_visible(camera cam, int x, int y, int z, uint side, chunk* c, chunk* adj);
 

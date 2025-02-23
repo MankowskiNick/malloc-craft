@@ -10,6 +10,7 @@
 #define RIGHT  3.0f
 #define TOP    4.0f
 #define BOTTOM 5.0f
+#define UNKNOWN_SIDE -1.0f
 
 typedef struct {
     uint id;

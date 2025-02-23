@@ -1,60 +1,83 @@
 #include <block.h>
+#include <world.h>
+#include <cglm/cglm.h>
 
+float get_empty_dist(camera cam) {
+    vec3 position = {cam.position[0], cam.position[1], cam.position[2]};
+    vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
+    glm_normalize_to(dir, dir);
 
-// TODO: implement actual DDA algorithm
-void get_block_coords(camera cam, chunk* c, chunk* adj, int* x, int* y, int* z, uint* side) {
-    // use dda to get block coords
-    float ray[3] = {cam.front[0], cam.front[1], cam.front[2]};
-    float pos[3] = {cam.position[0], cam.position[1], cam.position[2]};
     float t = 0.0f;
 
-    while (t < 10.0f) {
-        int x_ = (int)pos[0] % (CHUNK_SIZE);
-        int y_ = (int)pos[1];
-        int z_ = (int)pos[2] % (CHUNK_SIZE);
+    uint chunk_x, chunk_y, chunk_z;
+    chunk_y = (uint)position[1];
+    chunk* c = get_chunk_at(position[0], position[2], &chunk_x, &chunk_z);
 
-        if (x_ >= 0 && x_ < CHUNK_SIZE && y_ >= 0 && y_ < CHUNK_HEIGHT && z_ >= 0 && z_ < CHUNK_SIZE) {
-            if (c->blocks[x_][y_][z_] != NULL) {
-                *x = x_;
-                *y = y_;
-                *z = z_;
-                return;
-            }
-        }
+    while (t <= MAX_REACH && c->blocks[chunk_x][chunk_y][chunk_z] == NULL) {
+        t += 0.005f;
 
-        pos[0] += ray[0];
-        pos[1] += ray[1];
-        pos[2] += ray[2];
-        t += 0.0001f;
+        vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
+
+        c = get_chunk_at(pos[0], pos[2], &chunk_x, &chunk_z);
+        chunk_y = (uint)pos[1];
     }
 
-    *x = -1;
-    *y = -1;
-    *z = -1;
+    return t;
 }
 
-void break_block(camera cam, chunk* c, chunk* adj) {
-    int x, y, z;
-    uint side;
-    get_block_coords(cam, c, adj, &x, &y, &z, &side);
+void break_block(camera cam) {
+    float t = get_empty_dist(cam);
+    t += RAY_STEP;
 
-    if (x == -1 || y == -1 || z == -1) {
+    if (t > MAX_REACH) {
         return;
     }
-    if (c->blocks[x][y][z] != NULL) {
-        c->blocks[x][y][z] = NULL;
+
+    vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
+    glm_normalize_to(dir, dir);
+    float x = cam.position[0] + t * dir[0];
+    float y = cam.position[1] + t * dir[1];
+    float z = cam.position[2] + t * dir[2];
+
+    uint chunk_x = 0;
+    uint chunk_y = 0;
+    uint chunk_z = 0;
+    chunk_y = (uint)y;
+    chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
+
+    if (chunk_x == -1 || chunk_y == -1 || chunk_z == -1 || c == NULL || chunk_y > CHUNK_HEIGHT - 1 || chunk_y < 0) {
+        return;
     }
+
+    c->blocks[chunk_x][chunk_y][chunk_z] = NULL;
 }
 
-void place_block(camera cam, chunk* c, chunk* adj, block_type* type) {
-    int x, y, z;
-    uint side;
-    get_block_coords(cam, c, adj, &x, &y, &z, &side);
+void place_block(camera cam) {
+    
+    float t = get_empty_dist(cam);
+    t -= RAY_STEP;
 
-    if (x == -1 || y == -1 || z == -1) {
+    if (t >= MAX_REACH) {
         return;
     }
-    c->blocks[x][y + 1][z] = type;
+
+    vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
+    glm_normalize_to(dir, dir);
+    float x = cam.position[0] + t * dir[0];
+    float y = cam.position[1] + t * dir[1];
+    float z = cam.position[2] + t * dir[2];
+
+    uint chunk_x = 0;
+    uint chunk_y = 0;
+    uint chunk_z = 0;
+    chunk_y = (uint)y;
+    chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
+
+    if (chunk_x == -1 || chunk_y == -1 || chunk_z == -1 || c == NULL || chunk_y > CHUNK_HEIGHT - 1 || chunk_y < 0) {
+        return;
+    }
+
+    c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[4];
 }
 
 
@@ -106,51 +129,63 @@ block_type TYPES[] = {
             {3.0f / 32.0f, 0.0f},
             {3.0f / 32.0f, 0.0f},
         }
+    },
+    {
+        .id = 4,
+        .name = "weezer",
+        .face_atlas_coords = {
+            
+            {4.0f / 32.0f, 0.0f},
+            {4.0f / 32.0f, 0.0f},
+            {4.0f / 32.0f, 0.0f},
+            {4.0f / 32.0f, 0.0f},
+            {5.0f / 32.0f, 0.0f},
+            {5.0f / 32.0f, 0.0f},
+        }
     }
 };
 
 float CUBE_VERTICES[] = {
-
-    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, FRONT,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, FRONT,
-    0.5f, -0.5f, -0.5f,  1.0f, 0.0f, FRONT,
-    0.5f, -0.5f, -0.5f,  1.0f, 0.0f, FRONT,
-    0.5f, -0.5f,  0.5f,  0.0f, 0.0f, FRONT,
-    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, FRONT,
+    1.0f,  1.0f,  1.0f,  0.0f, 1.0f, FRONT,
+    1.0f,  1.0f,  0.0f,  1.0f, 1.0f, FRONT,
+    1.0f,  0.0f,  0.0f,  1.0f, 0.0f, FRONT,
+    1.0f,  0.0f,  0.0f,  1.0f, 0.0f, FRONT,
+    1.0f,  0.0f,  1.0f,  0.0f, 0.0f, FRONT,
+    1.0f,  1.0f,  1.0f,  0.0f, 1.0f, FRONT,
  
-     -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, BACK,
-     -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, BACK,
-     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, BACK,
-     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, BACK,
-     -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, BACK,
-     -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, BACK,
+    0.0f,  1.0f,  1.0f,  0.0f, 1.0f, BACK,
+    0.0f,  1.0f,  0.0f,  1.0f, 1.0f, BACK,
+    0.0f,  0.0f,  0.0f,  1.0f, 0.0f, BACK,
+    0.0f,  0.0f,  0.0f,  1.0f, 0.0f, BACK,
+    0.0f,  0.0f,  1.0f,  0.0f, 0.0f, BACK,
+    0.0f,  1.0f,  1.0f,  0.0f, 1.0f, BACK,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, LEFT,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, LEFT,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, LEFT,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f, LEFT,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, LEFT,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, LEFT,
+    0.0f,  0.0f,  0.0f,  0.0f, 0.0f, LEFT,
+    1.0f,  0.0f,  0.0f,  1.0f, 0.0f, LEFT,
+    1.0f,  1.0f,  0.0f,  1.0f, 1.0f, LEFT,
+    1.0f,  1.0f,  0.0f,  1.0f, 1.0f, LEFT,
+    0.0f,  1.0f,  0.0f,  0.0f, 1.0f, LEFT,
+    0.0f,  0.0f,  0.0f,  0.0f, 0.0f, LEFT,
 
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, RIGHT,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, RIGHT,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, RIGHT,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, RIGHT,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, RIGHT,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, RIGHT,
+    0.0f,  0.0f,  1.0f,  0.0f, 0.0f, RIGHT,
+    1.0f,  0.0f,  1.0f,  1.0f, 0.0f, RIGHT,
+    1.0f,  1.0f,  1.0f,  1.0f, 1.0f, RIGHT,
+    1.0f,  1.0f,  1.0f,  1.0f, 1.0f, RIGHT,
+    0.0f,  1.0f,  1.0f,  0.0f, 1.0f, RIGHT,
+    0.0f,  0.0f,  1.0f,  0.0f, 0.0f, RIGHT,
 
 
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, TOP,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f, TOP,
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, TOP,
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, TOP,
-   -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, TOP,
-   -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, TOP,
+    0.0f,  1.0f,  0.0f,  0.0f, 1.0f, TOP,
+    1.0f,  1.0f,  0.0f,  1.0f, 1.0f, TOP,
+    1.0f,  1.0f,  1.0f,  1.0f, 0.0f, TOP,
+    1.0f,  1.0f,  1.0f,  1.0f, 0.0f, TOP,
+    0.0f,  1.0f,  1.0f,  0.0f, 0.0f, TOP,
+    0.0f,  1.0f,  0.0f,  0.0f, 1.0f, TOP,
    
-   -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, BOTTOM,
-    0.5f, -0.5f, -0.5f,  1.0f, 1.0f, BOTTOM,
-    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, BOTTOM,
-    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, BOTTOM,
-   -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, BOTTOM,
-   -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, BOTTOM
+    0.0f,  0.0f,  0.0f,  0.0f, 1.0f, BOTTOM,
+    1.0f,  0.0f,  0.0f,  1.0f, 1.0f, BOTTOM,
+    1.0f,  0.0f,  1.0f,  1.0f, 0.0f, BOTTOM,
+    1.0f,  0.0f,  1.0f,  1.0f, 0.0f, BOTTOM,
+    0.0f,  0.0f,  1.0f,  0.0f, 0.0f, BOTTOM,
+    0.0f,  0.0f,  0.0f,  0.0f, 1.0f, BOTTOM
  };

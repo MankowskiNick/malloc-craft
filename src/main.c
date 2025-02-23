@@ -3,9 +3,10 @@
 #include <render.h>
 #include <camera.h>
 #include <input.h>
+#include <settings.h>
 
 int main() {
-    GLFWwindow* window = create_window("malloc-craft", 800, 600);
+    GLFWwindow* window = create_window("malloc-craft", WIDTH, HEIGHT);
 
     if (!window || !load_gl()) {
         return -1;
@@ -15,7 +16,7 @@ int main() {
     r_init(&program);
 
     camera cam = {
-        .position = {1.0f, 1.0f, 0.0f},
+        .position = {1.0f, 32.0f, 0.0f},
         .up = {0.0f, 1.0f, 0.0f},
         .front = {1.0f, 0.0f, 0.0f},
         .yaw = 0.0f,

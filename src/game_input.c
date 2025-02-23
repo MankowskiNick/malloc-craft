@@ -15,11 +15,6 @@ typedef struct key_entry {
     struct key_entry* next;
 } key_entry;
 
-typedef struct {
-    double x, y;
-} mouse_capture;
-
-mouse_capture mouse = {0.0f, 0.0f};
 key_entry* key_stack;
 
 camera* cam;
@@ -132,10 +127,6 @@ void handle_keyrelease(int key) {
 }
 
 
-void handle_mousemove(double xpos, double ypos) {
-}
-
-
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     switch(action) {
         case GLFW_PRESS:
@@ -150,54 +141,45 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
-    double dx = xpos - mouse.x;
-    double dy = ypos - mouse.y;
+    double dx = xpos - WIDTH / 2;//mouse.x;
+    double dy = ypos - HEIGHT / 2;//mouse.y;
 
-    mouse.x = xpos;
-    mouse.y = ypos;
+    // mouse.x = xpos;
+    // mouse.y = ypos;
 
     cam->yaw += dx * SENSITIVITY;
     cam->pitch -= dy * SENSITIVITY;
+
+    glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-    // get chunk and adjacent chunks
-    int x = (int)(cam->position[0] / CHUNK_SIZE);
-    int z = (int)(cam->position[2] / CHUNK_SIZE);
-    chunk* c = get_chunk(x, z);
-    chunk* adj[4] = {
-        get_chunk(x + 1, z),
-        get_chunk(x - 1, z),
-        get_chunk(x, z + 1),
-        get_chunk(x, z - 1)
-    };
+    if (action == GLFW_PRESS) {
+        uint chunk_x, chunk_z, side;
 
-    // determine based on camera yaw
-    int side = 0;
-    if (cam->yaw < PI/4 || cam->yaw > 7*PI/4) {
-        side = FRONT;
-    }
-    else if (cam->yaw < 3*PI/4) {
-        side = RIGHT;
-    }
-    else if (cam->yaw < 5*PI/4) {
-        side = BACK;
-    }
-    else {
-        side = LEFT;
-    }
+        chunk* c = get_chunk_at(cam->position[0], cam->position[2], &chunk_x, &chunk_z);
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        break_block(*cam, c, adj[side]);
-        
-    }
-    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-        place_block(*cam, c, adj[side], &TYPES[2]);
+        printf("Player position: %f, %f, %f\n", cam->position[0], cam->position[1], cam->position[2]);
+        printf("Chunk: %d, %d\n", c->x, c->z);
+        printf("Coords within chunk: %i, %i\n\n", chunk_x, chunk_z);
+
+        switch(button) {
+            case GLFW_MOUSE_BUTTON_LEFT:
+                break_block(*cam);
+                break;
+            case GLFW_MOUSE_BUTTON_RIGHT:
+                place_block(*cam);
+                break;
+            default:
+                break;
+        }
     }
 }
 
 void i_init(GLFWwindow* window, camera* player_cam) {
     key_stack = NULL;
+
+    // lock cursor to center of window
 
     // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
     glfwSetKeyCallback(window, key_callback);

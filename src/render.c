@@ -13,7 +13,7 @@
 #define VERTS_PER_SIDE 6
 #define SIDE_OFFSET VERTS_PER_SIDE * VBO_WIDTH
 
-#define INITIAL_VBO_SIZE 100000
+#define INITIAL_VBO_SIZE 50000 * SIDE_OFFSET // 50000 sides
 
 VAO vao;
 VBO vbo;
@@ -171,7 +171,6 @@ void render(camera cam, shader_program program) {
 
     int player_chunk_x = (int)(cam.position[0] / CHUNK_SIZE);
     int player_chunk_z = (int)(cam.position[2] / CHUNK_SIZE);
-    // printf("Player chunk: (%d, %d)\n", player_chunk_x, player_chunk_z);
 
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
@@ -195,8 +194,6 @@ void render(camera cam, shader_program program) {
     add_attrib(&vbo, 1, 2, 3 * sizeof(float), VBO_WIDTH * sizeof(float));
     add_attrib(&vbo, 2, 2, 5 * sizeof(float), VBO_WIDTH * sizeof(float));
     use_vbo(vbo);
-
-    // printf("Num sides: %d\n", num_sides);
 
     glDrawArrays(GL_TRIANGLES, 0, num_sides * VERTS_PER_SIDE);
     free(side_data);

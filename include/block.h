@@ -11,7 +11,7 @@
 #define CUBE_VERTICES_WIDTH 6
 extern float CUBE_VERTICES[];
 
-void break_block(camera cam, chunk* c, chunk* adj);
-void place_block(camera cam, chunk* c, chunk* adj, block_type* type);
+void break_block(camera cam);
+void place_block(camera cam);
 
 #endif
