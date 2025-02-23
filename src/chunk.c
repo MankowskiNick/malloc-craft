@@ -123,10 +123,10 @@ int get_side_visible(
     // dont render blocks that are that we can't see, fo rexample don't render the bottom of a block if we are above it
     switch(side) {
         case (int)TOP:
-            visible = visible && cam.position[1] > y;
+            visible = visible && cam.position[1] > y - 1;
             break;
         case (int)BOTTOM:
-            visible = visible && cam.position[1] <= y - 1;
+            visible = visible && cam.position[1] <= y + 1;
             break;
         case (int)FRONT:
             visible = visible && cam.position[0] > (x - 1) + c->x * CHUNK_SIZE;
