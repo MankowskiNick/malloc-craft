@@ -1,6 +1,17 @@
 #include <block.h>
+#include <render.h>
 #include <world.h>
 #include <cglm/cglm.h>
+
+void update_chunks(int x, int z) {
+    // update chunk and adjacent ones
+    update_chunk_packet_at(x, z);
+    update_chunk_packet_at(x + 1, z);
+    update_chunk_packet_at(x - 1, z);
+    update_chunk_packet_at(x, z + 1);
+    update_chunk_packet_at(x, z - 1);
+
+}
 
 float get_empty_dist(camera cam) {
     vec3 position = {cam.position[0], cam.position[1], cam.position[2]};
@@ -50,6 +61,8 @@ void break_block(camera cam) {
     }
 
     c->blocks[chunk_x][chunk_y][chunk_z] = NULL;
+    
+    update_chunks(c->x, c->z);
 }
 
 void place_block(camera cam) {
@@ -78,6 +91,9 @@ void place_block(camera cam) {
     }
 
     c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[4];
+
+    // update chunk and adjacent chunks
+    update_chunks(c->x, c->z);
 }
 
 

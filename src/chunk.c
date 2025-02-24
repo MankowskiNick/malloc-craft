@@ -1,9 +1,19 @@
 #include <chunk.h>
 #include <noise.h>
 
+uint chunk_hash(chunk_coord c) {
+    uint hash = (unsigned int)((c.x * 73856093) ^ (c.z * 19349663)) + CHUNK_CACHE_SIZE;
+    return hash % CHUNK_CACHE_SIZE;
+}
+
+int chunk_equals(chunk_coord a, chunk_coord b) {
+    return a.x == b.x && a.z == b.z;
+}
+
 void c_init() {
     n_init(SEED);
 }
+
 void chunk_create(chunk* c, int x, int z) {
     if (c == NULL) {
         c = malloc(sizeof(chunk));
@@ -108,7 +118,6 @@ void get_adjacent(int x, int y, int z, uint side, chunk* c, chunk* adj, block_ty
 }
 
 int get_side_visible(
-    camera cam,
     int x, int y, int z,
     uint side, 
     chunk* c,
@@ -123,28 +132,15 @@ int get_side_visible(
     // calculate visibility
     visible = adjacent == NULL;
 
-    // dont render blocks that are that we can't see, fo rexample don't render the bottom of a block if we are above it
+    // dont render sides that we can't see
     switch(side) {
         case (int)TOP:
-            visible = visible && cam.position[1] > y - 1;
+            visible = visible && y < CHUNK_HEIGHT;
             break;
         case (int)BOTTOM:
-            visible = visible && cam.position[1] <= y + 1;
-            break;
-        case (int)FRONT:
-            visible = visible && cam.position[0] > (x - 1) + c->x * CHUNK_SIZE;
-            break;
-        case (int)BACK:
-            visible = visible && cam.position[0] <= (x + 1) + c->x * CHUNK_SIZE;
-            break;
-        case (int)LEFT:
-            visible = visible && cam.position[2] <= (z + 1) + c->z * CHUNK_SIZE;
-            break;
-        case (int)RIGHT:
-            visible = visible && cam.position[2] > (z - 1) + c->z * CHUNK_SIZE;
+            visible = visible && y > 0;
             break;
         default:
-            visible = 0;
             break;
     }
 
