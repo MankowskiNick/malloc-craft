@@ -57,6 +57,7 @@ void add_chunk(chunk* c) {
 }
 
 void w_init() {
+    c_init();
     for (int i = 0; i < CHUNK_CACHE_SIZE; i++) {
         world[i] = NULL;
     }

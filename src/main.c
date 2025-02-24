@@ -16,7 +16,7 @@ int main() {
     r_init(&program);
 
     camera cam = {
-        .position = {1.0f, 32.0f, 0.0f},
+        .position = {1.0f, (float)CHUNK_HEIGHT, 0.0f},
         .up = {0.0f, 1.0f, 0.0f},
         .front = {1.0f, 0.0f, 0.0f},
         .yaw = 0.0f,

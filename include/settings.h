@@ -3,15 +3,14 @@
 #define HEIGHT 600
 
 #define CHUNK_SIZE 16
-#define CHUNK_HEIGHT 256
+#define CHUNK_HEIGHT 64
 
 #define CHUNK_RENDER_DISTANCE 4
 #define RENDER_DISTANCE CHUNK_RENDER_DISTANCE * CHUNK_SIZE
 
 // #define WIREFRAME
 
-// mipmap tends to make things slower
-// #define USE_MIPMAP
+#define SEED 123456789
 
 #define DELTA_X 0.2f
 #define DELTA_Y 0.2f
@@ -20,3 +19,7 @@
 
 #define MAX_REACH 5.0f
 #define RAY_STEP 0.05f
+
+
+#define WORLDGEN_FREQUENCY 0.25f
+#define WORLDGEN_AMPLITUDE 2.0f

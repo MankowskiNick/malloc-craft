@@ -3,6 +3,7 @@
 
 #include <util.h>
 
-float n_get(float x, float z);
+void n_init(uint seed);
+float n_get(float x, float z, uint num_octaves);
 
 #endif
