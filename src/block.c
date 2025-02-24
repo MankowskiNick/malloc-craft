@@ -57,7 +57,7 @@ void place_block(camera cam) {
     float t = get_empty_dist(cam);
     t -= RAY_STEP;
 
-    if (t >= MAX_REACH) {
+    if (t >= MAX_REACH - RAY_STEP) {
         return;
     }
 

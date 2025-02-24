@@ -45,6 +45,8 @@ void r_init(shader_program* program) {
     t_init();
 
     w_init();
+
+    glViewport(0, 0, WIDTH, HEIGHT);
 }
 
 void r_cleanup() {

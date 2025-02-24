@@ -14,7 +14,7 @@ void chunk_create(chunk* c, int x, int z) {
             // get perlin noise at this point
             float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
             float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
-            float y_ = n_get(x_, z_) * 5.0f;
+            float y_ = n_get(x_, z_) * 10.0f;
 
             int y = (int)(y_) + 16;
 
