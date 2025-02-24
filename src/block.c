@@ -24,7 +24,9 @@ float get_empty_dist(camera cam) {
     chunk_y = (uint)position[1];
     chunk* c = get_chunk_at(position[0], position[2], &chunk_x, &chunk_z);
 
-    while (t <= MAX_REACH && c->blocks[chunk_x][chunk_y][chunk_z] == NULL) {
+    while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT 
+        && t <= MAX_REACH && 
+        c->blocks[chunk_x][chunk_y][chunk_z] == NULL) {
         t += 0.005f;
 
         vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
