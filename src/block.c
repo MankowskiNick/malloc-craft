@@ -1,4 +1,5 @@
 #include <block.h>
+#include <render.h>
 #include <world.h>
 #include <cglm/cglm.h>
 
@@ -50,6 +51,7 @@ void break_block(camera cam) {
     }
 
     c->blocks[chunk_x][chunk_y][chunk_z] = NULL;
+    update_chunk_packet_at(c->x, c->z);
 }
 
 void place_block(camera cam) {
@@ -78,6 +80,8 @@ void place_block(camera cam) {
     }
 
     c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[4];
+
+    update_chunk_packet_at(c->x, c->z);
 }
 
 

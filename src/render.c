@@ -14,14 +14,13 @@
 #define VERTS_PER_SIDE 6
 #define SIDE_OFFSET VERTS_PER_SIDE * VBO_WIDTH
 
-#define INITIAL_VBO_SIZE 200000 * SIDE_OFFSET
+#define INITIAL_VBO_SIZE 2000 * SIDE_OFFSET
 
 VAO vao;
 VBO vbo;
 shader_program program;
 
 typedef struct {
-    // chunk* chunk;
     float* side_data;
     int num_sides;
 } chunk_packet;
@@ -96,7 +95,6 @@ void pack_side(int x_0, int y_0, int z_0, uint side, block_type* type, float* si
 
 void pack_block(
     int x, int y, int z,
-    camera cam,
     chunk* c,
     chunk* adj_chunks[4], // front, back, left, right
     float** side_data, 
@@ -107,18 +105,12 @@ void pack_block(
     int world_y = y;
     int world_z = z + (CHUNK_SIZE * c->z);
 
-    float dist = sqrtf(
-        powf(world_x - cam.position[0], 2) + 
-        powf(world_y - cam.position[1], 2) + 
-        powf(world_z - cam.position[2], 2)
-    );
-
     for (int side = 0; side < 6; side++) {
         chunk* adj = NULL;
         if (side < 4) {
             adj = adj_chunks[side];
         }
-        if (!get_side_visible(cam, x, y, z, side, c, adj)) {
+        if (!get_side_visible(x, y, z, side, c, adj)) {
             continue;
         }
 
@@ -143,7 +135,7 @@ void pack_block(
     }
 }
 
-void pack_chunk(camera cam, chunk* c, chunk* adj_chunks[4], float** side_data, int* num_sides) {
+void pack_chunk(chunk* c, chunk* adj_chunks[4], float** side_data, int* num_sides) {
     if (c == NULL) {
         return;
     }
@@ -154,7 +146,7 @@ void pack_chunk(camera cam, chunk* c, chunk* adj_chunks[4], float** side_data, i
                 if (c->blocks[i][k][j] == NULL) {
                     continue;
                 }
-                pack_block(i, k, j, cam, c, adj_chunks, side_data, num_sides);
+                pack_block(i, k, j, c, adj_chunks, side_data, num_sides);
             }
         }
     }
@@ -169,6 +161,36 @@ void render_packet(chunk_packet* packet) {
     use_vbo(vbo);
 
     glDrawArrays(GL_TRIANGLES, 0, packet->num_sides * VERTS_PER_SIDE);
+}
+
+void update_chunk_packet_at(int x, int z) {
+    chunk_coord coord = {x, z};
+    chunk_packet* packet = chunk_packet_map_get(&packets, coord);
+    if (packet == NULL) {
+        assert(false && "Packet does not exist");
+    }
+
+    free(packet->side_data);
+    chunk_packet_map_remove(&packets, coord);
+
+    chunk* c = get_chunk(x, z);
+    chunk* adj_chunks[4] = {
+        get_chunk(x + 1, z),
+        get_chunk(x - 1, z),
+        get_chunk(x, z - 1),
+        get_chunk(x, z + 1)
+    };
+    int packet_side_count = 0;
+    float* packet_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
+    assert(packet_sides != NULL && "Failed to allocate memory for packet sides");
+    pack_chunk(c, adj_chunks, &packet_sides, &packet_side_count);
+
+    packet = malloc(sizeof(chunk_packet));
+    assert(packet != NULL && "Failed to allocate memory for packet");
+
+    packet->side_data = packet_sides;
+    packet->num_sides = packet_side_count;
+    chunk_packet_map_insert(&packets, coord, *packet);
 }
 
 void render(camera cam, shader_program program) {
@@ -209,9 +231,11 @@ void render(camera cam, shader_program program) {
                 };
                 int packet_side_count = 0;
                 float* packet_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
-                pack_chunk(cam, c, adj_chunks, &packet_sides, &packet_side_count);
+                assert(packet_sides != NULL && "Failed to allocate memory for packet sides");
+                pack_chunk(c, adj_chunks, &packet_sides, &packet_side_count);
 
                 packet = malloc(sizeof(chunk_packet));
+                assert(packet != NULL && "Failed to allocate memory for packet");
                 packet->side_data = packet_sides;
                 packet->num_sides = packet_side_count;
 

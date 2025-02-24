@@ -17,6 +17,6 @@ int chunk_equals(chunk_coord a, chunk_coord b);
 void c_init();
 void chunk_create(chunk* c, int x, int z);
 
-int get_side_visible(camera cam, int x, int y, int z, uint side, chunk* c, chunk* adj);
+int get_side_visible(int x, int y, int z, uint side, chunk* c, chunk* adj);
 
 #endif

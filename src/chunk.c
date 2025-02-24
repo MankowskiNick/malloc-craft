@@ -118,7 +118,6 @@ void get_adjacent(int x, int y, int z, uint side, chunk* c, chunk* adj, block_ty
 }
 
 int get_side_visible(
-    camera cam,
     int x, int y, int z,
     uint side, 
     chunk* c,
