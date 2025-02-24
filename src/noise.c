@@ -82,6 +82,5 @@ void n_init(uint seed) {
     for (int i = 0; i < 256; i++) {
         srand(i + seed);
         permutation[i] = permutation[rand() % 256];
-        printf("%d ", permutation[i]);
     }
 }

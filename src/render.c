@@ -6,6 +6,7 @@
 #include <vao.h>
 #include <texture.h>
 #include <assert.h>
+#include <hashmap.h>
 
 #include <settings.h>
 
@@ -13,18 +14,22 @@
 #define VERTS_PER_SIDE 6
 #define SIDE_OFFSET VERTS_PER_SIDE * VBO_WIDTH
 
-#define INITIAL_VBO_SIZE 50000 * SIDE_OFFSET // 50000 sides
+#define INITIAL_VBO_SIZE 200000 * SIDE_OFFSET
 
 VAO vao;
 VBO vbo;
 shader_program program;
 
-struct chunk_packet {
-    chunk* c;
-    float side_data[50000];
-};
+typedef struct {
+    // chunk* chunk;
+    float* side_data;
+    int num_sides;
+} chunk_packet;
 
-float chunk_packets[CHUNK_RENDER_DISTANCE * CHUNK_RENDER_DISTANCE];
+DEFINE_HASHMAP(chunk_packet_map, chunk_coord, chunk_packet, chunk_hash, chunk_equals);
+typedef chunk_packet_map_hashmap chunk_packet_map;
+
+chunk_packet_map packets;
 
 void r_init(shader_program* program) {
     glEnable(GL_DEPTH_TEST);
@@ -51,7 +56,11 @@ void r_init(shader_program* program) {
     // texture
     t_init();
 
+    // world
     w_init();
+
+    // initialize chunk packet map
+    packets = chunk_packet_map_init(CHUNK_CACHE_SIZE);
 
     glViewport(0, 0, WIDTH, HEIGHT);
 }
@@ -104,10 +113,6 @@ void pack_block(
         powf(world_z - cam.position[2], 2)
     );
 
-    if (dist > (float)RENDER_DISTANCE) {
-        return;
-    }
-
     for (int side = 0; side < 6; side++) {
         chunk* adj = NULL;
         if (side < 4) {
@@ -155,6 +160,17 @@ void pack_chunk(camera cam, chunk* c, chunk* adj_chunks[4], float** side_data, i
     }
 }
 
+void render_packet(chunk_packet* packet) {
+    bind_vao(vao);
+    buffer_data(vbo, GL_STATIC_DRAW, packet->side_data, packet->num_sides * SIDE_OFFSET * sizeof(float));
+    add_attrib(&vbo, 0, 3, 0, VBO_WIDTH * sizeof(float));
+    add_attrib(&vbo, 1, 2, 3 * sizeof(float), VBO_WIDTH * sizeof(float));
+    add_attrib(&vbo, 2, 2, 5 * sizeof(float), VBO_WIDTH * sizeof(float));
+    use_vbo(vbo);
+
+    glDrawArrays(GL_TRIANGLES, 0, packet->num_sides * VERTS_PER_SIDE);
+}
+
 void render(camera cam, shader_program program) {
     mat4 view, proj;
     get_view_matrix(cam, &view);
@@ -173,11 +189,6 @@ void render(camera cam, shader_program program) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-    // pack chunks into buffer
-    int num_sides = 0;
-    float* side_data = malloc(INITIAL_VBO_SIZE * SIDE_OFFSET * sizeof(float));
-    assert(side_data != NULL && "Failed to allocate memory for side data");
-
     int player_chunk_x = (int)(cam.position[0] / CHUNK_SIZE);
     int player_chunk_z = (int)(cam.position[2] / CHUNK_SIZE);
 
@@ -185,24 +196,29 @@ void render(camera cam, shader_program program) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
             int x = (int)(cam.position[0] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + i;
             int z = (int)(cam.position[2] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + j;
-            chunk* c = get_chunk(x, z);
-            chunk* adj_chunks[4] = {
-                get_chunk(x + 1, z),
-                get_chunk(x - 1, z),
-                get_chunk(x, z - 1),
-                get_chunk(x, z + 1)
-            };
-            pack_chunk(cam, c, adj_chunks, &side_data, &num_sides);
+
+            chunk_coord coord = {x, z};
+            chunk_packet* packet = chunk_packet_map_get(&packets, coord);
+            if (packet == NULL) {
+                chunk* c = get_chunk(x, z);
+                chunk* adj_chunks[4] = {
+                    get_chunk(x + 1, z),
+                    get_chunk(x - 1, z),
+                    get_chunk(x, z - 1),
+                    get_chunk(x, z + 1)
+                };
+                int packet_side_count = 0;
+                float* packet_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
+                pack_chunk(cam, c, adj_chunks, &packet_sides, &packet_side_count);
+
+                packet = malloc(sizeof(chunk_packet));
+                packet->side_data = packet_sides;
+                packet->num_sides = packet_side_count;
+
+                chunk_packet_map_insert(&packets, coord, *packet);
+            }
+            
+            render_packet(packet);
         }
     }
-
-    bind_vao(vao);
-    buffer_data(vbo, GL_STATIC_DRAW, side_data, num_sides * SIDE_OFFSET * sizeof(float));
-    add_attrib(&vbo, 0, 3, 0, VBO_WIDTH * sizeof(float));
-    add_attrib(&vbo, 1, 2, 3 * sizeof(float), VBO_WIDTH * sizeof(float));
-    add_attrib(&vbo, 2, 2, 5 * sizeof(float), VBO_WIDTH * sizeof(float));
-    use_vbo(vbo);
-
-    glDrawArrays(GL_TRIANGLES, 0, num_sides * VERTS_PER_SIDE);
-    free(side_data);
 }
