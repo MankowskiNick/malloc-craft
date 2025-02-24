@@ -6,24 +6,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define CHUNK_CACHE_SIZE 2048
-
 #define mod(x, y) fmod(x, y) < 0 ? fmod(x, y) + (y) : fmod(x,y)
 
-typedef struct {
-    int x, z;
-} chunk_coord;
-
-uint hash(chunk_coord c) {
-    uint hash = (unsigned int)((c.x * 73856093) ^ (c.z * 19349663)) + CHUNK_CACHE_SIZE;
-    return hash % CHUNK_CACHE_SIZE;
-}
-
-int equals(chunk_coord a, chunk_coord b) {
-    return a.x == b.x && a.z == b.z;
-}
-
-DEFINE_HASHMAP(chunk_map, chunk_coord, chunk*, hash, equals);
+DEFINE_HASHMAP(chunk_map, chunk_coord, chunk*, chunk_hash, chunk_equals);
 typedef chunk_map_hashmap chunk_map;
 chunk_map chunks;
 

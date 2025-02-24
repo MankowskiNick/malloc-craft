@@ -1,9 +1,19 @@
 #include <chunk.h>
 #include <noise.h>
 
+uint chunk_hash(chunk_coord c) {
+    uint hash = (unsigned int)((c.x * 73856093) ^ (c.z * 19349663)) + CHUNK_CACHE_SIZE;
+    return hash % CHUNK_CACHE_SIZE;
+}
+
+int chunk_equals(chunk_coord a, chunk_coord b) {
+    return a.x == b.x && a.z == b.z;
+}
+
 void c_init() {
     n_init(SEED);
 }
+
 void chunk_create(chunk* c, int x, int z) {
     if (c == NULL) {
         c = malloc(sizeof(chunk));
