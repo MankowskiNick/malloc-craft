@@ -19,6 +19,13 @@ VAO vao;
 VBO vbo;
 shader_program program;
 
+struct chunk_packet {
+    chunk* c;
+    float side_data[50000];
+};
+
+float chunk_packets[CHUNK_RENDER_DISTANCE * CHUNK_RENDER_DISTANCE];
+
 void r_init(shader_program* program) {
     glEnable(GL_DEPTH_TEST);
 
@@ -176,7 +183,6 @@ void render(camera cam, shader_program program) {
 
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
-
             int x = (int)(cam.position[0] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + i;
             int z = (int)(cam.position[2] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + j;
             chunk* c = get_chunk(x, z);
