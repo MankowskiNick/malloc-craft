@@ -20,8 +20,15 @@
 #define MAX_REACH 5.0f
 #define RAY_STEP 0.05f
 
+// unused as of now, but will be used to generate different biomes
+#define WORLDGEN_BIOME_FREQUENCY 0.01f
+#define WORLDGEN_BIOME_AMPLITUDE 0.05f
+#define WORLDGEN_BIOME_OCTAVES 10
 
-#define WORLDGEN_FREQUENCY 0.25f
-#define WORLDGEN_AMPLITUDE 2.0f
+// used to generate the height of the terrain
+#define WORLDGEN_BLOCKHEIGHT_FREQUENCY 0.25f
+#define WORLDGEN_BLOCKHEIGHT_AMPLITUDE 2.0f
+#define WORLDGEN_BLOCKHEIGHT_OCTAVES 6
+#define WORLDGEN_BLOCKHEIGHT_MODIFIER 20.0f
 
 #define CHUNK_CACHE_SIZE 2048

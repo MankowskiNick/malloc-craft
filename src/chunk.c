@@ -27,7 +27,11 @@ void chunk_create(chunk* c, int x, int z) {
             // get perlin noise at this point
             float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
             float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
-            float y_ = n_get(x_, z_, 10) * 20.0f;
+            float y_ = n_get(x_, z_, 
+                    WORLDGEN_BLOCKHEIGHT_FREQUENCY, 
+                    WORLDGEN_BLOCKHEIGHT_AMPLITUDE, 
+                    WORLDGEN_BLOCKHEIGHT_OCTAVES)
+                * WORLDGEN_BLOCKHEIGHT_MODIFIER;
 
             int y = (int)(y_) + (CHUNK_HEIGHT / 2);
 
