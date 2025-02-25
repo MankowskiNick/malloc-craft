@@ -92,7 +92,7 @@ void place_block(camera cam) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[4];
+    c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[6];
 
     // update chunk and adjacent chunks
     update_chunks(c->x, c->z);
@@ -103,6 +103,7 @@ block_type TYPES[] = {
     {
         .id = 0,
         .name = "air",
+        .transparent = 0,
         .face_atlas_coords = {
             {-1.0f, -1.0f},
             {-1.0f, -1.0f},
@@ -115,50 +116,80 @@ block_type TYPES[] = {
     {
         .id = 1,
         .name = "grass",
+        .transparent = 0,
         .face_atlas_coords = {
-            {1.0f / 32.0f, 0.0f},
-            {1.0f / 32.0f, 0.0f},
-            {1.0f / 32.0f, 0.0f},
-            {1.0f / 32.0f, 0.0f},
+            {1.0f, 0.0f},
+            {1.0f, 0.0f},
+            {1.0f, 0.0f},
+            {1.0f, 0.0f},
             {0.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
+            {2.0f, 0.0f},
         }
     },
     {
         .id = 2,
         .name = "dirt",
+        .transparent = 0,
         .face_atlas_coords = {
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
         }
     },
     {
         .id = 3,
         .name = "stone",
+        .transparent = 0,
         .face_atlas_coords = {
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
         }
     },
     {
         .id = 4,
         .name = "weezer",
+        .transparent = 0,
         .face_atlas_coords = {
             
-            {4.0f / 32.0f, 0.0f},
-            {4.0f / 32.0f, 0.0f},
-            {4.0f / 32.0f, 0.0f},
-            {4.0f / 32.0f, 0.0f},
-            {5.0f / 32.0f, 0.0f},
-            {5.0f / 32.0f, 0.0f},
+            {4.0f, 0.0f},
+            {4.0f, 0.0f},
+            {4.0f, 0.0f},
+            {4.0f, 0.0f},
+            {5.0f, 0.0f},
+            {5.0f, 0.0f},
+        }
+    },
+    {
+        .id = 5,
+        .name = "oak_trunk",
+        .transparent = 0,
+        .face_atlas_coords = {
+            {7.0f, 0.0f},
+            {7.0f, 0.0f},
+            {7.0f, 0.0f},
+            {7.0f, 0.0f},
+            {8.0f, 0.0f},
+            {8.0f, 0.0f},
+        }
+    },
+    {
+        .id = 6,
+        .name = "oak_leaves",
+        .transparent = 1,
+        .face_atlas_coords = {
+            {10.0f, 0.0f},
+            {10.0f, 0.0f},
+            {10.0f, 0.0f},
+            {9.0f, 0.0f},
+            {9.0f, 0.0f},
+            {9.0f, 0.0f},
         }
     }
 };

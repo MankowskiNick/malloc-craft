@@ -12,13 +12,16 @@
 
 #define SEED 123456789
 
-#define DELTA_X 0.2f
-#define DELTA_Y 0.2f
-#define DELTA_Z 0.2f
+#define DELTA_X 0.02f
+#define DELTA_Y 0.02f
+#define DELTA_Z 0.02f
 #define SENSITIVITY 0.001f
 
 #define MAX_REACH 5.0f
 #define RAY_STEP 0.05f
+
+// how many textures are packed into one side of the atlas
+#define TEXTURE_ATLAS_SIZE 32
 
 // unused as of now, but will be used to generate different biomes
 #define WORLDGEN_BIOME_FREQUENCY 0.01f

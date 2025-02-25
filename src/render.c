@@ -88,8 +88,8 @@ void pack_side(int x_0, int y_0, int z_0, uint side, block_type* type, float* si
         side_data[side_data_offset + 2] = z;
         side_data[side_data_offset + 3] = tx;
         side_data[side_data_offset + 4] = ty;
-        side_data[side_data_offset + 5] = type->face_atlas_coords[side][0];
-        side_data[side_data_offset + 6] = type->face_atlas_coords[side][1];
+        side_data[side_data_offset + 5] = type->face_atlas_coords[side][0] / (float)TEXTURE_ATLAS_SIZE;
+        side_data[side_data_offset + 6] = type->face_atlas_coords[side][1] / (float)TEXTURE_ATLAS_SIZE;
     }
 }
 

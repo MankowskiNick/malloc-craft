@@ -134,7 +134,7 @@ int get_side_visible(
     get_adjacent(x, y, z, side, c, adj, &adjacent);
 
     // calculate visibility
-    visible = adjacent == NULL;
+    visible = adjacent == NULL || adjacent->transparent;
 
     // dont render sides that we can't see
     switch(side) {
