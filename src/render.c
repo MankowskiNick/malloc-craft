@@ -22,6 +22,7 @@ shader_program program;
 
 typedef struct {
     float* side_data;
+    float* transparent_side_data;
     int num_sides;
 } chunk_packet;
 
@@ -32,6 +33,8 @@ chunk_packet_map packets;
 
 void r_init(shader_program* program) {
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     #ifdef WIREFRAME
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -163,6 +166,33 @@ void render_packet(chunk_packet* packet) {
     glDrawArrays(GL_TRIANGLES, 0, packet->num_sides * VERTS_PER_SIDE);
 }
 
+void render_chunk(int x, int z) {
+    chunk_coord coord = {x, z};
+    chunk_packet* packet = chunk_packet_map_get(&packets, coord);
+    if (packet == NULL) {
+        chunk* c = get_chunk(x, z);
+        chunk* adj_chunks[4] = {
+            get_chunk(x + 1, z),
+            get_chunk(x - 1, z),
+            get_chunk(x, z - 1),
+            get_chunk(x, z + 1)
+        };
+        int packet_side_count = 0;
+        float* packet_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
+        assert(packet_sides != NULL && "Failed to allocate memory for packet sides");
+        pack_chunk(c, adj_chunks, &packet_sides, &packet_side_count);
+
+        packet = malloc(sizeof(chunk_packet));
+        assert(packet != NULL && "Failed to allocate memory for packet");
+        packet->side_data = packet_sides;
+        packet->num_sides = packet_side_count;
+
+        chunk_packet_map_insert(&packets, coord, *packet);
+    }
+            
+    render_packet(packet);
+}
+
 void update_chunk_packet_at(int x, int z) {
     chunk_coord coord = {x, z};
     chunk_packet* packet = chunk_packet_map_get(&packets, coord);
@@ -214,35 +244,12 @@ void render(camera cam, shader_program program) {
     int player_chunk_x = (int)(cam.position[0] / CHUNK_SIZE);
     int player_chunk_z = (int)(cam.position[2] / CHUNK_SIZE);
 
+
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
             int x = (int)(cam.position[0] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + i;
             int z = (int)(cam.position[2] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + j;
-
-            chunk_coord coord = {x, z};
-            chunk_packet* packet = chunk_packet_map_get(&packets, coord);
-            if (packet == NULL) {
-                chunk* c = get_chunk(x, z);
-                chunk* adj_chunks[4] = {
-                    get_chunk(x + 1, z),
-                    get_chunk(x - 1, z),
-                    get_chunk(x, z - 1),
-                    get_chunk(x, z + 1)
-                };
-                int packet_side_count = 0;
-                float* packet_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
-                assert(packet_sides != NULL && "Failed to allocate memory for packet sides");
-                pack_chunk(c, adj_chunks, &packet_sides, &packet_side_count);
-
-                packet = malloc(sizeof(chunk_packet));
-                assert(packet != NULL && "Failed to allocate memory for packet");
-                packet->side_data = packet_sides;
-                packet->num_sides = packet_side_count;
-
-                chunk_packet_map_insert(&packets, coord, *packet);
-            }
-            
-            render_packet(packet);
+            render_chunk(x, z);
         }
     }
 }

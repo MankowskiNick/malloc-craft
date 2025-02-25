@@ -37,7 +37,12 @@ void chunk_create(chunk* c, int x, int z) {
 
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (k > y) {
-                    c->blocks[i][k][j] = NULL;  // Air block above level 8
+                    if (k > WORLDGEN_WATER_LEVEL) {
+                        c->blocks[i][k][j] = NULL;  // Air block above level 8
+                    }
+                    else {
+                        c->blocks[i][k][j] = &TYPES[7];  // Water block above level 8
+                    }
                 }
                 else if (k == y) {
                     c->blocks[i][k][j] = &TYPES[1];  // Dirt block below level 8
@@ -134,7 +139,7 @@ int get_side_visible(
     get_adjacent(x, y, z, side, c, adj, &adjacent);
 
     // calculate visibility
-    visible = adjacent == NULL || adjacent->transparent;
+    visible = adjacent == NULL;// || adjacent->transparent == c->blocks[x][y][z]->transparent;
 
     // dont render sides that we can't see
     switch(side) {
