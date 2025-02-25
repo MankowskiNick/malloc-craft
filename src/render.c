@@ -286,17 +286,11 @@ void render(camera cam, shader_program program) {
 
     chunk_packet* packets[2 * CHUNK_RENDER_DISTANCE][2 * CHUNK_RENDER_DISTANCE];
 
-    // get solid and transparent goemetry and store in chunk packets
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
             int x = (int)(cam.position[0] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + i;
             int z = (int)(cam.position[2] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + j;
             packets[i][j] = get_chunk_packet(x, z);
-        }
-    }
-
-    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
             render_sides(packets[i][j]->opaque_side_data, packets[i][j]->num_opaque_sides);
         }
     }
