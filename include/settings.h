@@ -12,9 +12,9 @@
 
 #define SEED 123456789
 
-#define DELTA_X 0.05f
-#define DELTA_Y 0.05f
-#define DELTA_Z 0.05f
+#define DELTA_X 0.1f
+#define DELTA_Y 0.1f
+#define DELTA_Z 0.1f
 #define SENSITIVITY 0.001f
 
 #define MAX_REACH 5.0f

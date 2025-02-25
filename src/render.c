@@ -14,16 +14,17 @@
 #define VERTS_PER_SIDE 6
 #define SIDE_OFFSET VERTS_PER_SIDE * VBO_WIDTH
 
-#define INITIAL_VBO_SIZE 2000 * SIDE_OFFSET
+#define INITIAL_VBO_SIZE 5000 * SIDE_OFFSET
 
 VAO vao;
 VBO vbo;
 shader_program program;
 
 typedef struct {
-    float* side_data;
+    float* opaque_side_data;
     float* transparent_side_data;
-    int num_sides;
+    int num_opaque_sides;
+    int num_transparent_sides;
 } chunk_packet;
 
 DEFINE_HASHMAP(chunk_packet_map, chunk_coord, chunk_packet, chunk_hash, chunk_equals);
@@ -85,14 +86,18 @@ void pack_side(int x_0, int y_0, int z_0, uint side, block_type* type, float* si
         float tx = CUBE_VERTICES[index + 3];
         float ty = CUBE_VERTICES[index + 4];
 
-        int side_data_offset = i * VBO_WIDTH;
-        side_data[side_data_offset + 0] = x;
-        side_data[side_data_offset + 1] = y;
-        side_data[side_data_offset + 2] = z;
-        side_data[side_data_offset + 3] = tx;
-        side_data[side_data_offset + 4] = ty;
-        side_data[side_data_offset + 5] = type->face_atlas_coords[side][0] / (float)TEXTURE_ATLAS_SIZE;
-        side_data[side_data_offset + 6] = type->face_atlas_coords[side][1] / (float)TEXTURE_ATLAS_SIZE;
+        int opaque_side_data_offset = i * VBO_WIDTH;
+        side_data[opaque_side_data_offset + 0] = x;
+        side_data[opaque_side_data_offset + 0] = x;
+        side_data[opaque_side_data_offset + 0] = x;
+        side_data[opaque_side_data_offset + 0] = x;
+        side_data[opaque_side_data_offset + 0] = x;
+        side_data[opaque_side_data_offset + 1] = y;
+        side_data[opaque_side_data_offset + 2] = z;
+        side_data[opaque_side_data_offset + 3] = tx;
+        side_data[opaque_side_data_offset + 4] = ty;
+        side_data[opaque_side_data_offset + 5] = type->face_atlas_coords[side][0] / (float)TEXTURE_ATLAS_SIZE;
+        side_data[opaque_side_data_offset + 6] = type->face_atlas_coords[side][1] / (float)TEXTURE_ATLAS_SIZE;
     }
 }
 
@@ -101,8 +106,7 @@ void pack_block(
     chunk* c,
     chunk* adj_chunks[4], // front, back, left, right
     float** side_data, 
-    int* num_sides
-) {
+    int* num_sides) {
     
     int world_x = x + (CHUNK_SIZE * c->x);
     int world_y = y;
@@ -113,6 +117,7 @@ void pack_block(
         if (side < 4) {
             adj = adj_chunks[side];
         }
+
         if (!get_side_visible(x, y, z, side, c, adj)) {
             continue;
         }
@@ -120,13 +125,12 @@ void pack_block(
         int new_side_count = (*num_sides) + 1;
 
         // check if we need to reallocate memory
-        if (new_side_count > INITIAL_VBO_SIZE) {
+        if (new_side_count * SIDE_OFFSET > INITIAL_VBO_SIZE) {
             float* tmp = realloc(*side_data, new_side_count * SIDE_OFFSET * sizeof(float));
             assert(tmp != NULL && "Failed to allocate memory for side data");
             *side_data = tmp;
         }
         block_type* type = c->blocks[x][y][z];
-
 
         pack_side(
             world_x, world_y, world_z, 
@@ -138,7 +142,9 @@ void pack_block(
     }
 }
 
-void pack_chunk(chunk* c, chunk* adj_chunks[4], float** side_data, int* num_sides) {
+void pack_chunk(chunk* c, chunk* adj_chunks[4], 
+    float** opaque_side_data, int* num_opaque_sides,
+    float** transparent_side_data, int* num_transparent_sides) {
     if (c == NULL) {
         return;
     }
@@ -149,48 +155,75 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4], float** side_data, int* num_side
                 if (c->blocks[i][k][j] == NULL) {
                     continue;
                 }
-                pack_block(i, k, j, c, adj_chunks, side_data, num_sides);
+
+                if (c->blocks[i][k][j]->transparent) {
+                    pack_block(i, k, j, c, adj_chunks, 
+                        transparent_side_data, num_transparent_sides);
+                }
+                else {
+                    pack_block(i, k, j, c, adj_chunks, 
+                        opaque_side_data, num_opaque_sides);
+                }
             }
         }
     }
 }
 
-void render_packet(chunk_packet* packet) {
+void render_sides(float* side_data, int num_sides) {
     bind_vao(vao);
-    buffer_data(vbo, GL_STATIC_DRAW, packet->side_data, packet->num_sides * SIDE_OFFSET * sizeof(float));
+    buffer_data(vbo, GL_STATIC_DRAW, side_data, num_sides * SIDE_OFFSET * sizeof(float));
     add_attrib(&vbo, 0, 3, 0, VBO_WIDTH * sizeof(float));
     add_attrib(&vbo, 1, 2, 3 * sizeof(float), VBO_WIDTH * sizeof(float));
     add_attrib(&vbo, 2, 2, 5 * sizeof(float), VBO_WIDTH * sizeof(float));
     use_vbo(vbo);
 
-    glDrawArrays(GL_TRIANGLES, 0, packet->num_sides * VERTS_PER_SIDE);
+    glDrawArrays(GL_TRIANGLES, 0, num_sides * VERTS_PER_SIDE);
 }
 
-void render_chunk(int x, int z) {
+chunk_packet* create_chunk_packet(int x, int z) {
+    chunk_packet* packet = malloc(sizeof(chunk_packet));
+    assert(packet != NULL && "Failed to allocate memory for packet");
+
+    // get chunk and adjacent chunks
+    chunk* c = get_chunk(x, z);
+    chunk* adj_chunks[4] = {
+        get_chunk(x + 1, z),
+        get_chunk(x - 1, z),
+        get_chunk(x, z - 1),
+        get_chunk(x, z + 1)
+    };
+
+    // pack chunk data into packet
+    int packet_transparent_side_count = 0;
+    int packet_opaque_side_count = 0;
+
+    float* packet_opaque_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
+    float* packet_transparent_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
+    assert(packet_opaque_sides != NULL && "Failed to allocate memory for opaque packet sides");
+    assert(packet_transparent_sides != NULL && "Failed to allocate memory for transparent packet sides");
+
+    pack_chunk(c, adj_chunks, 
+        &packet_opaque_sides, &packet_opaque_side_count,
+        &packet_transparent_sides, &packet_transparent_side_count);
+
+    assert(packet != NULL && "Failed to allocate memory for packet");
+    packet->opaque_side_data = packet_opaque_sides;
+    packet->num_opaque_sides = packet_opaque_side_count;
+    packet->transparent_side_data = packet_transparent_sides;
+    packet->num_transparent_sides = packet_transparent_side_count;
+
+    chunk_coord coord = {x, z};
+    chunk_packet_map_insert(&packets, coord, *packet);
+    return packet;
+}
+
+chunk_packet* get_chunk_packet(int x, int z) {
     chunk_coord coord = {x, z};
     chunk_packet* packet = chunk_packet_map_get(&packets, coord);
     if (packet == NULL) {
-        chunk* c = get_chunk(x, z);
-        chunk* adj_chunks[4] = {
-            get_chunk(x + 1, z),
-            get_chunk(x - 1, z),
-            get_chunk(x, z - 1),
-            get_chunk(x, z + 1)
-        };
-        int packet_side_count = 0;
-        float* packet_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
-        assert(packet_sides != NULL && "Failed to allocate memory for packet sides");
-        pack_chunk(c, adj_chunks, &packet_sides, &packet_side_count);
-
-        packet = malloc(sizeof(chunk_packet));
-        assert(packet != NULL && "Failed to allocate memory for packet");
-        packet->side_data = packet_sides;
-        packet->num_sides = packet_side_count;
-
-        chunk_packet_map_insert(&packets, coord, *packet);
+        packet = create_chunk_packet(x, z);
     }
-            
-    render_packet(packet);
+    return packet;
 }
 
 void update_chunk_packet_at(int x, int z) {
@@ -200,7 +233,7 @@ void update_chunk_packet_at(int x, int z) {
         assert(false && "Packet does not exist");
     }
 
-    free(packet->side_data);
+    free(packet->opaque_side_data);
     chunk_packet_map_remove(&packets, coord);
 
     chunk* c = get_chunk(x, z);
@@ -210,16 +243,23 @@ void update_chunk_packet_at(int x, int z) {
         get_chunk(x, z - 1),
         get_chunk(x, z + 1)
     };
-    int packet_side_count = 0;
-    float* packet_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
-    assert(packet_sides != NULL && "Failed to allocate memory for packet sides");
-    pack_chunk(c, adj_chunks, &packet_sides, &packet_side_count);
+    int transparent_side_count = 0;
+    int opaque_side_count = 0;
+    float* transparent_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
+    float* opaque_sides = malloc(INITIAL_VBO_SIZE * sizeof(float));
+    assert(transparent_sides != NULL && "Failed to allocate memory for transparent packet sides");
+    assert(opaque_sides != NULL && "Failed to allocate memory for opaque packet sides");
+    pack_chunk(c, adj_chunks, 
+        &opaque_sides, &opaque_side_count, 
+        &transparent_sides, &transparent_side_count);
 
     packet = malloc(sizeof(chunk_packet));
     assert(packet != NULL && "Failed to allocate memory for packet");
 
-    packet->side_data = packet_sides;
-    packet->num_sides = packet_side_count;
+    packet->opaque_side_data = opaque_sides;
+    packet->num_opaque_sides = opaque_side_count;
+    packet->transparent_side_data = transparent_sides;
+    packet->num_transparent_sides = transparent_side_count;
     chunk_packet_map_insert(&packets, coord, *packet);
 }
 
@@ -244,12 +284,26 @@ void render(camera cam, shader_program program) {
     int player_chunk_x = (int)(cam.position[0] / CHUNK_SIZE);
     int player_chunk_z = (int)(cam.position[2] / CHUNK_SIZE);
 
+    chunk_packet* packets[2 * CHUNK_RENDER_DISTANCE][2 * CHUNK_RENDER_DISTANCE];
 
+    // get solid and transparent goemetry and store in chunk packets
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
             int x = (int)(cam.position[0] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + i;
             int z = (int)(cam.position[2] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + j;
-            render_chunk(x, z);
+            packets[i][j] = get_chunk_packet(x, z);
+        }
+    }
+
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+            render_sides(packets[i][j]->opaque_side_data, packets[i][j]->num_opaque_sides);
+        }
+    }
+
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+            render_sides(packets[i][j]->transparent_side_data, packets[i][j]->num_transparent_sides);
         }
     }
 }

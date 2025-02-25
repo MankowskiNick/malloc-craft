@@ -138,8 +138,11 @@ int get_side_visible(
     block_type* adjacent = NULL;
     get_adjacent(x, y, z, side, c, adj, &adjacent);
 
+    block_type* current = c->blocks[x][y][z];
+
+
     // calculate visibility
-    visible = adjacent == NULL;// || adjacent->transparent == c->blocks[x][y][z]->transparent;
+    visible = adjacent == NULL || adjacent->transparent != current->transparent;
 
     // dont render sides that we can't see
     switch(side) {
