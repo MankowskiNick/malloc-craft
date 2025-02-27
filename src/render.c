@@ -7,6 +7,7 @@
 #include <texture.h>
 #include <assert.h>
 #include <hashmap.h>
+#include <sort.h>
 
 #include <mesh.h>
 
@@ -17,7 +18,23 @@ VAO vao;
 VBO vbo;
 shader_program program;
 
-void r_init(shader_program* program) {
+camera* r_cam_ref;
+
+float chunk_distance_to_camera(const void* item) {
+    chunk_mesh* packet = *(chunk_mesh**)item;
+    // camera coords to chunk coords
+    float x = (r_cam_ref->position[0] / (float)CHUNK_SIZE);
+    float z = (r_cam_ref->position[2] / (float)CHUNK_SIZE);
+
+    return -1.0f * sqrt(
+        pow((float)(packet->x + 0.5f) - x, 2) +
+        pow((float)(packet->z + 0.5f) - z, 2)
+    );
+}
+
+void r_init(shader_program* program, camera* camera) {
+    r_cam_ref = camera;
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -47,7 +64,7 @@ void r_init(shader_program* program) {
     // world
     w_init();
 
-    m_init();
+    m_init(camera);
 
     glViewport(0, 0, WIDTH, HEIGHT);
 }
@@ -91,20 +108,36 @@ void render(camera cam, shader_program program) {
     int player_chunk_x = (int)(cam.position[0] / CHUNK_SIZE);
     int player_chunk_z = (int)(cam.position[2] / CHUNK_SIZE);
 
-    chunk_mesh* packets[2 * CHUNK_RENDER_DISTANCE][2 * CHUNK_RENDER_DISTANCE];
+    int num_packets = 4 * CHUNK_RENDER_DISTANCE * CHUNK_RENDER_DISTANCE;
+    chunk_mesh* packet[num_packets];
 
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
             int x = (int)(cam.position[0] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + i;
             int z = (int)(cam.position[2] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + j;
-            packets[i][j] = get_chunk_mesh(x, z);
-            render_sides(packets[i][j]->opaque_side_data, packets[i][j]->num_opaque_sides);
+            packet[i * 2 * CHUNK_RENDER_DISTANCE + j] = get_chunk_mesh(x, z);
+
+            if ((x == player_chunk_x && z == player_chunk_z) ||
+                (x == player_chunk_x + 1 && z == player_chunk_z) ||
+                (x == player_chunk_x - 1 && z == player_chunk_z) ||
+                (x == player_chunk_x && z == player_chunk_z + 1) ||
+                (x == player_chunk_x && z == player_chunk_z - 1)) {
+                sort_transparent_sides(packet[i * 2 * CHUNK_RENDER_DISTANCE + j]);
+            }
         }
     }
 
-    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
-            render_sides(packets[i][j]->transparent_side_data, packets[i][j]->num_transparent_sides);
-        }
+    quicksort(packet, num_packets, sizeof(chunk_mesh*), chunk_distance_to_camera);
+
+    for (int i = 0; i < num_packets; i++) {
+        render_sides(
+            packet[i]->opaque_data,
+            packet[i]->num_opaque_sides);
+    }
+
+    for (int i = 0; i < num_packets; i++) {
+        render_sides(
+            packet[i]->transparent_data,
+            packet[i]->num_transparent_sides);
     }
 }

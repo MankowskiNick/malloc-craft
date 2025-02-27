@@ -5,7 +5,7 @@
 #include <shader.h>
 
 void render_cube();
-void r_init(shader_program* program);
+void r_init(shader_program* program, camera* camera);
 void r_cleanup();
 void render(camera cam, shader_program program);
 
