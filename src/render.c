@@ -9,9 +9,9 @@
 #include <hashmap.h>
 #include <sort.h>
 
-#include <mesh.h>
-
 #include <settings.h>
+
+#define CAMERA_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1
 
 
 VAO vao;
@@ -20,25 +20,17 @@ shader_program program;
 
 int framecount = 0;
 
-typedef struct mesh_node {
-    chunk_mesh* mesh; 
-    struct mesh_node* next;
-} mesh_node;
-
-typedef mesh_node* mesh_queue;
-mesh_queue side_sort_queue = NULL;
-
 camera* r_cam_ref;
 
 float chunk_distance_to_camera(const void* item) {
-    chunk_mesh* packet = *(chunk_mesh**)item;
+    chunk_mesh** packet = (chunk_mesh**)item;
     // camera coords to chunk coords
     float x = (r_cam_ref->position[0] / (float)CHUNK_SIZE);
     float z = (r_cam_ref->position[2] / (float)CHUNK_SIZE);
 
     return -1.0f * sqrt(
-        pow((float)(packet->x + 0.5f) - x, 2) +
-        pow((float)(packet->z + 0.5f) - z, 2)
+        pow((float)((*packet)->x + 0.5f) - x, 2) +
+        pow((float)((*packet)->z + 0.5f) - z, 2)
     );
 }
 
@@ -86,14 +78,6 @@ void r_cleanup() {
     t_cleanup();
 
     m_cleanup();
-
-    // clean up queues
-    mesh_queue node = side_sort_queue;
-    while (node != NULL) {
-        mesh_queue next = node->next;
-        free(node);
-        node = next;
-    }
 }
 
 void render_sides(float* side_data, int num_sides) {
@@ -105,34 +89,6 @@ void render_sides(float* side_data, int num_sides) {
     use_vbo(vbo);
 
     glDrawArrays(GL_TRIANGLES, 0, num_sides * VERTS_PER_SIDE);
-}
-
-void update_sorting_queue(int x, int z, chunk_mesh* packet) {
-    mesh_queue node = side_sort_queue;
-    int found = 0;
-
-    // stop at the end of the list or when the node is found
-    while (node != NULL && node->next != NULL) {
-        if (node->mesh->x == x && node->mesh->z == z) {
-            found = 1;
-            break;
-        }
-        node = node->next;
-    }
-    if (!found) {
-        mesh_queue new_node = malloc(sizeof(mesh_node));
-        new_node->mesh = packet;
-        new_node->next = side_sort_queue;
-        side_sort_queue = new_node;
-    }
-}
-
-void sort_queue_process() {
-    mesh_queue node = side_sort_queue;
-    side_sort_queue = node->next;
-
-    sort_transparent_sides(node->mesh);
-    free(node);
 }
 
 void render(camera cam, shader_program program) {
@@ -153,24 +109,25 @@ void render(camera cam, shader_program program) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    int player_chunk_x = (int)(cam.position[0] / CHUNK_SIZE);
-    int player_chunk_z = (int)(cam.position[2] / CHUNK_SIZE);
+    int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(cam.position[0]);
+    int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(cam.position[2]);
 
     int num_packets = 4 * CHUNK_RENDER_DISTANCE * CHUNK_RENDER_DISTANCE;
     chunk_mesh* packet[num_packets];
+    printf("DEBUG: CHUNK_RENDER_DISTANCE = %d, num_packets = %d\n", 
+        CHUNK_RENDER_DISTANCE, num_packets);
 
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
-            int x = (int)(cam.position[0] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + i;
-            int z = (int)(cam.position[2] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + j;
+            
+            int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
+            int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
             packet[i * 2 * CHUNK_RENDER_DISTANCE + j] = get_chunk_mesh(x, z);
 
-            if ((x == player_chunk_x && z == player_chunk_z) ||
-                (x == player_chunk_x + 1 && z == player_chunk_z) ||
-                (x == player_chunk_x - 1 && z == player_chunk_z) ||
-                (x == player_chunk_x && z == player_chunk_z + 1) ||
-                (x == player_chunk_x && z == player_chunk_z - 1)) {
+            if ((x == player_chunk_x || x == player_chunk_x + 1 || x == player_chunk_x - 1) &&
+                (z == player_chunk_z || z == player_chunk_z + 1 || z == player_chunk_z - 1)) {
                 update_sorting_queue(x, z, packet[i * 2 * CHUNK_RENDER_DISTANCE + j]);
+                // sort_transparent_sides(packet[i * 2 * CHUNK_RENDER_DISTANCE + j]);
             }
         }
     }
@@ -191,4 +148,7 @@ void render(camera cam, shader_program program) {
     }
 
     framecount++;
+
+    printf("Framecount: %d, Camera Pos: (%f, %f, %f)\n, Camera Dir: (%f, %f, %f)", framecount, cam.position[0], cam.position[1], cam.position[2], cam.front[0], cam.front[1], cam.front[2]);
+    printf("Player Chunk: (%d, %d)\n", player_chunk_x, player_chunk_z);
 }

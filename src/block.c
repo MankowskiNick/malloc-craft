@@ -57,6 +57,7 @@ void break_block(camera cam) {
     c->blocks[chunk_x][chunk_y][chunk_z] = NULL;
     
     update_chunk_mesh(c->x, c->z);
+    update_sorting_queue(c->x, c->z, get_chunk_mesh(c->x, c->z));
 }
 
 void place_block(camera cam) {
@@ -86,8 +87,11 @@ void place_block(camera cam) {
 
     c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[8];
 
+    printf("Placed block at (chunk coords)(%d, %d), (world space)(%f, %f, %f)\n", c->x, c->z, chunk_z, x, y, z);
+
     // update chunk and adjacent chunks
     update_chunk_mesh(c->x, c->z);
+    update_sorting_queue(c->x, c->z, get_chunk_mesh(c->x, c->z));
 }
 
 

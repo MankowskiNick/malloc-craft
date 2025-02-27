@@ -9,6 +9,14 @@ DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals
 typedef chunk_mesh_map_hashmap chunk_mesh_map;
 chunk_mesh_map chunk_packets;
 
+typedef struct mesh_node {
+    chunk_mesh* mesh; 
+    struct mesh_node* next;
+} mesh_node;
+
+typedef mesh_node* mesh_queue;
+mesh_queue side_sort_queue = NULL;
+
 camera* m_cam_ref;
 
 void m_init(camera* camera) {
@@ -18,10 +26,31 @@ void m_init(camera* camera) {
 
 void m_cleanup() {
     chunk_mesh_map_free(&chunk_packets);
+
+    // clean up queues
+    mesh_queue node = side_sort_queue;
+    while (node != NULL) {
+        mesh_queue next = node->next;
+        free(node);
+        node = next;
+    }
 }
 
 float distance_to_camera(const void* item) {
     side_data* side = (side_data*)item;
+
+    // get the center of the side
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    for (int i = 0; i < VERTS_PER_SIDE; i++) {
+        x += side->vertices[i].x;
+        y += side->vertices[i].y;
+        z += side->vertices[i].z;
+    }
+    x /= VERTS_PER_SIDE;
+    y /= VERTS_PER_SIDE;
+    z /= VERTS_PER_SIDE;
 
     // multiply by -1 to sort in descending order
     return -1.0f * sqrt(
@@ -216,4 +245,63 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
 void sort_transparent_sides(chunk_mesh* packet) {
     quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_data), distance_to_camera);
     packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, packet->num_transparent_sides);
+}
+
+void queue_free(mesh_queue node) {
+    if (node == NULL) {
+        return;
+    }
+
+    free(node);
+}
+
+void update_sorting_queue(int x, int z, chunk_mesh* packet) {
+    mesh_queue node = side_sort_queue;
+
+    mesh_queue new_node = malloc(sizeof(mesh_node));
+    new_node->mesh = packet;
+    new_node->next = NULL;
+
+    if (node == NULL) {
+        side_sort_queue = new_node;
+        return;
+    }
+    
+    mesh_queue prev = NULL;
+    while (node != NULL) {
+        int node_x = node->mesh->x;
+        int node_z = node->mesh->z;
+        if (node_x == x && node_z == z && node->mesh == packet) {
+            queue_free(new_node);
+            return;
+        }
+
+        if (node_x == x && node_z == z) {
+            node->mesh = packet;
+            queue_free(new_node);
+            return;
+        }
+        prev = node;
+        node = node->next;
+    }
+
+    if (node == NULL) {
+        node = prev;
+    }
+
+    node->next = new_node;
+}
+
+void sort_queue_process() {
+    if (side_sort_queue == NULL) {
+        return;
+    }
+
+    mesh_queue node = side_sort_queue;
+    side_sort_queue = node->next;
+    
+    sort_transparent_sides(node->mesh);
+    node->next = NULL;
+    node->mesh = NULL;
+    free(node);
 }

@@ -36,5 +36,7 @@ void m_cleanup();
 void update_chunk_mesh(int x, int z);
 chunk_mesh* get_chunk_mesh(int x, int z);
 void sort_transparent_sides(chunk_mesh* packet);
+void update_sorting_queue(int x, int z, chunk_mesh* packet);
+void sort_queue_process();
 
 #endif
