@@ -18,6 +18,16 @@ VAO vao;
 VBO vbo;
 shader_program program;
 
+int framecount = 0;
+
+typedef struct mesh_node {
+    chunk_mesh* mesh; 
+    struct mesh_node* next;
+} mesh_node;
+
+typedef mesh_node* mesh_queue;
+mesh_queue side_sort_queue = NULL;
+
 camera* r_cam_ref;
 
 float chunk_distance_to_camera(const void* item) {
@@ -74,6 +84,16 @@ void r_cleanup() {
     delete_vbo(vbo);
     delete_program(program);
     t_cleanup();
+
+    m_cleanup();
+
+    // clean up queues
+    mesh_queue node = side_sort_queue;
+    while (node != NULL) {
+        mesh_queue next = node->next;
+        free(node);
+        node = next;
+    }
 }
 
 void render_sides(float* side_data, int num_sides) {
@@ -85,6 +105,34 @@ void render_sides(float* side_data, int num_sides) {
     use_vbo(vbo);
 
     glDrawArrays(GL_TRIANGLES, 0, num_sides * VERTS_PER_SIDE);
+}
+
+void update_sorting_queue(int x, int z, chunk_mesh* packet) {
+    mesh_queue node = side_sort_queue;
+    int found = 0;
+
+    // stop at the end of the list or when the node is found
+    while (node != NULL && node->next != NULL) {
+        if (node->mesh->x == x && node->mesh->z == z) {
+            found = 1;
+            break;
+        }
+        node = node->next;
+    }
+    if (!found) {
+        mesh_queue new_node = malloc(sizeof(mesh_node));
+        new_node->mesh = packet;
+        new_node->next = side_sort_queue;
+        side_sort_queue = new_node;
+    }
+}
+
+void sort_queue_process() {
+    mesh_queue node = side_sort_queue;
+    side_sort_queue = node->next;
+
+    sort_transparent_sides(node->mesh);
+    free(node);
 }
 
 void render(camera cam, shader_program program) {
@@ -122,11 +170,12 @@ void render(camera cam, shader_program program) {
                 (x == player_chunk_x - 1 && z == player_chunk_z) ||
                 (x == player_chunk_x && z == player_chunk_z + 1) ||
                 (x == player_chunk_x && z == player_chunk_z - 1)) {
-                sort_transparent_sides(packet[i * 2 * CHUNK_RENDER_DISTANCE + j]);
+                update_sorting_queue(x, z, packet[i * 2 * CHUNK_RENDER_DISTANCE + j]);
             }
         }
     }
 
+    sort_queue_process();
     quicksort(packet, num_packets, sizeof(chunk_mesh*), chunk_distance_to_camera);
 
     for (int i = 0; i < num_packets; i++) {
@@ -140,4 +189,6 @@ void render(camera cam, shader_program program) {
             packet[i]->transparent_data,
             packet[i]->num_transparent_sides);
     }
+
+    framecount++;
 }
