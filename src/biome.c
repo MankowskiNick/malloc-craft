@@ -27,7 +27,7 @@ biome BIOMES[] = {
         .surface_type = GRASS,
         .subsurface_type = DIRT,
         .underground_type = STONE,
-        .underwater_type = SAND,
+        .underwater_type = DIRT,
     },
     {
         .id = 1,
@@ -35,7 +35,7 @@ biome BIOMES[] = {
         .surface_type = GRASS,
         .subsurface_type = DIRT,
         .underground_type = STONE,
-        .underwater_type = SAND,
+        .underwater_type = DIRT,
     },
     {
         .id = 2,

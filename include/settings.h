@@ -32,7 +32,7 @@
 #define WORLDGEN_BIOME_AMPLITUDE 1.0f
 #define WORLDGEN_BIOME_OCTAVES 2
 
-#define WORLDGEN_WATER_LEVEL 50
+#define WORLDGEN_WATER_LEVEL 80
 
 // used to generate the height of the terrain
 #define WORLDGEN_BLOCKHEIGHT_FREQUENCY 0.25f
