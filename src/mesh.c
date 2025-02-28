@@ -320,23 +320,8 @@ chunk_mesh* update_chunk_mesh(int x, int z) {
     }
     
     // Return the central chunk mesh
-    chunk_coord center = {x, z};chunk_mesh* update_chunk_mesh(int x, int z) {
-        chunk_coord coords[] = {
-            {x+1, z}, {x-1, z}, {x, z+1}, {x, z-1}, {x, z}
-        };
-        
-        // Check which chunks exist first
-        for (int i = 0; i < 5; i++) {
-            chunk_coord coord = coords[i];
-            if (chunk_mesh_map_get(&chunk_packets, coord)) {
-                update_chunk_mesh_at(coord.x, coord.z);
-            }
-        }
-        
-        // Return the central chunk mesh
-        chunk_coord center = {x, z};
-        return chunk_mesh_map_get(&chunk_packets, center);
-    }
+    chunk_coord center = {x, z};
+    
     return chunk_mesh_map_get(&chunk_packets, center);
 }
 
