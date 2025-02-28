@@ -15,13 +15,13 @@ void c_init() {
     n_init(SEED);
 }
 
-int get_block_height(chunk* c, float x, float z) {
+int get_block_height(chunk* c, float x, float z, biome* b) {
     float y_ = n_get(x, z, 
-        WORLDGEN_BLOCKHEIGHT_FREQUENCY, 
-        WORLDGEN_BLOCKHEIGHT_AMPLITUDE, 
+        WORLDGEN_BLOCKHEIGHT_FREQUENCY,
+        WORLDGEN_BLOCKHEIGHT_AMPLITUDE,
         WORLDGEN_BLOCKHEIGHT_OCTAVES) * WORLDGEN_BLOCKHEIGHT_MODIFIER;
 
-    int y = (int)(y_) + (CHUNK_HEIGHT / 2);
+    int y = (int)(y_) + WORLDGEN_BASE_TERRAIN_HEIGHT;
     return y;
 }
 
@@ -32,10 +32,9 @@ void generate_blocks(chunk* c, int x, int z) {
             float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
             float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
             
-            float y = get_block_height(c, x_, z_);
-
-            // get biome
             biome* b = get_biome(x_, z_);
+
+            float y = get_block_height(c, x_, z_, b);
             
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (k > y) {
@@ -73,10 +72,6 @@ void chunk_create(chunk* c, int x, int z) {
 
     c->x = x;
     c->z = z;
-
-    // float biome = n_get(x, z, WORLDGEN_BIOME_FREQUENCY, WORLDGEN_BIOME_AMPLITUDE, WORLDGEN_BIOME_OCTAVES);
-
-    // printf("Biome: %f\n", biome);
-
+    
     generate_blocks(c, x, z);
 }

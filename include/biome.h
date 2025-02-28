@@ -1,6 +1,8 @@
 #ifndef BIOME_H
 #define BIOME_H
 
+#include <util.h>
+
 typedef struct {
     short id;
     char* name;
@@ -10,6 +12,7 @@ typedef struct {
 enum {
     PLAINS,
     DESERT,
+    MOUNTAINS,
     // PLAINS,
     // DESERT,
     // OCEAN,

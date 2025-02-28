@@ -13,7 +13,7 @@ int main() {
     }
 
     camera cam = {
-        .position = {1.0f, (float)CHUNK_HEIGHT, 0.0f},
+        .position = {1.0f, (float)WORLDGEN_BASE_TERRAIN_HEIGHT + 20.0f, 0.0f},
         .up = {0.0f, 1.0f, 0.0f},
         .front = {1.0f, 0.0f, 0.0f},
         .yaw = 0.0f,
