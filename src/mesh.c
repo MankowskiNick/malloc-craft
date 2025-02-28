@@ -26,6 +26,14 @@ void m_init(camera* camera) {
 
 void m_cleanup() {
     chunk_mesh_map_free(&chunk_packets);
+
+    mesh_queue* cur = mesh_queue_head;
+    while (cur != NULL) {
+        mesh_queue* next = cur->next;
+        free(cur);
+        cur = next;
+    }
+    mesh_queue_head = NULL;
 }
 
 float distance_to_camera(const void* item) {
@@ -196,9 +204,16 @@ chunk_mesh* update_chunk_mesh_at(int x, int z) {
     if (packet == NULL) {
         assert(false && "Packet does not exist");
     }
-
     free(packet->opaque_data);
+    packet->opaque_data = NULL;
     free(packet->transparent_data);
+    packet->transparent_data = NULL;
+    free(packet->opaque_sides);
+    packet->opaque_sides = NULL;
+    free(packet->transparent_sides);
+    packet->transparent_sides = NULL;
+
+
     chunk_mesh_map_remove(&chunk_packets, coord);
 
     return create_chunk_mesh(x, z);
@@ -224,6 +239,13 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
 
 void sort_transparent_sides(chunk_mesh* packet) {
     quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_data), distance_to_camera);
+    // free(packet->transparent_data);
+    // Add null check to prevent double-free
+    if (packet->transparent_data != NULL) {
+        free(packet->transparent_data);
+        packet->transparent_data = NULL;
+        // packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, packet->num_transparent_sides);
+    }
     packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, packet->num_transparent_sides);
 }
 
