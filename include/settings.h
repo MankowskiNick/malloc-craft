@@ -8,6 +8,8 @@
 #define CHUNK_RENDER_DISTANCE 12
 #define RENDER_DISTANCE 600.0f
 
+#define VSYNC
+
 // #define WIREFRAME
 
 #define USE_MIPMAP

@@ -49,6 +49,11 @@ GLFWwindow* create_window(char* title, int width, int height) {
     }
     glfwMakeContextCurrent(window);
 
+
+    #ifndef VSYNC
+        glfwSwapInterval(0);
+    #endif
+
     return window;
 }
 
