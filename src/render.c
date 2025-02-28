@@ -150,13 +150,11 @@ void render(camera cam, shader_program program) {
                 && z <= player_chunk_z + 1
                 && movedBlocks) {
                 queue_chunk_for_sorting(mesh);
-                // mesh_sort_queue_push(mesh);
             }
         }
     }
 
     sort_chunk();
-    // mesh_sort_queue_pop();
     if (movedChunks) {
         cam_cache.chunk_x = player_chunk_x;
         cam_cache.chunk_z = player_chunk_z;
