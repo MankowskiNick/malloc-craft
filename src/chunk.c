@@ -39,7 +39,7 @@ void generate_blocks(chunk* c, int x, int z) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (k > y) {
                     if (k > WORLDGEN_WATER_LEVEL) {
-                        c->blocks[i][k][j] = AIR;  // Air block above water level
+                        c->blocks[i][k][j] = AIR;
                     }
                     else {
                         c->blocks[i][k][j] = WATER;
@@ -48,10 +48,10 @@ void generate_blocks(chunk* c, int x, int z) {
                 else if (k == y) {
                     
                     if (k < WORLDGEN_WATER_LEVEL) {
-                        c->blocks[i][k][j] = b->underwater_type;  // Dirt if below water level
+                        c->blocks[i][k][j] = b->underwater_type;
                     }
                     else {
-                        c->blocks[i][k][j] = b->surface_type;  // Grass
+                        c->blocks[i][k][j] = b->surface_type;
                     }
                 }
                 else if (k > y - 3) {
@@ -72,6 +72,6 @@ void chunk_create(chunk* c, int x, int z) {
 
     c->x = x;
     c->z = z;
-    
+
     generate_blocks(c, x, z);
 }
