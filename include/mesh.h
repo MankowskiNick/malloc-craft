@@ -33,8 +33,9 @@ typedef struct {
 
 void m_init(camera* camera);
 void m_cleanup();
-void update_chunk_mesh(int x, int z);
+chunk_mesh* update_chunk_mesh(int x, int z);
 chunk_mesh* get_chunk_mesh(int x, int z);
-void sort_transparent_sides(chunk_mesh* packet);
+void mesh_queue_push(chunk_mesh* packet);
+void mesh_queue_pop();
 
 #endif

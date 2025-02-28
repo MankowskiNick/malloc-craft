@@ -9,6 +9,14 @@ DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals
 typedef chunk_mesh_map_hashmap chunk_mesh_map;
 chunk_mesh_map chunk_packets;
 
+typedef struct mesh_queue {
+    int x, z;
+    chunk_mesh* packet;
+    struct mesh_queue* next;
+} mesh_queue;
+
+mesh_queue* mesh_queue_head = NULL;
+
 camera* m_cam_ref;
 
 void m_init(camera* camera) {
@@ -178,10 +186,11 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
 
     chunk_coord coord = {x, z};
     chunk_mesh_map_insert(&chunk_packets, coord, *packet);
+    
     return packet;
 }
 
-void update_chunk_mesh_at(int x, int z) {
+chunk_mesh* update_chunk_mesh_at(int x, int z) {
     chunk_coord coord = {x, z};
     chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, coord);
     if (packet == NULL) {
@@ -192,16 +201,16 @@ void update_chunk_mesh_at(int x, int z) {
     free(packet->transparent_data);
     chunk_mesh_map_remove(&chunk_packets, coord);
 
-    create_chunk_mesh(x, z);
+    return create_chunk_mesh(x, z);
 }
 
-void update_chunk_mesh(int x, int z) {
+chunk_mesh* update_chunk_mesh(int x, int z) {
     // update chunk and adjacent ones
-    update_chunk_mesh_at(x, z);
     update_chunk_mesh_at(x + 1, z);
     update_chunk_mesh_at(x - 1, z);
     update_chunk_mesh_at(x, z + 1);
     update_chunk_mesh_at(x, z - 1);
+    return update_chunk_mesh_at(x, z);
 }
 
 chunk_mesh* get_chunk_mesh(int x, int z) {
@@ -216,4 +225,51 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
 void sort_transparent_sides(chunk_mesh* packet) {
     quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_data), distance_to_camera);
     packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, packet->num_transparent_sides);
+}
+
+void mesh_queue_push(chunk_mesh* packet) {
+
+    printf("Pushing packet at %d, %d\n", packet->x, packet->z);
+    mesh_queue* prev = NULL;
+    mesh_queue* cur = mesh_queue_head;
+    int count = 0;
+    while (cur != NULL) {
+        count++;
+        if (cur->x == packet->x && cur->z == packet->z) {
+            // Packet already in queue, update it
+            cur->packet = packet;
+            printf("Found after %d iterations\n", count);
+            return;
+        }
+        
+        prev = cur;
+        cur = cur->next;
+    }
+    printf("Not found after %d iterations\n", count);
+
+    // Packet not in queue, add it
+    mesh_queue* new_node = malloc(sizeof(mesh_queue));
+    assert(new_node != NULL && "Failed to allocate memory for mesh queue node");
+    new_node->packet = packet;
+    new_node->x = packet->x;
+    new_node->z = packet->z;
+    new_node->next = NULL;
+
+    if (prev == NULL) {
+        mesh_queue_head = new_node;
+    }
+    else {
+        prev->next = new_node;
+    }
+}
+
+void mesh_queue_pop() {
+    if (mesh_queue_head == NULL) {
+        return;
+    }
+
+    mesh_queue* cur = mesh_queue_head;
+    mesh_queue_head = cur->next;
+    sort_transparent_sides(cur->packet);
+    free(cur);
 }

@@ -8,11 +8,11 @@
 #include <assert.h>
 #include <hashmap.h>
 #include <sort.h>
-
 #include <mesh.h>
 
 #include <settings.h>
 
+#define CAMERA_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1
 
 VAO vao;
 VBO vbo;
@@ -105,28 +105,25 @@ void render(camera cam, shader_program program) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    int player_chunk_x = (int)(cam.position[0] / CHUNK_SIZE);
-    int player_chunk_z = (int)(cam.position[2] / CHUNK_SIZE);
+    int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(cam.position[0]);
+    int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(cam.position[2]);
 
     int num_packets = 4 * CHUNK_RENDER_DISTANCE * CHUNK_RENDER_DISTANCE;
     chunk_mesh* packet[num_packets];
 
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
-            int x = (int)(cam.position[0] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + i;
-            int z = (int)(cam.position[2] / CHUNK_SIZE) - CHUNK_RENDER_DISTANCE + j;
+            int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
+            int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
             packet[i * 2 * CHUNK_RENDER_DISTANCE + j] = get_chunk_mesh(x, z);
 
-            if ((x == player_chunk_x && z == player_chunk_z) ||
-                (x == player_chunk_x + 1 && z == player_chunk_z) ||
-                (x == player_chunk_x - 1 && z == player_chunk_z) ||
-                (x == player_chunk_x && z == player_chunk_z + 1) ||
-                (x == player_chunk_x && z == player_chunk_z - 1)) {
-                sort_transparent_sides(packet[i * 2 * CHUNK_RENDER_DISTANCE + j]);
+            if (x >= player_chunk_x - 1 && x <= player_chunk_x + 1 && z >= player_chunk_z - 1 && z <= player_chunk_z + 1) {
+                mesh_queue_push(packet[i * 2 * CHUNK_RENDER_DISTANCE + j]);
             }
         }
     }
 
+    mesh_queue_pop();
     quicksort(packet, num_packets, sizeof(chunk_mesh*), chunk_distance_to_camera);
 
     for (int i = 0; i < num_packets; i++) {
