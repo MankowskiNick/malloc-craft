@@ -32,7 +32,7 @@
 #define WORLDGEN_BIOME_AMPLITUDE 1.0f
 #define WORLDGEN_BIOME_OCTAVES 2
 
-#define WORLDGEN_WATER_LEVEL 80
+#define WORLDGEN_WATER_LEVEL 84
 
 // used to generate the height of the terrain
 #define WORLDGEN_BLOCKHEIGHT_FREQUENCY 0.25f
@@ -42,5 +42,6 @@
 #define WORLDGEN_BASE_TERRAIN_HEIGHT 64
 
 #define BIOME_COUNT 4
+#define TREE_COUNT 2
 
 #define CHUNK_CACHE_SIZE 2048

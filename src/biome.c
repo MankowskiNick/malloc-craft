@@ -10,7 +10,6 @@ short get_biome_id(float x, float z) {
         WORLDGEN_BIOME_FREQUENCY, 
         WORLDGEN_BIOME_AMPLITUDE, 
         1);
-    printf("%f  ", noise);
     float biome = noise * (float)BIOME_COUNT; // multiply by number of biomes
     return (uint)biome;
 }
@@ -28,6 +27,8 @@ biome BIOMES[] = {
         .subsurface_type = DIRT,
         .underground_type = STONE,
         .underwater_type = DIRT,
+        .tree_type = 0,
+        .tree_density = 0.005,
     },
     {
         .id = 1,
@@ -36,6 +37,8 @@ biome BIOMES[] = {
         .subsurface_type = DIRT,
         .underground_type = STONE,
         .underwater_type = DIRT,
+        .tree_type = 0,
+        .tree_density = 0.01,
     },
     {
         .id = 2,
@@ -44,6 +47,8 @@ biome BIOMES[] = {
         .subsurface_type = SAND,
         .underground_type = STONE,
         .underwater_type = SAND,
+        .tree_type = 1,
+        .tree_density = 0.005,
     },
     {
         .id = 3,
@@ -52,5 +57,7 @@ biome BIOMES[] = {
         .subsurface_type = STONE,
         .underground_type = STONE,
         .underwater_type = STONE,
+        .tree_type = 0,
+        .tree_density = 0.005,
     },
 };

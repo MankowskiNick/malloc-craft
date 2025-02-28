@@ -7,15 +7,15 @@ typedef struct {
     short id;
     char* name;
     short surface_type, subsurface_type, underground_type, underwater_type;
+    short tree_type;
+    float tree_density;
 } biome;
 
 enum {
     PLAINS,
     DESERT,
+    FOREST,
     MOUNTAINS,
-    // PLAINS,
-    // DESERT,
-    // OCEAN,
 };
 
 biome* get_biome(float x, float z);

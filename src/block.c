@@ -167,7 +167,7 @@ block_type TYPES[] = {
     },
     {
         .id = 5,
-        .name = "oak_trunk",
+        .name = "oak_log",
         .transparent = 0,
         .face_atlas_coords = {
             {7.0f, 0.0f},
@@ -228,6 +228,32 @@ block_type TYPES[] = {
             {6.0f, 0.0f},
             {6.0f, 0.0f},
             {6.0f, 0.0f},
+        }
+    },
+    {
+        .id = 10,
+        .name = "cactus",
+        .transparent = 0,
+        .face_atlas_coords = {
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {13.0f, 0.0f},
+            {13.0f, 0.0f},
+        }
+    },
+    {
+        .id = 11,
+        .name = "cactus_top",
+        .transparent = 0,
+        .face_atlas_coords = {
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {14.0f, 0.0f},
+            {13.0f, 0.0f},
         }
     }
 };

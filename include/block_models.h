@@ -18,11 +18,13 @@ enum {
     DIRT,
     STONE,
     WEEZER,
-    OAK_TRUNK,
-    OAK_LEAVES,
+    OAK_LOG,
+    OAK_LEAF,
     WATER,
     GLASS,
     SAND,
+    CACTUS,
+    CACTUS_TOP
 };
 
 typedef struct {
