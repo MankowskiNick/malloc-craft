@@ -78,6 +78,80 @@ float* chunk_mesh_to_float_array(side_data* sides, int num_sides) {
     return data;
 }
 
+void sort_transparent_sides(chunk_mesh* packet) {
+    quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_data), distance_to_camera);
+    if (packet->transparent_data != NULL) {
+        free(packet->transparent_data);
+        packet->transparent_data = NULL;
+    }
+    packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, packet->num_transparent_sides);
+}
+
+void mesh_queue_push(chunk_mesh* packet) {
+    mesh_queue* prev = NULL;
+    mesh_queue* cur = mesh_queue_head;
+    int count = 0;
+    while (cur != NULL) {
+        count++;
+        if (cur->x == packet->x && cur->z == packet->z) {
+            cur->packet = packet;
+            return;
+        }
+        
+        prev = cur;
+        cur = cur->next;
+    }
+
+    // Packet not in queue, add it
+    mesh_queue* new_node = malloc(sizeof(mesh_queue));
+    assert(new_node != NULL && "Failed to allocate memory for mesh queue node");
+    new_node->packet = packet;
+    new_node->x = packet->x;
+    new_node->z = packet->z;
+    new_node->next = NULL;
+
+    if (prev == NULL) {
+        mesh_queue_head = new_node;
+    }
+    else {
+        prev->next = new_node;
+    }
+}
+
+void mesh_queue_remove(chunk_mesh* packet) {
+    if (mesh_queue_head == NULL) {
+        return;
+    }
+
+    mesh_queue* prev = NULL;
+    mesh_queue* cur = mesh_queue_head;
+    while (cur != NULL) {
+        if (cur->x == packet->x && cur->z == packet->z) {
+            if (prev == NULL) {
+                mesh_queue_head = cur->next;
+            }
+            else {
+                prev->next = cur->next;
+            }
+            free(cur);
+            return;
+        }
+        prev = cur;
+        cur = cur->next;
+    }
+}
+
+void mesh_queue_pop() {
+    if (mesh_queue_head == NULL) {
+        return;
+    }
+
+    mesh_queue* cur = mesh_queue_head;
+    mesh_queue_head = cur->next;
+    sort_transparent_sides(cur->packet);
+    free(cur);
+}
+
 void pack_side(int x_0, int y_0, int z_0, uint side, block_type* type, side_data* data) {
     int cube_vertices_offset = side * VERTS_PER_SIDE * CUBE_VERTICES_WIDTH;
     for (int i = 0; i < 6; i++) {
@@ -216,6 +290,8 @@ chunk_mesh* update_chunk_mesh_at(int x, int z) {
     if (packet == NULL) {
         assert(false && "Packet does not exist");
     }
+
+    mesh_queue_remove(packet);
     free(packet->opaque_data);
     packet->opaque_data = NULL;
     free(packet->transparent_data);
@@ -225,19 +301,43 @@ chunk_mesh* update_chunk_mesh_at(int x, int z) {
     free(packet->transparent_sides);
     packet->transparent_sides = NULL;
 
-
     chunk_mesh_map_remove(&chunk_packets, coord);
 
     return create_chunk_mesh(x, z);
 }
 
 chunk_mesh* update_chunk_mesh(int x, int z) {
-    // update chunk and adjacent ones
-    update_chunk_mesh_at(x + 1, z);
-    update_chunk_mesh_at(x - 1, z);
-    update_chunk_mesh_at(x, z + 1);
-    update_chunk_mesh_at(x, z - 1);
-    return update_chunk_mesh_at(x, z);
+    chunk_coord coords[] = {
+        {x+1, z}, {x-1, z}, {x, z+1}, {x, z-1}, {x, z}
+    };
+    
+    // Check which chunks exist first
+    for (int i = 0; i < 5; i++) {
+        chunk_coord coord = coords[i];
+        if (chunk_mesh_map_get(&chunk_packets, coord)) {
+            update_chunk_mesh_at(coord.x, coord.z);
+        }
+    }
+    
+    // Return the central chunk mesh
+    chunk_coord center = {x, z};chunk_mesh* update_chunk_mesh(int x, int z) {
+        chunk_coord coords[] = {
+            {x+1, z}, {x-1, z}, {x, z+1}, {x, z-1}, {x, z}
+        };
+        
+        // Check which chunks exist first
+        for (int i = 0; i < 5; i++) {
+            chunk_coord coord = coords[i];
+            if (chunk_mesh_map_get(&chunk_packets, coord)) {
+                update_chunk_mesh_at(coord.x, coord.z);
+            }
+        }
+        
+        // Return the central chunk mesh
+        chunk_coord center = {x, z};
+        return chunk_mesh_map_get(&chunk_packets, center);
+    }
+    return chunk_mesh_map_get(&chunk_packets, center);
 }
 
 chunk_mesh* get_chunk_mesh(int x, int z) {
@@ -247,55 +347,4 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
         packet = create_chunk_mesh(x, z);
     }
     return packet;
-}
-
-void sort_transparent_sides(chunk_mesh* packet) {
-    quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_data), distance_to_camera);
-    if (packet->transparent_data != NULL) {
-        free(packet->transparent_data);
-        packet->transparent_data = NULL;
-    }
-    packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, packet->num_transparent_sides);
-}
-
-void mesh_queue_push(chunk_mesh* packet) {
-    mesh_queue* prev = NULL;
-    mesh_queue* cur = mesh_queue_head;
-    int count = 0;
-    while (cur != NULL) {
-        count++;
-        if (cur->x == packet->x && cur->z == packet->z) {
-            cur->packet = packet;
-            return;
-        }
-        
-        prev = cur;
-        cur = cur->next;
-    }
-
-    // Packet not in queue, add it
-    mesh_queue* new_node = malloc(sizeof(mesh_queue));
-    assert(new_node != NULL && "Failed to allocate memory for mesh queue node");
-    new_node->packet = packet;
-    new_node->x = packet->x;
-    new_node->z = packet->z;
-    new_node->next = NULL;
-
-    if (prev == NULL) {
-        mesh_queue_head = new_node;
-    }
-    else {
-        prev->next = new_node;
-    }
-}
-
-void mesh_queue_pop() {
-    if (mesh_queue_head == NULL) {
-        return;
-    }
-
-    mesh_queue* cur = mesh_queue_head;
-    mesh_queue_head = cur->next;
-    sort_transparent_sides(cur->packet);
-    free(cur);
 }
