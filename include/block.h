@@ -14,4 +14,6 @@ extern float CUBE_VERTICES[];
 void break_block(camera cam);
 void place_block(camera cam);
 
+block_type* get_block_type(uint id);
+
 #endif

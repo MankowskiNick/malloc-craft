@@ -18,7 +18,7 @@ float get_empty_dist(camera cam) {
 
     while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT 
         && t <= MAX_REACH && 
-        c->blocks[chunk_x][chunk_y][chunk_z] == NULL) {
+        c->blocks[chunk_x][chunk_y][chunk_z] == AIR) {
         t += 0.005f;
 
         vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
@@ -54,7 +54,7 @@ void break_block(camera cam) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = NULL;
+    c->blocks[chunk_x][chunk_y][chunk_z] = AIR;
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
     mesh_queue_push(new_mesh);
@@ -85,11 +85,16 @@ void place_block(camera cam) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[8];
+    c->blocks[chunk_x][chunk_y][chunk_z] = GLASS;
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
     mesh_queue_push(new_mesh);
+}
+
+// this should maybe be 
+block_type* get_block_type(uint id) {
+    return &TYPES[id];
 }
 
 

@@ -152,73 +152,54 @@ void mesh_queue_pop() {
     free(cur);
 }
 
-
-void get_adjacent_block(int x, int y, int z, uint side, chunk* c, chunk* adj, block_type** block) {
+short get_adjacent_block(int x, int y, int z, uint side, chunk* c, chunk* adj) {
     switch(side) {
         case (int)TOP:
             if (y + 1 < CHUNK_HEIGHT) {
-                *block = c->blocks[x][y + 1][z];
-            }
-            else {
-                *block = NULL;
+                return c->blocks[x][y + 1][z];
             }
             break;
         case (int)BOTTOM:
             if (y - 1 >= 0) {
-                *block = c->blocks[x][y - 1][z];
-            }
-            else {
-                *block = NULL;
+                return c->blocks[x][y - 1][z];
             }
             break;
         case (int)FRONT:
             if (x + 1 < CHUNK_SIZE) {
-                *block = c->blocks[x + 1][y][z];
+                return c->blocks[x + 1][y][z];
             }
             else if (adj != NULL) {
-                *block = adj->blocks[0][y][z];
-            }
-            else {
-                *block = NULL;
+                return adj->blocks[0][y][z];
             }
             break;
         case (int)BACK:
             if (x - 1 >= 0) {
-                *block = c->blocks[x - 1][y][z];
+                return c->blocks[x - 1][y][z];
             }
             else if (adj != NULL) {
-                *block = adj->blocks[CHUNK_SIZE - 1][y][z];
-            }
-            else {
-                *block = NULL;
+                return adj->blocks[CHUNK_SIZE - 1][y][z];
             }
             break;
         case (int)LEFT:
             if (z - 1 >= 0) {
-                *block = c->blocks[x][y][z - 1];
+                return c->blocks[x][y][z - 1];
             }
             else if (adj != NULL) {
-                *block = adj->blocks[x][y][CHUNK_SIZE - 1];
-            }
-            else {
-                *block = NULL;
+                return adj->blocks[x][y][CHUNK_SIZE - 1];
             }
             break;
         case (int)RIGHT:
             if (z + 1 < CHUNK_SIZE) {
-                *block = c->blocks[x][y][z + 1];
+                return c->blocks[x][y][z + 1];
             }
             else if (adj != NULL) {
-                *block = adj->blocks[x][y][0];
-            }
-            else {
-                *block = NULL;
+                return adj->blocks[x][y][0];
             }
             break;
         default:
-            *block = NULL;
             break;
     }
+    return AIR;
 }
 
 int get_side_visible(
@@ -230,13 +211,14 @@ int get_side_visible(
     uint visible = 0;
 
     // calculate adjacent block
-    block_type* adjacent = NULL;
-    get_adjacent_block(x, y, z, side, c, adj, &adjacent);
+    short adjacent_id = get_adjacent_block(x, y, z, side, c, adj);
 
-    block_type* current = c->blocks[x][y][z];
+    short current_id = c->blocks[x][y][z];
+    block_type* current = get_block_type(current_id);
 
-    // calculate visibility
-    visible = adjacent == NULL;
+    // calculate visibility 
+    block_type* adjacent = get_block_type(adjacent_id);
+    visible = adjacent_id == AIR || get_block_type(adjacent_id)->transparent != current->transparent;
 
     // make sure transparent neighbors are visible
     if (adjacent != NULL && adjacent->transparent != current->transparent) {
@@ -315,13 +297,15 @@ void pack_block(
             assert(tmp != NULL && "Failed to allocate memory for side data");
             *chunk_side_data = tmp;
         }
-        block_type* type = c->blocks[x][y][z];
+
+        short block_id = c->blocks[x][y][z];
+        block_type* type = get_block_type(block_id);
 
         pack_side(
             world_x, world_y, world_z, 
             side, 
             type,
-            &((*chunk_side_data)[*num_sides])  // Correct way
+            &((*chunk_side_data)[*num_sides])
         );
         (*num_sides)++;
     }
@@ -337,11 +321,14 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
-                if (c->blocks[i][k][j] == NULL) {
+                if (c->blocks[i][k][j] == AIR) {
                     continue;
                 }
 
-                if (c->blocks[i][k][j]->transparent) {
+                short block_id = c->blocks[i][k][j];
+                block_type* block = get_block_type(block_id);
+
+                if (block->transparent) {
                     pack_block(i, k, j, c, adj_chunks, 
                         transparent_side_data, num_transparent_sides);
                 }

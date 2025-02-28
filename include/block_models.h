@@ -12,6 +12,18 @@
 #define BOTTOM 5.0f
 #define UNKNOWN_SIDE -1.0f
 
+enum {
+    AIR,
+    GRASS,
+    DIRT,
+    STONE,
+    WEEZER,
+    OAK_TRUNK,
+    OAK_LEAVES,
+    WATER,
+    GLASS
+};
+
 typedef struct {
     uint id;
     char* name;
@@ -28,7 +40,7 @@ typedef struct {
 
 typedef struct {
     int x, z;
-    block_type* blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
+    short blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
 } chunk;
 
 #endif
