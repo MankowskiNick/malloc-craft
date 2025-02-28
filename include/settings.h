@@ -28,9 +28,9 @@
 #define TEXTURE_ATLAS_SIZE 32
 
 // unused as of now, but will be used to generate different biomes
-#define WORLDGEN_BIOME_FREQUENCY 0.01f
-#define WORLDGEN_BIOME_AMPLITUDE 0.05f
-#define WORLDGEN_BIOME_OCTAVES 10
+#define WORLDGEN_BIOME_FREQUENCY 0.1f
+#define WORLDGEN_BIOME_AMPLITUDE 1.0f
+#define WORLDGEN_BIOME_OCTAVES 2
 
 #define WORLDGEN_WATER_LEVEL 50
 

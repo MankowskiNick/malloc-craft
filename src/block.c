@@ -93,7 +93,7 @@ void place_block(camera cam) {
 }
 
 // this should maybe be 
-block_type* get_block_type(uint id) {
+block_type* get_block_type(short id) {
     return &TYPES[id];
 }
 
@@ -215,6 +215,19 @@ block_type TYPES[] = {
             {11.0f, 0.0f},
             {11.0f, 0.0f},
             {11.0f, 0.0f},
+        }
+    },
+    {
+        .id = 9,
+        .name = "sand",
+        .transparent = 0,
+        .face_atlas_coords = {
+            {6.0f, 0.0f},
+            {6.0f, 0.0f},
+            {6.0f, 0.0f},
+            {6.0f, 0.0f},
+            {6.0f, 0.0f},
+            {6.0f, 0.0f},
         }
     }
 };
