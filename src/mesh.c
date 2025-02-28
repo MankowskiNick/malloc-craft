@@ -39,11 +39,23 @@ void m_cleanup() {
 float distance_to_camera(const void* item) {
     side_data* side = (side_data*)item;
 
+    float sx = 0.0f;
+    float sy = 0.0f;
+    float sz = 0.0f;
+    for (int i = 0; i < VERTS_PER_SIDE; i++) {
+        sx += side->vertices[i].x;
+        sy += side->vertices[i].y;
+        sz += side->vertices[i].z;
+    }
+    sx /= VERTS_PER_SIDE;
+    sy /= VERTS_PER_SIDE;
+    sz /= VERTS_PER_SIDE;
+
     // multiply by -1 to sort in descending order
     return -1.0f * sqrt(
-        pow(side->vertices[0].x - m_cam_ref->position[0], 2) +
-        pow(side->vertices[0].y - m_cam_ref->position[1], 2) +
-        pow(side->vertices[0].z - m_cam_ref->position[2], 2)
+        pow(sx - m_cam_ref->position[0], 2) +
+        pow(sy - m_cam_ref->position[1], 2) +
+        pow(sz - m_cam_ref->position[2], 2)
     );
 }
 
