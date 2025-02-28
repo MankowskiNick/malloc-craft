@@ -10,6 +10,8 @@
 
 #define VSYNC
 
+#define CHUNK_LOAD_PER_FRAME 3
+
 // #define WIREFRAME
 
 #define USE_MIPMAP

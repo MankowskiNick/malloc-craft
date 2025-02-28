@@ -1,12 +1,21 @@
 #include <chunk_mesh.h>
 #include <block.h>
 #include <sort.h>
+#include <chunk.h>
+#include <assert.h>
 
 
 camera* cm_cam_ref;
 
 void chunk_mesh_init(camera* camera) {
     cm_cam_ref = camera;
+}
+
+int chunk_coord_equals(void* a, void* b) {
+    chunk_coord* c1 = (chunk_coord*)a;
+    chunk_coord* c2 = (chunk_coord*)b;
+
+    return c1->x == c2->x && c1->z == c2->z;
 }
 
 int chunk_mesh_equals(void* a, void* b) {

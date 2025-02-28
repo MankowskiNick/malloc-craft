@@ -1,6 +1,6 @@
 #version 330 core
 
-#define FOG_DIST 400.0f
+#define FOG_DIST 40000000.0f
 
 in vec2 texCoord;
 in vec2 atlasCoord;

@@ -9,6 +9,7 @@
 #include <hashmap.h>
 #include <sort.h>
 #include <mesh.h>
+#include <queue.h>
 
 #include <settings.h>
 
@@ -41,6 +42,7 @@ float chunk_distance_to_camera(const void* item) {
 
 void r_init(shader_program* program, camera* camera) {
     r_cam_ref = camera;
+
     cam_cache.x = camera->position[0];
     cam_cache.z = camera->position[2];
     cam_cache.chunk_x = CAMERA_POS_TO_CHUNK_POS(camera->position[0]);
@@ -85,6 +87,7 @@ void r_cleanup() {
     delete_vbo(vbo);
     delete_program(program);
     t_cleanup();
+    m_cleanup();
 }
 
 void render_sides(float* side_data, int num_sides) {
@@ -128,8 +131,11 @@ void render(camera cam, shader_program program) {
 
     int movedChunks = (player_chunk_x == cam_cache.chunk_x && player_chunk_z == cam_cache.chunk_z) ? 0 : 1;
 
-    int num_packets = 4 * CHUNK_RENDER_DISTANCE * CHUNK_RENDER_DISTANCE;
-    chunk_mesh* packet[num_packets];
+    // int num_packets = 4 * CHUNK_RENDER_DISTANCE * CHUNK_RENDER_DISTANCE;
+    // chunk_mesh* packet[num_packets];
+    chunk_mesh** packet = NULL;
+    int num_packets = 0;
+    // int chunks_loaded = 1;
 
     for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
@@ -138,11 +144,15 @@ void render(camera cam, shader_program program) {
 
             chunk_mesh* mesh = get_chunk_mesh(x, z);
 
-            packet[i * 2 * CHUNK_RENDER_DISTANCE + j] = mesh;
+            // packet[i * 2 * CHUNK_RENDER_DISTANCE + j] = mesh;
 
             if (mesh == NULL) {
                 continue;
             }
+
+            packet = realloc(packet, (num_packets + 1) * sizeof(chunk_mesh*));
+            packet[num_packets] = mesh;
+            num_packets++;
 
             if (x >= player_chunk_x - 1 
                 && x <= player_chunk_x + 1 
@@ -155,6 +165,7 @@ void render(camera cam, shader_program program) {
     }
 
     sort_chunk();
+    load_chunk();
     if (movedChunks) {
         cam_cache.chunk_x = player_chunk_x;
         cam_cache.chunk_z = player_chunk_z;
@@ -175,4 +186,6 @@ void render(camera cam, shader_program program) {
             packet[i]->transparent_data,
             packet[i]->num_transparent_sides);
     }
+
+    free(packet);
 }

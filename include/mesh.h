@@ -13,5 +13,6 @@ chunk_mesh* update_chunk_mesh(int x, int z);
 chunk_mesh* get_chunk_mesh(int x, int z);
 void queue_chunk_for_sorting(chunk_mesh* packet);
 void sort_chunk();
+void load_chunk();
 
 #endif

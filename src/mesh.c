@@ -11,15 +11,19 @@ typedef chunk_mesh_map_hashmap chunk_mesh_map;
 chunk_mesh_map chunk_packets;
 
 queue_node* sort_queue = NULL;
+queue_node* chunk_load_queue = NULL;
 
 void m_init(camera* camera) {
     chunk_packets = chunk_mesh_map_init(CHUNK_CACHE_SIZE);
     queue_init(&sort_queue);
+    queue_init(&chunk_load_queue);
     chunk_mesh_init(camera);
 }
 
 void m_cleanup() {
     chunk_mesh_map_free(&chunk_packets);
+    queue_cleanup(&sort_queue);
+    queue_cleanup(&chunk_load_queue);
 }
 
 short get_adjacent_block(int x, int y, int z, uint side, chunk* c, chunk* adj) {
@@ -295,12 +299,30 @@ chunk_mesh* update_chunk_mesh(int x, int z) {
 }
 
 chunk_mesh* get_chunk_mesh(int x, int z) {
-    chunk_coord coord = {x, z};
-    chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, coord);
-    if (packet == NULL) {
-        packet = create_chunk_mesh(x, z);
+    // chunk_coord coord = {x, z};
+    chunk_coord* coord = malloc(sizeof(chunk_coord));
+    assert(coord != NULL && "Failed to allocate memory for chunk coord");
+    coord->x = x;
+    coord->z = z;
+
+    chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, *coord);
+    if (packet != NULL) {
+        return packet;
     }
-    return packet;
+
+    queue_push(&chunk_load_queue, coord, chunk_coord_equals);
+    return NULL;
+}
+
+void load_chunk() {
+    for (int i = 0; i < CHUNK_LOAD_PER_FRAME; i++) {
+        chunk_coord* coord = (chunk_coord*)queue_pop(&chunk_load_queue);
+        if (coord == NULL) {
+            continue;
+        }
+    
+        create_chunk_mesh(coord->x, coord->z);
+    }
 }
 
 void queue_chunk_for_sorting(chunk_mesh* packet) {
