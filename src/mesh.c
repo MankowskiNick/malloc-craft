@@ -152,6 +152,119 @@ void mesh_queue_pop() {
     free(cur);
 }
 
+
+void get_adjacent_block(int x, int y, int z, uint side, chunk* c, chunk* adj, block_type** block) {
+    switch(side) {
+        case (int)TOP:
+            if (y + 1 < CHUNK_HEIGHT) {
+                *block = c->blocks[x][y + 1][z];
+            }
+            else {
+                *block = NULL;
+            }
+            break;
+        case (int)BOTTOM:
+            if (y - 1 >= 0) {
+                *block = c->blocks[x][y - 1][z];
+            }
+            else {
+                *block = NULL;
+            }
+            break;
+        case (int)FRONT:
+            if (x + 1 < CHUNK_SIZE) {
+                *block = c->blocks[x + 1][y][z];
+            }
+            else if (adj != NULL) {
+                *block = adj->blocks[0][y][z];
+            }
+            else {
+                *block = NULL;
+            }
+            break;
+        case (int)BACK:
+            if (x - 1 >= 0) {
+                *block = c->blocks[x - 1][y][z];
+            }
+            else if (adj != NULL) {
+                *block = adj->blocks[CHUNK_SIZE - 1][y][z];
+            }
+            else {
+                *block = NULL;
+            }
+            break;
+        case (int)LEFT:
+            if (z - 1 >= 0) {
+                *block = c->blocks[x][y][z - 1];
+            }
+            else if (adj != NULL) {
+                *block = adj->blocks[x][y][CHUNK_SIZE - 1];
+            }
+            else {
+                *block = NULL;
+            }
+            break;
+        case (int)RIGHT:
+            if (z + 1 < CHUNK_SIZE) {
+                *block = c->blocks[x][y][z + 1];
+            }
+            else if (adj != NULL) {
+                *block = adj->blocks[x][y][0];
+            }
+            else {
+                *block = NULL;
+            }
+            break;
+        default:
+            *block = NULL;
+            break;
+    }
+}
+
+int get_side_visible(
+    int x, int y, int z,
+    uint side, 
+    chunk* c,
+    chunk* adj
+) {
+    uint visible = 0;
+
+    // calculate adjacent block
+    block_type* adjacent = NULL;
+    get_adjacent_block(x, y, z, side, c, adj, &adjacent);
+
+    block_type* current = c->blocks[x][y][z];
+
+    // calculate visibility
+    visible = adjacent == NULL;
+
+    // make sure transparent neighbors are visible
+    if (adjacent != NULL && adjacent->transparent != current->transparent) {
+        visible = 1;
+    }
+
+    if (adjacent != NULL 
+        && (adjacent->transparent && current->transparent)
+        && adjacent->id != current->id) {
+        visible = 1;
+    }
+
+    // dont render sides that we can't see
+    switch(side) {
+        case (int)TOP:
+            visible = visible && y < CHUNK_HEIGHT;
+            break;
+        case (int)BOTTOM:
+            visible = visible && y > 0;
+            break;
+        default:
+            break;
+    }
+
+    return visible;
+}
+
+
 void pack_side(int x_0, int y_0, int z_0, uint side, block_type* type, side_data* data) {
     int cube_vertices_offset = side * VERTS_PER_SIDE * CUBE_VERTICES_WIDTH;
     for (int i = 0; i < 6; i++) {
