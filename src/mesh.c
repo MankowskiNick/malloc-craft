@@ -251,35 +251,27 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
 
 void sort_transparent_sides(chunk_mesh* packet) {
     quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_data), distance_to_camera);
-    // free(packet->transparent_data);
-    // Add null check to prevent double-free
     if (packet->transparent_data != NULL) {
         free(packet->transparent_data);
         packet->transparent_data = NULL;
-        // packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, packet->num_transparent_sides);
     }
     packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, packet->num_transparent_sides);
 }
 
 void mesh_queue_push(chunk_mesh* packet) {
-
-    printf("Pushing packet at %d, %d\n", packet->x, packet->z);
     mesh_queue* prev = NULL;
     mesh_queue* cur = mesh_queue_head;
     int count = 0;
     while (cur != NULL) {
         count++;
         if (cur->x == packet->x && cur->z == packet->z) {
-            // Packet already in queue, update it
             cur->packet = packet;
-            printf("Found after %d iterations\n", count);
             return;
         }
         
         prev = cur;
         cur = cur->next;
     }
-    printf("Not found after %d iterations\n", count);
 
     // Packet not in queue, add it
     mesh_queue* new_node = malloc(sizeof(mesh_queue));

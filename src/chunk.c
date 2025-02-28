@@ -146,7 +146,16 @@ int get_side_visible(
     block_type* current = c->blocks[x][y][z];
 
     // calculate visibility
-    visible = adjacent == NULL || adjacent->transparent != current->transparent;
+    visible = adjacent == NULL;// || adjacent->transparent != current->transparent;// || (adjacent->transparent && adjacent->id != current->id);
+
+    // make sure transparent neighbors are visible
+    if (adjacent != NULL && adjacent->transparent != current->transparent) {
+        visible = 1;
+    }
+
+    if (adjacent != NULL && adjacent->transparent == current->transparent && adjacent->id != current->id) {
+        visible = 1;
+    }
 
     // dont render sides that we can't see
     switch(side) {

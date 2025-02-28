@@ -20,6 +20,13 @@ shader_program program;
 
 camera* r_cam_ref;
 
+typedef struct {
+    float x, z;
+    int chunk_x, chunk_z;
+} camera_cache;
+
+camera_cache cam_cache;
+
 float chunk_distance_to_camera(const void* item) {
     chunk_mesh* packet = *(chunk_mesh**)item;
     // camera coords to chunk coords
@@ -34,6 +41,10 @@ float chunk_distance_to_camera(const void* item) {
 
 void r_init(shader_program* program, camera* camera) {
     r_cam_ref = camera;
+    cam_cache.x = camera->position[0];
+    cam_cache.z = camera->position[2];
+    cam_cache.chunk_x = CAMERA_POS_TO_CHUNK_POS(camera->position[0]);
+    cam_cache.chunk_z = CAMERA_POS_TO_CHUNK_POS(camera->position[2]);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -108,6 +119,15 @@ void render(camera cam, shader_program program) {
     int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(cam.position[0]);
     int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(cam.position[2]);
 
+
+    int movedBlocks = ((int)cam.position[0] == (int)cam_cache.x && (int)cam.position[2] == (int)cam_cache.z) ? 0 : 1;
+    if (movedBlocks) {
+        cam_cache.x = cam.position[0];
+        cam_cache.z = cam.position[2];
+    }
+
+    int movedChunks = (player_chunk_x == cam_cache.chunk_x && player_chunk_z == cam_cache.chunk_z) ? 0 : 1;
+
     int num_packets = 4 * CHUNK_RENDER_DISTANCE * CHUNK_RENDER_DISTANCE;
     chunk_mesh* packet[num_packets];
 
@@ -117,22 +137,30 @@ void render(camera cam, shader_program program) {
             int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
             packet[i * 2 * CHUNK_RENDER_DISTANCE + j] = get_chunk_mesh(x, z);
 
-            if (x >= player_chunk_x - 1 && x <= player_chunk_x + 1 && z >= player_chunk_z - 1 && z <= player_chunk_z + 1) {
+            if (x >= player_chunk_x - 1 
+                && x <= player_chunk_x + 1 
+                && z >= player_chunk_z - 1
+                && z <= player_chunk_z + 1
+                && movedBlocks) {
                 mesh_queue_push(packet[i * 2 * CHUNK_RENDER_DISTANCE + j]);
             }
         }
     }
 
     mesh_queue_pop();
+    if (movedChunks) {
+        cam_cache.chunk_x = player_chunk_x;
+        cam_cache.chunk_z = player_chunk_z;
+    }
+
+    // may want to preserve packet between frames to prevent the need for continuous quicksorting, would allow us to only update
+    // if the camera has moved between chunk boundaries
     quicksort(packet, num_packets, sizeof(chunk_mesh*), chunk_distance_to_camera);
 
     for (int i = 0; i < num_packets; i++) {
         render_sides(
             packet[i]->opaque_data,
             packet[i]->num_opaque_sides);
-    }
-
-    for (int i = 0; i < num_packets; i++) {
         render_sides(
             packet[i]->transparent_data,
             packet[i]->num_transparent_sides);
