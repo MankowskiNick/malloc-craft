@@ -6,6 +6,8 @@
 #include <settings.h>
 #include <util.h>
 
+#define VERTS_PER_SIDE 6
+
 // Vertex data for a cube
 // v.x v.y v.z t.x t.y side
 #define CUBE_VERTICES_WIDTH 6

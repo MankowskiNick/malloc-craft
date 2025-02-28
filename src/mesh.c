@@ -3,39 +3,23 @@
 #include <block.h>
 #include <world.h>
 #include <camera.h>
-#include <mesh_sort_queue.h>
+#include <chunk_mesh.h>
+#include <queue.h>
 
 DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals);
 typedef chunk_mesh_map_hashmap chunk_mesh_map;
 chunk_mesh_map chunk_packets;
 
+queue_node* sort_queue = NULL;
 
 void m_init(camera* camera) {
     chunk_packets = chunk_mesh_map_init(CHUNK_CACHE_SIZE);
-    mesh_sort_queue_init(camera);
+    queue_init(&sort_queue);
+    chunk_mesh_init(camera);
 }
 
 void m_cleanup() {
     chunk_mesh_map_free(&chunk_packets);
-}
-
-float* chunk_mesh_to_float_array(side_data* sides, int num_sides) {
-    float* data = malloc(num_sides * SIDE_OFFSET * sizeof(float));
-    assert(data != NULL && "Failed to allocate memory for float array");
-
-    for (int i = 0; i < num_sides; i++) {
-        for (int j = 0; j < VERTS_PER_SIDE; j++) {
-            int index = i * SIDE_OFFSET + j * VBO_WIDTH;
-            data[index + 0] = sides[i].vertices[j].x;
-            data[index + 1] = sides[i].vertices[j].y;
-            data[index + 2] = sides[i].vertices[j].z;
-            data[index + 3] = sides[i].vertices[j].tx;
-            data[index + 4] = sides[i].vertices[j].ty;
-            data[index + 5] = sides[i].vertices[j].atlas_x;
-            data[index + 6] = sides[i].vertices[j].atlas_y;
-        }
-    }
-    return data;
 }
 
 short get_adjacent_block(int x, int y, int z, uint side, chunk* c, chunk* adj) {
@@ -131,7 +115,6 @@ int get_side_visible(
 
     return visible;
 }
-
 
 void pack_side(int x_0, int y_0, int z_0, uint side, block_type* type, side_data* data) {
     int cube_vertices_offset = side * VERTS_PER_SIDE * CUBE_VERTICES_WIDTH;
@@ -277,7 +260,7 @@ chunk_mesh* update_chunk_mesh_at(int x, int z) {
         assert(false && "Packet does not exist");
     }
 
-    mesh_sort_queue_remove(packet);
+    queue_remove(&sort_queue, packet, chunk_mesh_equals);
     free(packet->opaque_data);
     packet->opaque_data = NULL;
     free(packet->transparent_data);
@@ -318,4 +301,24 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
         packet = create_chunk_mesh(x, z);
     }
     return packet;
+}
+
+void queue_chunk_for_sorting(chunk_mesh* packet) {
+    queue_push(&sort_queue, packet, chunk_mesh_equals);
+}
+
+void sort_chunk() {
+    chunk_mesh* packet = (chunk_mesh*)queue_pop(&sort_queue);
+    if (packet == NULL) {
+        return;
+    }
+
+    sort_transparent_sides(packet);
+
+    if (packet->transparent_data != NULL) {
+        free(packet->transparent_data);
+        packet->transparent_data = NULL;
+    }
+    packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, 
+                                                            packet->num_transparent_sides);
 }
