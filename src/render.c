@@ -135,14 +135,21 @@ void render(camera cam, shader_program program) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
             int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
             int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
-            packet[i * 2 * CHUNK_RENDER_DISTANCE + j] = get_chunk_mesh(x, z);
+
+            chunk_mesh* mesh = get_chunk_mesh(x, z);
+
+            packet[i * 2 * CHUNK_RENDER_DISTANCE + j] = mesh;
+
+            if (mesh == NULL) {
+                continue;
+            }
 
             if (x >= player_chunk_x - 1 
                 && x <= player_chunk_x + 1 
                 && z >= player_chunk_z - 1
                 && z <= player_chunk_z + 1
                 && movedBlocks) {
-                mesh_queue_push(packet[i * 2 * CHUNK_RENDER_DISTANCE + j]);
+                mesh_queue_push(mesh);
             }
         }
     }
@@ -158,6 +165,9 @@ void render(camera cam, shader_program program) {
     quicksort(packet, num_packets, sizeof(chunk_mesh*), chunk_distance_to_camera);
 
     for (int i = 0; i < num_packets; i++) {
+        if (packet[i] == NULL) {
+            continue;
+        }
         render_sides(
             packet[i]->opaque_data,
             packet[i]->num_opaque_sides);
