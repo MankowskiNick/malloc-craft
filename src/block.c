@@ -3,6 +3,7 @@
 #include <mesh.h>
 #include <world.h>
 #include <cglm/cglm.h>
+#include <mesh_sort_queue.h>
 
 
 float get_empty_dist(camera cam) {
@@ -57,7 +58,7 @@ void break_block(camera cam) {
     c->blocks[chunk_x][chunk_y][chunk_z] = AIR;
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
-    mesh_queue_push(new_mesh);
+    mesh_sort_queue_push(new_mesh);
 }
 
 void place_block(camera cam) {
@@ -89,10 +90,10 @@ void place_block(camera cam) {
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
-    mesh_queue_push(new_mesh);
+    mesh_sort_queue_push(new_mesh);
 }
 
-// this should maybe be 
+// TODO: refactor to make more safe
 block_type* get_block_type(short id) {
     return &TYPES[id];
 }
