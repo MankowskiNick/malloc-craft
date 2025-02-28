@@ -12,9 +12,6 @@ int main() {
         return -1;
     }
 
-    shader_program program;
-    r_init(&program);
-
     camera cam = {
         .position = {1.0f, (float)CHUNK_HEIGHT, 0.0f},
         .up = {0.0f, 1.0f, 0.0f},
@@ -22,6 +19,9 @@ int main() {
         .yaw = 0.0f,
         .pitch = 0.0f
     };
+
+    shader_program program;
+    r_init(&program, &cam);
 
     i_init(window, &cam);
 

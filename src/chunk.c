@@ -27,19 +27,33 @@ void chunk_create(chunk* c, int x, int z) {
             // get perlin noise at this point
             float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
             float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
-            float y_ = n_get(x_, z_, 10) * 20.0f;
+            float y_ = n_get(x_, z_, 
+                    WORLDGEN_BLOCKHEIGHT_FREQUENCY, 
+                    WORLDGEN_BLOCKHEIGHT_AMPLITUDE, 
+                    WORLDGEN_BLOCKHEIGHT_OCTAVES)
+                * WORLDGEN_BLOCKHEIGHT_MODIFIER;
 
             int y = (int)(y_) + (CHUNK_HEIGHT / 2);
 
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (k > y) {
-                    c->blocks[i][k][j] = NULL;  // Air block above level 8
+                    if (k > WORLDGEN_WATER_LEVEL) {
+                        c->blocks[i][k][j] = NULL;  // Air block above water level
+                    }
+                    else {
+                        c->blocks[i][k][j] = &TYPES[7];  // Water otherwise
+                    }
                 }
                 else if (k == y) {
-                    c->blocks[i][k][j] = &TYPES[1];  // Dirt block below level 8
+                    if (k < WORLDGEN_WATER_LEVEL) {
+                        c->blocks[i][k][j] = &TYPES[2];  // Dirt if below water level
+                    }
+                    else {
+                        c->blocks[i][k][j] = &TYPES[1];  // Grass
+                    }
                 }
                 else if (k > y - 3) {
-                    c->blocks[i][k][j] = &TYPES[2];  // Grass block below level 8
+                    c->blocks[i][k][j] = &TYPES[2];  // Dirt 
                 }
                 else {
                     c->blocks[i][k][j] = &TYPES[3];  // Stone block below level 8
@@ -129,8 +143,21 @@ int get_side_visible(
     block_type* adjacent = NULL;
     get_adjacent(x, y, z, side, c, adj, &adjacent);
 
+    block_type* current = c->blocks[x][y][z];
+
     // calculate visibility
-    visible = adjacent == NULL;
+    visible = adjacent == NULL;// || adjacent->transparent != current->transparent;// || (adjacent->transparent && adjacent->id != current->id);
+
+    // make sure transparent neighbors are visible
+    if (adjacent != NULL && adjacent->transparent != current->transparent) {
+        visible = 1;
+    }
+
+    if (adjacent != NULL 
+        && (adjacent->transparent && current->transparent)
+        && adjacent->id != current->id) {
+        visible = 1;
+    }
 
     // dont render sides that we can't see
     switch(side) {

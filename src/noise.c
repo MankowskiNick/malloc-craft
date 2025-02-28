@@ -58,17 +58,15 @@ float perlin(float x, float z) {
 }
 
 
-float n_get(float x, float z, uint num_octaves) {
+float n_get(float x, float z, float freq, float amp, uint num_octaves) {
     float total = 0.0f;
-    float frequency = WORLDGEN_FREQUENCY;
-    float amplitude = WORLDGEN_AMPLITUDE;
     float max_value = 0.0f;
 
     for (int i = 0; i < num_octaves; i++) {
-        total += perlin(x * frequency, z * frequency) * amplitude;
-        max_value += amplitude;
-        amplitude *= 0.5f;
-        frequency *= 2.0f;
+        total += perlin(x * freq, z * freq) * amp;
+        max_value += amp;
+        amp *= 0.5f;
+        freq *= 2.0f;
     }
 
     return total / max_value;

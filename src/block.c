@@ -1,17 +1,9 @@
 #include <block.h>
-#include <render.h>
+// #include <render.h>
+#include <mesh.h>
 #include <world.h>
 #include <cglm/cglm.h>
 
-void update_chunks(int x, int z) {
-    // update chunk and adjacent ones
-    update_chunk_packet_at(x, z);
-    update_chunk_packet_at(x + 1, z);
-    update_chunk_packet_at(x - 1, z);
-    update_chunk_packet_at(x, z + 1);
-    update_chunk_packet_at(x, z - 1);
-
-}
 
 float get_empty_dist(camera cam) {
     vec3 position = {cam.position[0], cam.position[1], cam.position[2]};
@@ -64,7 +56,8 @@ void break_block(camera cam) {
 
     c->blocks[chunk_x][chunk_y][chunk_z] = NULL;
     
-    update_chunks(c->x, c->z);
+    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
+    mesh_queue_push(new_mesh);
 }
 
 void place_block(camera cam) {
@@ -92,10 +85,11 @@ void place_block(camera cam) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[4];
+    c->blocks[chunk_x][chunk_y][chunk_z] = &TYPES[8];
 
     // update chunk and adjacent chunks
-    update_chunks(c->x, c->z);
+    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
+    mesh_queue_push(new_mesh);
 }
 
 
@@ -103,6 +97,7 @@ block_type TYPES[] = {
     {
         .id = 0,
         .name = "air",
+        .transparent = 0,
         .face_atlas_coords = {
             {-1.0f, -1.0f},
             {-1.0f, -1.0f},
@@ -115,50 +110,106 @@ block_type TYPES[] = {
     {
         .id = 1,
         .name = "grass",
+        .transparent = 0,
         .face_atlas_coords = {
-            {1.0f / 32.0f, 0.0f},
-            {1.0f / 32.0f, 0.0f},
-            {1.0f / 32.0f, 0.0f},
-            {1.0f / 32.0f, 0.0f},
+            {1.0f, 0.0f},
+            {1.0f, 0.0f},
+            {1.0f, 0.0f},
+            {1.0f, 0.0f},
             {0.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
+            {2.0f, 0.0f},
         }
     },
     {
         .id = 2,
         .name = "dirt",
+        .transparent = 0,
         .face_atlas_coords = {
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
-            {2.0f / 32.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
+            {2.0f, 0.0f},
         }
     },
     {
         .id = 3,
         .name = "stone",
+        .transparent = 0,
         .face_atlas_coords = {
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
-            {3.0f / 32.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
+            {3.0f, 0.0f},
         }
     },
     {
         .id = 4,
         .name = "weezer",
+        .transparent = 0,
         .face_atlas_coords = {
             
-            {4.0f / 32.0f, 0.0f},
-            {4.0f / 32.0f, 0.0f},
-            {4.0f / 32.0f, 0.0f},
-            {4.0f / 32.0f, 0.0f},
-            {5.0f / 32.0f, 0.0f},
-            {5.0f / 32.0f, 0.0f},
+            {4.0f, 0.0f},
+            {4.0f, 0.0f},
+            {4.0f, 0.0f},
+            {4.0f, 0.0f},
+            {5.0f, 0.0f},
+            {5.0f, 0.0f},
+        }
+    },
+    {
+        .id = 5,
+        .name = "oak_trunk",
+        .transparent = 0,
+        .face_atlas_coords = {
+            {7.0f, 0.0f},
+            {7.0f, 0.0f},
+            {7.0f, 0.0f},
+            {7.0f, 0.0f},
+            {8.0f, 0.0f},
+            {8.0f, 0.0f},
+        }
+    },
+    {
+        .id = 6,
+        .name = "oak_leaves",
+        .transparent = 1,
+        .face_atlas_coords = {
+            {9.0f, 0.0f},
+            {9.0f, 0.0f},
+            {9.0f, 0.0f},
+            {9.0f, 0.0f},
+            {9.0f, 0.0f},
+            {9.0f, 0.0f},
+        }
+    },
+    {
+        .id = 7,
+        .name = "water",
+        .transparent = 1,
+        .face_atlas_coords = {
+            {10.0f, 0.0f},
+            {10.0f, 0.0f},
+            {10.0f, 0.0f},
+            {10.0f, 0.0f},
+            {10.0f, 0.0f},
+            {10.0f, 0.0f},
+        }
+    },
+    {
+        .id = 8,
+        .name = "glass",
+        .transparent = 1,
+        .face_atlas_coords = {
+            {11.0f, 0.0f},
+            {11.0f, 0.0f},
+            {11.0f, 0.0f},
+            {11.0f, 0.0f},
+            {11.0f, 0.0f},
+            {11.0f, 0.0f},
         }
     }
 };

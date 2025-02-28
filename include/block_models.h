@@ -15,8 +15,10 @@
 typedef struct {
     uint id;
     char* name;
+    int transparent;
     float face_atlas_coords[6][2];
 } block_type;
+
 extern block_type TYPES[];
 
 typedef struct {
