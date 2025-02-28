@@ -153,7 +153,9 @@ int get_side_visible(
         visible = 1;
     }
 
-    if (adjacent != NULL && adjacent->transparent == current->transparent && adjacent->id != current->id) {
+    if (adjacent != NULL 
+        && (adjacent->transparent && current->transparent)
+        && adjacent->id != current->id) {
         visible = 1;
     }
 
