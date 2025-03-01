@@ -10,8 +10,7 @@ uniform float atlasSize;
 uniform float textureSize;
 
 void main() {
-    vec2 offset = vec2(atlasCoord.x / atlasSize, atlasCoord.y / atlasSize);
-    vec2 coord = vec2(texCoord.x / atlasSize + offset.x, texCoord.y / atlasSize + offset.y);
+    
+    vec2 coord = (atlasCoord + texCoord) / atlasSize;
     FragColor = texture(atlas, coord);
-    // FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

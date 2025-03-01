@@ -121,10 +121,16 @@ void send_cube_vbo() {
 }
 
 void render_sides(int* side_data, int num_sides) {
+    // for (int i = 0; i < num_sides; i++) {
+    //     int offset = i * VBO_WIDTH;
+    //     int atlas_x = side_data[offset + 3];
+    //     int atlas_y = side_data[offset + 4];
+    //     printf("atlas_x: %d, atlas_y: %d\n", atlas_x, atlas_y);
+    // }
     bind_vao(vao);
     buffer_data(instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
     i_add_attrib(&instance_vbo, 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
-    i_add_attrib(&instance_vbo, 2, 2, 4 * sizeof(int), VBO_WIDTH * sizeof(int)); // type
+    i_add_attrib(&instance_vbo, 2, 2, 3 * sizeof(int), VBO_WIDTH * sizeof(int)); // atlas coords
     i_add_attrib(&instance_vbo, 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
     use_vbo(instance_vbo);
 

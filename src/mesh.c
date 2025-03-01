@@ -125,7 +125,9 @@ void pack_side(int x_0, int y_0, int z_0, short side, short type, side_instance*
     data->y = y_0;
     data->z = z_0;
     data->side = side;
-    // data->type = type;
+    block_type* block = get_block_type(type);
+    data->atlas_x = block->face_atlas_coords[side][0];
+    data->atlas_y = block->face_atlas_coords[side][1];
 }
 
 void pack_block(
