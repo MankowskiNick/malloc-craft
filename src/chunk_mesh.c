@@ -25,25 +25,13 @@ int chunk_mesh_equals(void* a, void* b) {
 }
 
 float distance_to_camera(const void* item) {
-    side_data* side = (side_data*)item;
-
-    float sx = 0.0f;
-    float sy = 0.0f;
-    float sz = 0.0f;
-    for (int i = 0; i < VERTS_PER_SIDE; i++) {
-        sx += side->vertices[i].x;
-        sy += side->vertices[i].y;
-        sz += side->vertices[i].z;
-    }
-    sx /= VERTS_PER_SIDE;
-    sy /= VERTS_PER_SIDE;
-    sz /= VERTS_PER_SIDE;
+    side_instance* side = (side_instance*)item;
 
     // multiply by -1 to sort in descending order
     return -1.0f * sqrt(
-        pow(sx - cm_cam_ref->position[0], 2) +
-        pow(sy - cm_cam_ref->position[1], 2) +
-        pow(sz - cm_cam_ref->position[2], 2)
+        pow((float)(side->x) - cm_cam_ref->position[0], 2) +
+        pow((float)(side->y) - cm_cam_ref->position[1], 2) +
+        pow((float)(side->z) - cm_cam_ref->position[2], 2)
     );
 }
 
