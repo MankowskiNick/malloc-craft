@@ -9,12 +9,12 @@
 #define RENDER_DISTANCE 600.0f
 
 #define VSYNC
-
+#define TRANSPARENT_LEAVES
 #define CHUNK_LOAD_PER_FRAME 3
 
 // #define WIREFRAME
 
-#define USE_MIPMAP
+// #define USE_MIPMAP
 
 #define SEED 42069
 

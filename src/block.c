@@ -181,15 +181,27 @@ block_type TYPES[] = {
     {
         .id = 6,
         .name = "oak_leaves",
-        .transparent = 1,
-        .face_atlas_coords = {
-            {9.0f, 0.0f},
-            {9.0f, 0.0f},
-            {9.0f, 0.0f},
-            {9.0f, 0.0f},
-            {9.0f, 0.0f},
-            {9.0f, 0.0f},
-        }
+        #ifdef TRANSPARENT_LEAVES
+            .transparent = 1,
+            .face_atlas_coords = {
+                {9.0f, 0.0f},
+                {9.0f, 0.0f},
+                {9.0f, 0.0f},
+                {9.0f, 0.0f},
+                {9.0f, 0.0f},
+                {9.0f, 0.0f},
+            }
+        #else
+            .transparent = 0,
+            .face_atlas_coords = {
+                {15.0f, 0.0f},
+                {15.0f, 0.0f},
+                {15.0f, 0.0f},
+                {15.0f, 0.0f},
+                {15.0f, 0.0f},
+                {15.0f, 0.0f},
+            }
+        #endif
     },
     {
         .id = 7,
