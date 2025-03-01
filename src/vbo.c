@@ -17,11 +17,20 @@ void use_vbo(VBO vbo) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo.id);
 }
 
-void add_attrib(VBO* vbo, uint location, uint size, uint offset, uint stride) {
+void f_add_attrib(VBO* vbo, uint location, uint size, uint offset, uint stride) {
     glVertexAttribPointer(location, 
                             size,
                             GL_FLOAT,
                             GL_FALSE, 
+                            stride, 
+                            (void*)(offset));
+    glEnableVertexAttribArray(location);
+}
+
+void i_add_attrib(VBO* vbo, uint location, uint size, uint offset, uint stride) {
+    glVertexAttribIPointer(location, 
+                            size,
+                            GL_INT,
                             stride, 
                             (void*)(offset));
     glEnableVertexAttribArray(location);
