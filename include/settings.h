@@ -12,7 +12,10 @@
 #define TRANSPARENT_LEAVES
 #define CHUNK_LOAD_PER_FRAME 3
 
-#define WIREFRAME
+// #define WIREFRAME
+
+#define TEXTURE_SIZE 16
+#define ATLAS_SIZE 32
 
 // #define USE_MIPMAP
 

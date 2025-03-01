@@ -3,8 +3,7 @@
 
 #include <camera.h>
 
-#define VBO_WIDTH 7
-#define SIDE_OFFSET VERTS_PER_SIDE * VBO_WIDTH
+#define VBO_WIDTH 6
 
 typedef struct {
     float x, y, z;

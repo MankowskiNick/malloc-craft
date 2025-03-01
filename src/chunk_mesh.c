@@ -49,17 +49,18 @@ float distance_to_camera(const void* item) {
 
 int* chunk_mesh_to_buffer(side_instance* sides, int num_sides) {
     // x y z type side
-    int* data = malloc(num_sides * 5 * sizeof(int));
+    int* data = malloc(num_sides * VBO_WIDTH * sizeof(int));
     assert(data != NULL && "Failed to allocate memory for float array");
 
     for (int i = 0; i < num_sides; i++) {
-        int index = i * 5;
+        int index = i * VBO_WIDTH;
         side_instance side = sides[i];
         data[index + 0] = sides[i].x;
         data[index + 1] = sides[i].y;
         data[index + 2] = sides[i].z;
-        data[index + 3] = 0;
-        data[index + 4] = sides[i].side;
+        data[index + 3] = sides[i].atlas_x;
+        data[index + 4] = sides[i].atlas_y;
+        data[index + 5] = sides[i].side;
     }
     return data;
 }
@@ -71,6 +72,5 @@ void sort_transparent_sides(chunk_mesh* packet) {
         packet->transparent_data = NULL;
     }
     packet->transparent_data = chunk_mesh_to_buffer(packet->transparent_sides, packet->num_transparent_sides);
-    // packet->transparent_data = chunk_mesh_to_float_array_old(packet->transparent_sides, packet->num_transparent_sides);
 
 }

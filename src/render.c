@@ -122,10 +122,10 @@ void send_cube_vbo() {
 
 void render_sides(int* side_data, int num_sides) {
     bind_vao(vao);
-    buffer_data(instance_vbo, GL_STATIC_DRAW, side_data, num_sides * 5 * sizeof(int));
-    i_add_attrib(&instance_vbo, 1, 3, 0 * sizeof(int), 5 * sizeof(int)); // position
-    i_add_attrib(&instance_vbo, 2, 1, 3 * sizeof(int), 5 * sizeof(int)); // type
-    i_add_attrib(&instance_vbo, 3, 1, 4 * sizeof(int), 5 * sizeof(int)); // side
+    buffer_data(instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
+    i_add_attrib(&instance_vbo, 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
+    i_add_attrib(&instance_vbo, 2, 2, 4 * sizeof(int), VBO_WIDTH * sizeof(int)); // type
+    i_add_attrib(&instance_vbo, 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
     use_vbo(instance_vbo);
 
     // Set these attributes to advance per-instance, not per-vertex
@@ -150,6 +150,11 @@ void render(camera cam, shader_program program) {
     glBindTexture(GL_TEXTURE_2D, texture_atlas.id);
     uint atlas_loc = glGetUniformLocation(program.id, "atlas");
     glUniform1i(atlas_loc, 0);
+
+    uint texture_size_loc = glGetUniformLocation(program.id, "textureSize");
+    glUniform1f(texture_size_loc, (float)TEXTURE_SIZE);
+    uint atlas_size_loc = glGetUniformLocation(program.id, "atlasSize");
+    glUniform1f(atlas_size_loc, (float)ATLAS_SIZE);
 
     send_cube_vbo();
 

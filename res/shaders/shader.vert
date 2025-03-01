@@ -2,10 +2,11 @@
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in ivec3 aInstancePos;
-layout (location = 2) in int aBlockType;
+layout (location = 2) in ivec2 aAtlasCoord;
 layout (location = 3) in int aSide;
 
 out vec2 texCoord;
+out vec2 atlasCoord;
 
 uniform mat4 view;
 uniform mat4 proj;
@@ -32,4 +33,7 @@ void main()
     vec3 instancePos = vec3(aInstancePos);
     vec3 worldPos = transformFace(aPos, aSide) + instancePos;
     gl_Position = proj * view * vec4(worldPos, 1.0);
+
+    texCoord = vec2(aPos.x, aPos.y);
+    atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
 }
