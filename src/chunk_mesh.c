@@ -21,7 +21,7 @@ int chunk_coord_equals(void* a, void* b) {
 int chunk_mesh_equals(void* a, void* b) {
     chunk_mesh* c1 = (chunk_mesh*)a;
     chunk_mesh* c2 = (chunk_mesh*)b;
-    return c1->x == c2->x && c2->z == c2->z;
+    return c1->x == c2->x && c1->z == c2->z;
 }
 
 float distance_to_camera(const void* item) {
