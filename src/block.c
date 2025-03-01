@@ -18,7 +18,7 @@ float get_empty_dist(camera cam) {
 
     while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT 
         && t <= MAX_REACH && 
-        c->blocks[chunk_x][chunk_y][chunk_z] == AIR) {
+        c->blocks[chunk_x][chunk_y][chunk_z] == AIR || c->blocks[chunk_x][chunk_y][chunk_z] == WATER) {
         t += 0.005f;
 
         vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
@@ -57,7 +57,7 @@ void break_block(camera cam) {
     c->blocks[chunk_x][chunk_y][chunk_z] = AIR;
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
-    mesh_queue_push(new_mesh);
+    queue_chunk_for_sorting(new_mesh);
 }
 
 void place_block(camera cam) {
@@ -89,10 +89,10 @@ void place_block(camera cam) {
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
-    mesh_queue_push(new_mesh);
+    queue_chunk_for_sorting(new_mesh);
 }
 
-// this should maybe be 
+// TODO: refactor to make more safe
 block_type* get_block_type(short id) {
     return &TYPES[id];
 }
@@ -167,7 +167,7 @@ block_type TYPES[] = {
     },
     {
         .id = 5,
-        .name = "oak_trunk",
+        .name = "oak_log",
         .transparent = 0,
         .face_atlas_coords = {
             {7.0f, 0.0f},
@@ -228,6 +228,32 @@ block_type TYPES[] = {
             {6.0f, 0.0f},
             {6.0f, 0.0f},
             {6.0f, 0.0f},
+        }
+    },
+    {
+        .id = 10,
+        .name = "cactus",
+        .transparent = 0,
+        .face_atlas_coords = {
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {13.0f, 0.0f},
+            {13.0f, 0.0f},
+        }
+    },
+    {
+        .id = 11,
+        .name = "cactus_top",
+        .transparent = 0,
+        .face_atlas_coords = {
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {12.0f, 0.0f},
+            {14.0f, 0.0f},
+            {13.0f, 0.0f},
         }
     }
 };

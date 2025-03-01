@@ -1,6 +1,8 @@
 #include <chunk.h>
 #include <noise.h>
 #include <biome.h>
+#include <tree.h>
+#include <stdlib.h>
 
 uint chunk_hash(chunk_coord c) {
     uint hash = (unsigned int)((c.x * 73856093) ^ (c.z * 19349663)) + CHUNK_CACHE_SIZE;
@@ -13,34 +15,32 @@ int chunk_equals(chunk_coord a, chunk_coord b) {
 
 void c_init() {
     n_init(SEED);
+    tree_init();
 }
 
-int get_block_height(chunk* c, float x, float z) {
+int get_block_height(chunk* c, float x, float z, biome* b) {
     float y_ = n_get(x, z, 
-        WORLDGEN_BLOCKHEIGHT_FREQUENCY, 
-        WORLDGEN_BLOCKHEIGHT_AMPLITUDE, 
+        WORLDGEN_BLOCKHEIGHT_FREQUENCY,
+        WORLDGEN_BLOCKHEIGHT_AMPLITUDE,
         WORLDGEN_BLOCKHEIGHT_OCTAVES) * WORLDGEN_BLOCKHEIGHT_MODIFIER;
 
-    int y = (int)(y_) + (CHUNK_HEIGHT / 2);
+    int y = (int)(y_) + WORLDGEN_BASE_TERRAIN_HEIGHT;
     return y;
 }
 
 void generate_blocks(chunk* c, int x, int z) {
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
-            // get block height
             float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
             float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
-            
-            float y = get_block_height(c, x_, z_);
 
-            // get biome
             biome* b = get_biome(x_, z_);
+            float y = get_block_height(c, x_, z_, b);
             
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (k > y) {
                     if (k > WORLDGEN_WATER_LEVEL) {
-                        c->blocks[i][k][j] = AIR;  // Air block above water level
+                        c->blocks[i][k][j] = AIR;
                     }
                     else {
                         c->blocks[i][k][j] = WATER;
@@ -49,10 +49,10 @@ void generate_blocks(chunk* c, int x, int z) {
                 else if (k == y) {
                     
                     if (k < WORLDGEN_WATER_LEVEL) {
-                        c->blocks[i][k][j] = b->underwater_type;  // Dirt if below water level
+                        c->blocks[i][k][j] = b->underwater_type;
                     }
                     else {
-                        c->blocks[i][k][j] = b->surface_type;  // Grass
+                        c->blocks[i][k][j] = b->surface_type;
                     }
                 }
                 else if (k > y - 3) {
@@ -61,6 +61,21 @@ void generate_blocks(chunk* c, int x, int z) {
                 else {
                     c->blocks[i][k][j] = b->underground_type;
                 }
+            }
+        }
+    }
+
+    // generate trees -- separate pass so it doesn't cut out terrain
+    for (int i = 2; i < CHUNK_SIZE - 2; i++) {
+        for (int j = 2; j < CHUNK_SIZE - 2; j++) {
+            float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
+            float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
+
+            biome* b = get_biome(x_, z_);
+            int y = get_block_height(c, x_, z_, b);
+
+            if (rand() / (float)RAND_MAX < b->tree_density && y > WORLDGEN_WATER_LEVEL) {
+                generate_tree(i, y, j, b->tree_type, c);
             }
         }
     }
@@ -73,10 +88,6 @@ void chunk_create(chunk* c, int x, int z) {
 
     c->x = x;
     c->z = z;
-
-    // float biome = n_get(x, z, WORLDGEN_BIOME_FREQUENCY, WORLDGEN_BIOME_AMPLITUDE, WORLDGEN_BIOME_OCTAVES);
-
-    // printf("Biome: %f\n", biome);
 
     generate_blocks(c, x, z);
 }
