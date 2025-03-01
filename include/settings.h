@@ -12,7 +12,7 @@
 #define TRANSPARENT_LEAVES
 #define CHUNK_LOAD_PER_FRAME 3
 
-// #define WIREFRAME
+#define WIREFRAME
 
 // #define USE_MIPMAP
 

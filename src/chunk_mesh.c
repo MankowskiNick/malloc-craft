@@ -47,30 +47,30 @@ float distance_to_camera(const void* item) {
     );
 }
 
-float* chunk_mesh_to_float_array(side_data* sides, int num_sides) {
-    float* data = malloc(num_sides * SIDE_OFFSET * sizeof(float));
+int* chunk_mesh_to_buffer(side_instance* sides, int num_sides) {
+    // x y z type side
+    int* data = malloc(num_sides * 6 * sizeof(int));
     assert(data != NULL && "Failed to allocate memory for float array");
 
     for (int i = 0; i < num_sides; i++) {
-        for (int j = 0; j < VERTS_PER_SIDE; j++) {
-            int index = i * SIDE_OFFSET + j * VBO_WIDTH;
-            data[index + 0] = sides[i].vertices[j].x;
-            data[index + 1] = sides[i].vertices[j].y;
-            data[index + 2] = sides[i].vertices[j].z;
-            data[index + 3] = sides[i].vertices[j].tx;
-            data[index + 4] = sides[i].vertices[j].ty;
-            data[index + 5] = sides[i].vertices[j].atlas_x;
-            data[index + 6] = sides[i].vertices[j].atlas_y;
-        }
+        int index = i * 6;
+        side_instance side = sides[i];
+        data[index + 0] = sides[i].x;
+        data[index + 1] = sides[i].y;
+        data[index + 2] = sides[i].z;
+        data[index + 3] = 0;
+        data[index + 4] = sides[i].side;
     }
     return data;
 }
 
 void sort_transparent_sides(chunk_mesh* packet) {
-    quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_data), distance_to_camera);
+    quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_instance), distance_to_camera);
     if (packet->transparent_data != NULL) {
         free(packet->transparent_data);
         packet->transparent_data = NULL;
     }
-    packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, packet->num_transparent_sides);
+    packet->transparent_data = chunk_mesh_to_buffer(packet->transparent_sides, packet->num_transparent_sides);
+    // packet->transparent_data = chunk_mesh_to_float_array_old(packet->transparent_sides, packet->num_transparent_sides);
+
 }

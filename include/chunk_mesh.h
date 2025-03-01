@@ -17,19 +17,28 @@ typedef struct {
 } side_data;
 
 typedef struct {
+    int x, y, z;
+    int atlas_x, atlas_y;
+    short side;
+} side_instance;
+
+typedef struct {
     int x, z;
-    side_data* opaque_sides;
-    side_data* transparent_sides;
+    side_instance* opaque_sides;
+    side_instance* transparent_sides;
     int num_opaque_sides;
     int num_transparent_sides;
 
-    float* transparent_data;
-    float* opaque_data;
+    // float* transparent_data;
+    // float* opaque_data;
+    int* transparent_data;
+    int* opaque_data;
 } chunk_mesh;
 
 void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);
-float* chunk_mesh_to_float_array(side_data* sides, int num_sides);
+// float* chunk_mesh_to_float_array_old(side_data* sides, int num_sides);
+int* chunk_mesh_to_buffer(side_instance* sides, int num_sides);
 void sort_transparent_sides(chunk_mesh* packet);
 
 #endif

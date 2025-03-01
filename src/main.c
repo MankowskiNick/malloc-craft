@@ -27,7 +27,10 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
         update_camera();
+
+        // pre optimization ~ 9-10 ms
         render(cam, program);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

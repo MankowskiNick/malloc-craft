@@ -26,7 +26,7 @@ void m_cleanup() {
     queue_cleanup(&chunk_load_queue);
 }
 
-short get_adjacent_block(int x, int y, int z, uint side, chunk* c, chunk* adj) {
+short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
     switch(side) {
         case (int)TOP:
             if (y + 1 < CHUNK_HEIGHT) {
@@ -78,7 +78,7 @@ short get_adjacent_block(int x, int y, int z, uint side, chunk* c, chunk* adj) {
 
 int get_side_visible(
     int x, int y, int z,
-    uint side, 
+    short side, 
     chunk* c,
     chunk* adj
 ) {
@@ -120,32 +120,19 @@ int get_side_visible(
     return visible;
 }
 
-void pack_side(int x_0, int y_0, int z_0, uint side, block_type* type, side_data* data) {
-    int cube_vertices_offset = side * VERTS_PER_SIDE * CUBE_VERTICES_WIDTH;
-    for (int i = 0; i < 6; i++) {
-        int index = cube_vertices_offset + i * CUBE_VERTICES_WIDTH;
-        float x = x_0 + CUBE_VERTICES[index + 0];
-        float y = y_0 + CUBE_VERTICES[index + 1];
-        float z = z_0 + CUBE_VERTICES[index + 2];
-
-        float tx = CUBE_VERTICES[index + 3];
-        float ty = CUBE_VERTICES[index + 4];
-
-        data->vertices[i].x = x;
-        data->vertices[i].y = y;
-        data->vertices[i].z = z;
-        data->vertices[i].tx = tx;
-        data->vertices[i].ty = ty;
-        data->vertices[i].atlas_x = type->face_atlas_coords[side][0] / (float)TEXTURE_ATLAS_SIZE;
-        data->vertices[i].atlas_y = type->face_atlas_coords[side][1] / (float)TEXTURE_ATLAS_SIZE;
-    }
+void pack_side(int x_0, int y_0, int z_0, short side, short type, side_instance* data) {
+    data->x = x_0;
+    data->y = y_0;
+    data->z = z_0;
+    data->side = side;
+    // data->type = type;
 }
 
 void pack_block(
     int x, int y, int z,
     chunk* c,
     chunk* adj_chunks[4], // front, back, left, right
-    side_data** chunk_side_data, 
+    side_instance** chunk_side_data, 
     int* num_sides) {
     
     int world_x = x + (CHUNK_SIZE * c->x);
@@ -166,18 +153,17 @@ void pack_block(
 
         // check if we need to reallocate memory
         if (new_side_count > SIDES_PER_CHUNK) {
-            side_data* tmp = realloc(*chunk_side_data, new_side_count * sizeof(side_data));
+            side_instance* tmp = realloc(*chunk_side_data, new_side_count * sizeof(side_instance));
             assert(tmp != NULL && "Failed to allocate memory for side data");
             *chunk_side_data = tmp;
         }
 
         short block_id = c->blocks[x][y][z];
-        block_type* type = get_block_type(block_id);
 
         pack_side(
             world_x, world_y, world_z, 
             side, 
-            type,
+            block_id,
             &((*chunk_side_data)[*num_sides])
         );
         (*num_sides)++;
@@ -185,8 +171,8 @@ void pack_block(
 }
 
 void pack_chunk(chunk* c, chunk* adj_chunks[4], 
-    side_data** opaque_side_data, int* num_opaque_sides,
-    side_data** transparent_side_data, int* num_transparent_sides) {
+    side_instance** opaque_side_data, int* num_opaque_sides,
+    side_instance** transparent_side_data, int* num_transparent_sides) {
     if (c == NULL) {
         return;
     }
@@ -231,8 +217,8 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     int transparent_side_count = 0;
     int opaque_side_count = 0;
 
-    side_data* opaque_sides = malloc(SIDES_PER_CHUNK * sizeof(side_data));
-    side_data* transparent_sides = malloc(SIDES_PER_CHUNK * sizeof(side_data));
+    side_instance* opaque_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
+    side_instance* transparent_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
     assert(opaque_sides != NULL && "Failed to allocate memory for opaque packet sides");
     assert(transparent_sides != NULL && "Failed to allocate memory for transparent packet sides");
 
@@ -246,8 +232,8 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     packet->z = z;
     packet->num_opaque_sides = opaque_side_count;
     packet->num_transparent_sides = transparent_side_count;
-    packet->opaque_data = chunk_mesh_to_float_array(opaque_sides, opaque_side_count);
-    packet->transparent_data = chunk_mesh_to_float_array(transparent_sides, transparent_side_count);
+    packet->opaque_data = chunk_mesh_to_buffer(opaque_sides, opaque_side_count);
+    packet->transparent_data = chunk_mesh_to_buffer(transparent_sides, transparent_side_count);
     packet->opaque_sides = opaque_sides;
     packet->transparent_sides = transparent_sides;
 
@@ -341,6 +327,7 @@ void sort_chunk() {
         free(packet->transparent_data);
         packet->transparent_data = NULL;
     }
-    packet->transparent_data = chunk_mesh_to_float_array(packet->transparent_sides, 
-                                                            packet->num_transparent_sides);
+    packet->transparent_data = chunk_mesh_to_buffer(packet->transparent_sides, packet->num_transparent_sides);
+    // packet->transparent_data = chunk_mesh_to_float_array_old(packet->transparent_sides, 
+    //                                                         packet->num_transparent_sides);
 }
