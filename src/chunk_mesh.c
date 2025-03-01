@@ -49,11 +49,11 @@ float distance_to_camera(const void* item) {
 
 int* chunk_mesh_to_buffer(side_instance* sides, int num_sides) {
     // x y z type side
-    int* data = malloc(num_sides * 6 * sizeof(int));
+    int* data = malloc(num_sides * 5 * sizeof(int));
     assert(data != NULL && "Failed to allocate memory for float array");
 
     for (int i = 0; i < num_sides; i++) {
-        int index = i * 6;
+        int index = i * 5;
         side_instance side = sides[i];
         data[index + 0] = sides[i].x;
         data[index + 1] = sides[i].y;

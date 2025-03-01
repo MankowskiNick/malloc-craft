@@ -123,7 +123,7 @@ void send_cube_vbo() {
 void render_sides(int* side_data, int num_sides) {
     bind_vao(vao);
     buffer_data(instance_vbo, GL_STATIC_DRAW, side_data, num_sides * 5 * sizeof(int));
-    i_add_attrib(&instance_vbo, 1, 3, 0, 5 * sizeof(int)); // position
+    i_add_attrib(&instance_vbo, 1, 3, 0 * sizeof(int), 5 * sizeof(int)); // position
     i_add_attrib(&instance_vbo, 2, 1, 3 * sizeof(int), 5 * sizeof(int)); // type
     i_add_attrib(&instance_vbo, 3, 1, 4 * sizeof(int), 5 * sizeof(int)); // side
     use_vbo(instance_vbo);
