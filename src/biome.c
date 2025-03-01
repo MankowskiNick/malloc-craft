@@ -38,7 +38,7 @@ biome BIOMES[] = {
         .underground_type = STONE,
         .underwater_type = DIRT,
         .tree_type = 0,
-        .tree_density = 0.01,
+        .tree_density = 0.03,
     },
     {
         .id = 2,
@@ -48,7 +48,7 @@ biome BIOMES[] = {
         .underground_type = STONE,
         .underwater_type = SAND,
         .tree_type = 1,
-        .tree_density = 0.005,
+        .tree_density = 0.02,
     },
     {
         .id = 3,
