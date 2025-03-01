@@ -243,7 +243,7 @@ void render(camera cam, shader_program program) {
 
     GLuint64 elapsedTime;
     glGetQueryObjectui64v(query, GL_QUERY_RESULT, &elapsedTime);
-    // printf("GPU time: %f ms\n", elapsedTime / 1e6);
+    printf("GPU time: %f ms\n", elapsedTime / 1e6);
     glDeleteQueries(1, &query);
 
     free(packet);

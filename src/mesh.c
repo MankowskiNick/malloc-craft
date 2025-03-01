@@ -295,6 +295,7 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
 
     chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, *coord);
     if (packet != NULL) {
+        free(coord);
         return packet;
     }
 
@@ -308,8 +309,8 @@ void load_chunk() {
         if (coord == NULL) {
             continue;
         }
-    
         create_chunk_mesh(coord->x, coord->z);
+        free(coord);
     }
 }
 
