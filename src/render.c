@@ -80,6 +80,15 @@ void r_init(shader_program* program, camera* camera) {
     m_init(camera);
 
     glViewport(0, 0, WIDTH, HEIGHT);
+
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+            int x = cam_cache.chunk_x - CHUNK_RENDER_DISTANCE + i;
+            int z = cam_cache.chunk_z - CHUNK_RENDER_DISTANCE + j;
+            get_chunk_mesh(x, z);
+            load_chunk();
+        }
+    }
 }
 
 void r_cleanup() {
@@ -141,6 +150,10 @@ void render(camera cam, shader_program program) {
         for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
             int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
             int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
+
+            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
+                continue;
+            }
 
             chunk_mesh* mesh = get_chunk_mesh(x, z);
 
