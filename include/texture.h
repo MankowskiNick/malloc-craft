@@ -10,13 +10,10 @@ typedef struct {
     uint id;
     uint width, height;
     uint num_channels;
-} atlas;
+    uint tex_index;
+} texture;
 
-void t_init();
-void t_cleanup();
-
-extern atlas texture_atlas;
-
-
+texture t_init(char* path, uint tex_index);
+void t_cleanup(texture* tex);
 
 #endif

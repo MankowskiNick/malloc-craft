@@ -16,7 +16,6 @@ short get_biome_id(float x, float z) {
 
 biome* get_biome(float x, float z) {
     short id = get_biome_id(x, z);
-    printf("Biome id: %d\n", id);
     return &BIOMES[id];
 }
 

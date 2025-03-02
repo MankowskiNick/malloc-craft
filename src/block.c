@@ -268,5 +268,18 @@ block_type TYPES[] = {
             {14, 0},
             {13, 0},
         }
+    },
+    {
+        .id = 12,
+        .name = "oak_planks",
+        .transparent = 0,
+        .face_atlas_coords = {
+            {16, 0},
+            {16, 0},
+            {16, 0},
+            {16, 0},
+            {16, 0},
+            {16, 0},
+        }
     }
 };

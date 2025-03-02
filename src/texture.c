@@ -4,17 +4,16 @@
 #include <stb_image.h>
 #include <glad/glad.h>
 
-atlas texture_atlas;
+// atlas texture_atlas;
 
-void t_init() {
+texture t_init(char* path, uint tex_index) {
     int width, height, num_channels;
     // flip the image vertically
     stbi_set_flip_vertically_on_load(1);
-    unsigned char *data = stbi_load("res/atlas.png", &width, &height, &num_channels, 0); 
+    unsigned char *data = stbi_load(path, &width, &height, &num_channels, 0); 
 
     if (!data) {
         printf("ERROR::TEXTURE::FAILED_TO_LOAD_TEXTURE\n");
-        return;
     }
 
     uint texture_id;
@@ -40,15 +39,19 @@ void t_init() {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     #endif
 
-
-    texture_atlas.id = texture_id;
-    texture_atlas.width = width;
-    texture_atlas.height = height;
-    texture_atlas.num_channels = num_channels;
+    texture tex = {
+        .id = texture_id,
+        .width = width,
+        .height = height,
+        .num_channels = num_channels,
+        .tex_index = tex_index
+    };
 
     stbi_image_free(data);
+
+    return tex;
 }
 
-void t_cleanup() {
-    glDeleteTextures(1, &texture_atlas.id);
+void t_cleanup(texture* tex) {
+    glDeleteTextures(1, &tex->id);
 }
