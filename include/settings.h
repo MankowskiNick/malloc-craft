@@ -33,11 +33,11 @@
 #define TEXTURE_ATLAS_SIZE 32
 
 // unused as of now, but will be used to generate different biomes
-#define WORLDGEN_BIOME_FREQUENCY 0.1f
+#define WORLDGEN_BIOME_FREQUENCY 0.2f
 #define WORLDGEN_BIOME_AMPLITUDE 1.0f
 #define WORLDGEN_BIOME_OCTAVES 2
 
-#define WORLDGEN_WATER_LEVEL 84
+#define WORLDGEN_WATER_LEVEL 64
 
 // used to generate the height of the terrain
 #define WORLDGEN_BLOCKHEIGHT_FREQUENCY 0.25f
@@ -49,4 +49,4 @@
 #define BIOME_COUNT 4
 #define TREE_COUNT 2
 
-#define CHUNK_CACHE_SIZE 2048
+#define CHUNK_CACHE_SIZE 1024
