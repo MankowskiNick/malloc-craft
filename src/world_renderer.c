@@ -97,9 +97,6 @@ void send_atlas(world_renderer* wr) {
 
     uint atlas_size_loc = glGetUniformLocation(wr->program.id, "atlasSize");
     glUniform1f(atlas_size_loc, (float)ATLAS_SIZE);
-
-    uint tex_size_loc = glGetUniformLocation(wr->program.id, "texSize");
-    glUniform1f(tex_size_loc, (float)TEXTURE_SIZE);
 }
 
 void send_fog(world_renderer* wr) {

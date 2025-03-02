@@ -8,7 +8,7 @@
 #include <skybox.h>
 
 int main() {
-    GLFWwindow* window = create_window("malloc-craft", WIDTH, HEIGHT);
+    GLFWwindow* window = create_window(TITLE, WIDTH, HEIGHT);
 
     if (!window || !load_gl()) {
         return -1;

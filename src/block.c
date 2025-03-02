@@ -96,7 +96,12 @@ void place_block(player_instance player) {
 
 // TODO: refactor to make more safe
 block_type* get_block_type(short id) {
-    return &TYPES[id];
+    for (int i = 0; i < BLOCK_COUNT; i++) {
+        if (TYPES[i].id == id) {
+            return &TYPES[i];
+        }
+    }
+    return NULL;
 }
 
 block_type TYPES[] = {

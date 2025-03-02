@@ -3,53 +3,63 @@ A Minecraft-like voxel game written in C using OpenGL. This project focuses on m
 
 ![image](https://github.com/user-attachments/assets/e545a467-4824-49f4-b7b0-020aaff5a91c)
 
+## Key Features
+- Procedural terrain generation with multiple biomes
+- Dynamic chunk loading and management
+- Block placement and destruction with raycast selection
+- Procedural tree generation
+- Texture atlas support for various block types
+- Performance optimizations with mesh batching
 
-Key features:
-- Custom chunk-based world generation
-- Basic block placement and destruction
-- First-person camera controls
-- Texture atlas support for blocks
-- OpenGL-based rendering
+## Settings
+Many parts of `malloc-craft` are configurable.  Please see `include/settings.h` for more information.
 
 ## Project Structure
 
-- **include/** – Header files for the project (e.g., `block.h`, `camera.h`, `world.h`).
-- **src/** – Source code files.
-- **lib/** – Third-party libraries (e.g., cglm, GLFW).
-- **res/** – Resources such as textures (e.g., `atlas.png`) and shader files.
-- **CMakeLists.txt** – Main CMake configuration file.
+- **include/** – Header files defining the game's architecture
+- **src/** – Source directory
+- **lib/** – Third-party libraries
+  - cglm – Math library optimized for graphics programming
+  - GLFW – Platform-independent window and input handling
+  - glad – OpenGL loading library
+  - stb_image – Image loading utilities
+- **res/** – Game resources
+  - **shaders/** – GLSL shader programs
+  - **atlas.png / atlas.xcf** - Texture atlas image and GIMP file
+  - **skybox.png / skybox.xcf** - Skybox image and GIMP file
 
 ## Prerequisites
 
-- CMake (version 3.10 or higher recommended)
-- A C compiler (e.g., gcc, clang, or MSVC)
-- GLFW dependencies (if not using the bundled source in `lib/GLFW`)
-- cglm (included in the `lib/cglm` folder)
+- CMake (version 3.10 or higher)
+- C compiler with C11 support (gcc, clang, MSVC)
+- OpenGL 3.3+ compatible graphics hardware and drivers
 
 ## Building
 
-1. Create a build directory:
+1. Clone the repository with submodules:
+    ```sh
+    git clone  https://github.com/MankowskiNick/malloc-craft.git
+    cd malloc-craft
+    ```
+
+2. Create a build directory:
     ```sh
     mkdir build && cd build
     ```
 
-2. Generate the build files with CMake:
+3. Generate the build files with CMake:
     ```sh
     cmake ..
     ```
 
-3. Build the project:
+4. Build the project:
     ```sh
     make
     ```
 
-## Running
-
-After a successful build, the compiled executable `malloc-craft` (or its platform-specific equivalent) will reside in the `build` folder or a subdirectory thereof. Run it from the command line or your IDE.
-
 ## Acknowledgments
 
-- [GLFW](https://www.glfw.org/)
-- [cglm](https://github.com/recp/cglm)
-- [stb](https://github.com/nothings/stb/)
-- [glad](https://github.com/Dav1dde/glad)
+- [GLFW](https://www.glfw.org/) – Window and input management
+- [cglm](https://github.com/recp/cglm) – Graphics math library
+- [stb](https://github.com/nothings/stb/) – Image loading
+- [glad](https://github.com/Dav1dde/glad) – OpenGL loading

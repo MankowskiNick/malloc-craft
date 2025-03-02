@@ -8,7 +8,6 @@ out vec4 FragColor;
 
 uniform sampler2D atlas;
 uniform float atlasSize;
-uniform float textureSize;
 uniform float fogDistance;
 
 void main() {
