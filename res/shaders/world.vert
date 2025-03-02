@@ -7,6 +7,7 @@ layout (location = 3) in int aSide;
 
 out vec2 texCoord;
 out vec2 atlasCoord;
+out float dist;
 
 uniform mat4 view;
 uniform mat4 proj;
@@ -36,4 +37,6 @@ void main()
 
     texCoord = vec2(aPos.x, aPos.y);
     atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
+
+    dist = length(gl_Position.xyz);
 }

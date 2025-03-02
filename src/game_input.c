@@ -100,7 +100,7 @@ void handle_keypress(int key) {
             player->selected_block = OAK_LOG;
             return;
         case GLFW_KEY_6:
-            player->selected_block = OAK_LEAF;
+            player->selected_block = OAK_PLANKS;
             return;
         case GLFW_KEY_7:
             player->selected_block = GLASS;

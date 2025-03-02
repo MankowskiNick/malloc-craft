@@ -24,7 +24,8 @@ enum {
     GLASS,
     SAND,
     CACTUS,
-    CACTUS_TOP
+    CACTUS_TOP,
+    OAK_PLANKS
 };
 
 typedef struct {

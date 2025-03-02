@@ -102,6 +102,11 @@ void send_atlas(world_renderer* wr) {
     glUniform1f(tex_size_loc, (float)TEXTURE_SIZE);
 }
 
+void send_fog(world_renderer* wr) {
+    uint fog_loc = glGetUniformLocation(wr->program.id, "fogDistance");
+    glUniform1f(fog_loc, RENDER_DISTANCE);
+}
+
 void send_cube_vbo(world_renderer* wr) {
     float faceVertices[] = {
         0.0f, 0.0f, 0.0f,
@@ -140,6 +145,7 @@ void render_world(world_renderer* wr) {
     send_view_matrix(wr);
     send_proj_matrix(wr);
     send_atlas(wr);
+    send_fog(wr);
 
     send_cube_vbo(wr);
     glClear(GL_DEPTH_BUFFER_BIT);
