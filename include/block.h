@@ -2,7 +2,7 @@
 #define BLOCK_H
 
 #include <block_models.h>
-#include <camera.h>
+#include <player_instance.h>
 #include <settings.h>
 #include <util.h>
 
@@ -13,8 +13,8 @@
 #define CUBE_VERTICES_WIDTH 6
 extern float CUBE_VERTICES[];
 
-void break_block(camera cam);
-void place_block(camera cam);
+void break_block(player_instance player);
+void place_block(player_instance player);
 
 block_type* get_block_type(short id);
 

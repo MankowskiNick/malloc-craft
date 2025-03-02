@@ -17,7 +17,7 @@ typedef struct key_entry {
 
 key_entry* key_stack;
 
-camera* cam;
+player_instance* player;
 
 void update_pos(int key, vec3 front, vec3 right) {
     float dx = 0.0f, dy = 0.0f, dz = 0.0f;
@@ -52,6 +52,7 @@ void update_pos(int key, vec3 front, vec3 right) {
             break;
     }
 
+    camera* cam = &(player->cam);
     update_camera_pos(cam, (float[3]){dx, dy, dz});
 }
 
@@ -59,6 +60,7 @@ void update_position() {
     key_entry* cur = key_stack;
     while(cur != NULL) {
         vec3 front, up, right;
+        camera* cam = &(player->cam);
         glm_normalize_to(cam->front, front);
         glm_normalize_to(cam->up, up);
         glm_vec3_cross(front, up, right);
@@ -71,7 +73,7 @@ void update_position() {
 
 void update_camera() {
     update_position();
-    update_orientation(cam);
+    update_orientation(&(player->cam));
 }
 
 
@@ -81,6 +83,33 @@ void handle_keypress(int key) {
     switch(key) {
         case GLFW_KEY_ESCAPE:
             glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
+            return;
+        case GLFW_KEY_1:
+            player->selected_block = GRASS;
+            return;
+        case GLFW_KEY_2:
+            player->selected_block = DIRT;
+            return;
+        case GLFW_KEY_3:
+            player->selected_block = STONE;
+            return;
+        case GLFW_KEY_4:
+            player->selected_block = WEEZER;
+            return;
+        case GLFW_KEY_5:
+            player->selected_block = OAK_LOG;
+            return;
+        case GLFW_KEY_6:
+            player->selected_block = OAK_LEAF;
+            return;
+        case GLFW_KEY_7:
+            player->selected_block = GLASS;
+            return;
+        case GLFW_KEY_8:
+            player->selected_block = SAND;
+            return;
+        case GLFW_KEY_9:
+            player->selected_block = CACTUS;
             return;
         default:
             break;
@@ -147,8 +176,10 @@ void mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
     // mouse.x = xpos;
     // mouse.y = ypos;
 
+    camera* cam = &(player->cam);
     cam->yaw += dx * SENSITIVITY;
     cam->pitch -= dy * SENSITIVITY;
+
 
     glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 }
@@ -157,14 +188,15 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     if (action == GLFW_PRESS) {
         uint chunk_x, chunk_z, side;
 
+        camera* cam = &(player->cam);
         chunk* c = get_chunk_at(cam->position[0], cam->position[2], &chunk_x, &chunk_z);
 
         switch(button) {
             case GLFW_MOUSE_BUTTON_LEFT:
-                break_block(*cam);
+                break_block(*player);
                 break;
             case GLFW_MOUSE_BUTTON_RIGHT:
-                place_block(*cam);
+                place_block(*player);
                 break;
             default:
                 break;
@@ -172,7 +204,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     }
 }
 
-void i_init(GLFWwindow* window, camera* player_cam) {
+void i_init(GLFWwindow* window, player_instance* player_ptr) {
     key_stack = NULL;
 
     // lock cursor to center of window
@@ -182,7 +214,7 @@ void i_init(GLFWwindow* window, camera* player_cam) {
     glfwSetCursorPosCallback(window, mouse_move_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
 
-    cam = player_cam;
+    player = player_ptr;
 }
 
 void i_cleanup() {

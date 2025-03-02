@@ -2,6 +2,7 @@
 // #include <render.h>
 #include <mesh.h>
 #include <world.h>
+#include <player_instance.h>
 #include <cglm/cglm.h>
 
 
@@ -30,7 +31,8 @@ float get_empty_dist(camera cam) {
     return t;
 }
 
-void break_block(camera cam) {
+void break_block(player_instance player) {
+    camera cam = player.cam;
     float t = get_empty_dist(cam);
     t += RAY_STEP;
 
@@ -60,8 +62,8 @@ void break_block(camera cam) {
     queue_chunk_for_sorting(new_mesh);
 }
 
-void place_block(camera cam) {
-    
+void place_block(player_instance player) {
+    camera cam = player.cam;
     float t = get_empty_dist(cam);
     t -= RAY_STEP;
 
@@ -85,7 +87,7 @@ void place_block(camera cam) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = GLASS;
+    c->blocks[chunk_x][chunk_y][chunk_z] = player.selected_block;
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);

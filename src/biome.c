@@ -9,7 +9,7 @@ short get_biome_id(float x, float z) {
     float noise = n_get(x, z, 
         WORLDGEN_BIOME_FREQUENCY, 
         WORLDGEN_BIOME_AMPLITUDE, 
-        1);
+        WORLDGEN_BIOME_OCTAVES);
     float biome = noise * (float)BIOME_COUNT; // multiply by number of biomes
     return (uint)biome;
 }
