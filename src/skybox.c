@@ -1,14 +1,16 @@
 #include <skybox.h>
+// #include <camera.h>
 #include <settings.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <cglm/cglm.h>
 
 #include <stdio.h>
 
 #define PI 3.141592653
 
-float* get_vertices(int* count) {
+float* get_vertices(int* count, float** texture_coords) {
     // Each stack has 2*(slices+1) vertices (for a triangle strip)
     // Each vertex has 3 coordinates (x,y,z)
     int vertices_per_stack = 2 * (SKYBOX_SLICES + 1);
@@ -62,7 +64,7 @@ skybox* create_skybox() {
     glBufferData(GL_ARRAY_BUFFER, s->vertex_count * sizeof(float), s->vertices, GL_STATIC_DRAW);
     
     // Set up vertex attributes
-    glVertexAttribPointer(0, count, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     shader vert_shader = create_shader("res/shaders/skybox.vert", GL_VERTEX_SHADER);
@@ -77,11 +79,31 @@ void destroy_skybox(skybox* s) {
     free(s);
 }
 
-void draw_skybox(skybox* s) {
+void get_rotation_matrix(camera* cam, mat4* out) {
+    mat4 view;
+    glm_mat4_identity(view);
+    glm_rotate(view, -cam->yaw, (vec3){0.0f, 1.0f, 0.0f});
+    glm_rotate(view, cam->pitch, (vec3){1.0f, 0.0f, 0.0f});
+    glm_mat4_inv(view, *out);
+}
+
+void draw_skybox(skybox* s, camera* cam) {
+
+    glDisable(GL_DEPTH_TEST);
     use_program(s->program);
     bind_vao(s->vao);
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+    mat4 view;
+    get_rotation_matrix(cam, &view);
+    uint view_loc = glGetUniformLocation(s->program.id, "view");
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float*)view);
+
+    mat4 proj;
+    get_projection_matrix(&proj, 45.0f, 800.0f / 600.0f, 0.1f, RENDER_DISTANCE);
+    uint proj_loc = glGetUniformLocation(s->program.id, "proj");
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 
     int vertices_per_stack = 2 * (SKYBOX_SLICES + 1);
     
@@ -89,4 +111,6 @@ void draw_skybox(skybox* s) {
         int start_vertex = stack * vertices_per_stack;
         glDrawArrays(GL_TRIANGLE_STRIP, start_vertex, vertices_per_stack);
     }
+
+    glEnable(GL_DEPTH_TEST);
 }

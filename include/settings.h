@@ -12,7 +12,7 @@
 #define TRANSPARENT_LEAVES
 #define CHUNK_LOAD_PER_FRAME 1
 
-// #define WIREFRAME
+#define WIREFRAME
 
 #define TEXTURE_SIZE 16
 #define ATLAS_SIZE 32
@@ -29,9 +29,9 @@
 #define MAX_REACH 5.0f
 #define RAY_STEP 0.05f
 
-#define SKYBOX_SLICES 30
-#define SKYBOX_STACKS 30
-#define SKYBOX_RADIUS 100.0f
+#define SKYBOX_SLICES 15
+#define SKYBOX_STACKS 15
+#define SKYBOX_RADIUS 1.0f
 
 // how many textures are packed into one side of the atlas
 #define TEXTURE_ATLAS_SIZE 32

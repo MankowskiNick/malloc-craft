@@ -6,6 +6,7 @@
 #include <util.h>
 #include <settings.h>
 #include <shader.h>
+#include <camera.h>
 
 typedef struct {
     VAO vao;
@@ -19,6 +20,6 @@ typedef struct {
 
 skybox* create_skybox();
 void destroy_skybox(skybox* s);
-void draw_skybox(skybox* s);
+void draw_skybox(skybox* s, camera* cam);
 
 #endif

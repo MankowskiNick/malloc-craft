@@ -35,8 +35,8 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         update_camera();
 
-        draw_skybox(s);
-        // render(player.cam, program);
+        draw_skybox(s, &(player.cam));
+        render(player.cam, program);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
