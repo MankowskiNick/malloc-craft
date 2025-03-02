@@ -18,8 +18,8 @@ typedef struct {
     shader_program program;
 } skybox;
 
-skybox* create_skybox();
-void destroy_skybox(skybox* s);
-void draw_skybox(skybox* s, camera* cam);
+skybox create_skybox();
+void skybox_cleanup(skybox* s);
+void render_skybox(skybox* s, camera* cam);
 
 #endif

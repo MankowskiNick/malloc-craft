@@ -10,7 +10,7 @@
 
 #define PI 3.141592653
 
-float* get_vertices(int* count, float** texture_coords) {
+float* get_vertices(int* count) {
     // Each stack has 2*(slices+1) vertices (for a triangle strip)
     // Each vertex has 3 coordinates (x,y,z)
     int vertices_per_stack = 2 * (SKYBOX_SLICES + 1);
@@ -45,23 +45,21 @@ float* get_vertices(int* count, float** texture_coords) {
     return vertices;
 }
 
-skybox* create_skybox() {
-    skybox* s = malloc(sizeof(skybox));
+skybox create_skybox() {
 
     int count;
-    s->vertices = get_vertices(&count);
-    s->vertex_count = count;
+    float* vertices = get_vertices(&count);
 
     // Create and bind VAO first
-    s->vao = create_vao();
-    bind_vao(s->vao);
+    VAO vao = create_vao();
+    bind_vao(vao);
     
     // Create, bind VBO and upload data
-    s->vbo = create_vbo(GL_STATIC_DRAW);
-    use_vbo(s->vbo);
+    VBO vbo = create_vbo(GL_STATIC_DRAW);
+    use_vbo(vbo);
     
     // Load buffer data during initialization
-    glBufferData(GL_ARRAY_BUFFER, s->vertex_count * sizeof(float), s->vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, count * sizeof(float), vertices, GL_STATIC_DRAW);
     
     // Set up vertex attributes
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -69,14 +67,23 @@ skybox* create_skybox() {
 
     shader vert_shader = create_shader("res/shaders/skybox.vert", GL_VERTEX_SHADER);
     shader frag_shader = create_shader("res/shaders/skybox.frag", GL_FRAGMENT_SHADER);
-    s->program = create_program(vert_shader, frag_shader);
+    shader_program program = create_program(vert_shader, frag_shader);
+    delete_shader(vert_shader);
+    delete_shader(frag_shader);
+
+    skybox s = {
+        .vertices = vertices,
+        .vertex_count = count,
+        .vao = vao,
+        .vbo = vbo,
+        .program = program
+    };
 
     return s;
 }
 
-void destroy_skybox(skybox* s) {
+void skybox_cleanup(skybox* s) {
     free(s->vertices);
-    free(s);
 }
 
 void get_rotation_matrix(camera* cam, mat4* out) {
@@ -87,7 +94,7 @@ void get_rotation_matrix(camera* cam, mat4* out) {
     glm_mat4_inv(view, *out);
 }
 
-void draw_skybox(skybox* s, camera* cam) {
+void render_skybox(skybox* s, camera* cam) {
 
     glDisable(GL_DEPTH_TEST);
     use_program(s->program);

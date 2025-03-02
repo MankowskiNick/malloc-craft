@@ -25,7 +25,7 @@ int main() {
         }
     };
 
-    skybox* s = create_skybox();
+    skybox s = create_skybox();
 
     shader_program program;
     r_init(&program, &(player.cam));
@@ -35,7 +35,7 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         update_camera();
 
-        draw_skybox(s, &(player.cam));
+        // draw_skybox(&s, &(player.cam));
         render(player.cam, program);
 
         glfwSwapBuffers(window);

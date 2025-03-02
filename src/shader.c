@@ -86,3 +86,7 @@ void delete_program(shader_program program) {
 void use_program(shader_program program) {
     glUseProgram(program.id);
 }
+
+void stop_program() {
+    glUseProgram(0);
+}
