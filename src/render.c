@@ -67,7 +67,6 @@ void r_init(shader_program* program, camera* camera) {
     shader vert_shader = create_shader("res/shaders/shader.vert", GL_VERTEX_SHADER);
 
     *program = create_program(vert_shader, frag_shader);
-    use_program(*program);
 
     delete_shader(frag_shader);
     delete_shader(vert_shader);
@@ -102,13 +101,10 @@ void r_cleanup() {
 }
 
 void send_cube_vbo() {
-    // Vertex positions for a unit quad (centered, in XY plane)
     float faceVertices[] = {
-        // First triangle
         0.0f, 0.0f, 0.0f,
         1.0f, 0.0f, 0.0f,
         1.0f, 1.0f, 0.0f,
-        // Second triangle
         0.0f, 0.0f, 0.0f,
         1.0f, 1.0f, 0.0f,
         0.0f, 1.0f, 0.0f
@@ -121,12 +117,6 @@ void send_cube_vbo() {
 }
 
 void render_sides(int* side_data, int num_sides) {
-    // for (int i = 0; i < num_sides; i++) {
-    //     int offset = i * VBO_WIDTH;
-    //     int atlas_x = side_data[offset + 3];
-    //     int atlas_y = side_data[offset + 4];
-    //     printf("atlas_x: %d, atlas_y: %d\n", atlas_x, atlas_y);
-    // }
     bind_vao(vao);
     buffer_data(instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
     i_add_attrib(&instance_vbo, 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
@@ -134,7 +124,6 @@ void render_sides(int* side_data, int num_sides) {
     i_add_attrib(&instance_vbo, 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
     use_vbo(instance_vbo);
 
-    // Set these attributes to advance per-instance, not per-vertex
     glVertexAttribDivisor(1, 1);
     glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
@@ -143,6 +132,9 @@ void render_sides(int* side_data, int num_sides) {
 }
 
 void render(camera cam, shader_program program) {
+
+    use_program(program);
+
     mat4 view, proj;
     get_view_matrix(cam, &view);
     uint view_loc = glGetUniformLocation(program.id, "view");
@@ -164,8 +156,7 @@ void render(camera cam, shader_program program) {
 
     send_cube_vbo();
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    // glClear(GL_DEPTH_BUFFER_BIT);
 
     int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(cam.position[0]);
     int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(cam.position[2]);
@@ -221,11 +212,6 @@ void render(camera cam, shader_program program) {
     // if the camera has moved between chunk boundaries
     quicksort(packet, num_packets, sizeof(chunk_mesh*), chunk_distance_to_camera);
 
-    GLuint query;
-    glGenQueries(1, &query);
-    glBeginQuery(GL_TIME_ELAPSED, query);
-
-
     for (int i = 0; i < num_packets; i++) {
         if (packet[i] == NULL) {
             continue;
@@ -237,14 +223,6 @@ void render(camera cam, shader_program program) {
             packet[i]->transparent_data,
             packet[i]->num_transparent_sides);
     }
-
-
-    glEndQuery(GL_TIME_ELAPSED);
-
-    GLuint64 elapsedTime;
-    glGetQueryObjectui64v(query, GL_QUERY_RESULT, &elapsedTime);
-    printf("GPU time: %f ms\n", elapsedTime / 1e6);
-    glDeleteQueries(1, &query);
 
     free(packet);
 }

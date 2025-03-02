@@ -29,10 +29,13 @@
 #define MAX_REACH 5.0f
 #define RAY_STEP 0.05f
 
+#define SKYBOX_SLICES 30
+#define SKYBOX_STACKS 30
+#define SKYBOX_RADIUS 100.0f
+
 // how many textures are packed into one side of the atlas
 #define TEXTURE_ATLAS_SIZE 32
 
-// unused as of now, but will be used to generate different biomes
 #define WORLDGEN_BIOME_FREQUENCY 0.2f
 #define WORLDGEN_BIOME_AMPLITUDE 1.0f
 #define WORLDGEN_BIOME_OCTAVES 2
