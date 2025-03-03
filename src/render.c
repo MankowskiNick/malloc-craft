@@ -52,8 +52,8 @@ renderer create_renderer(camera* camera) {
         }
     }
 
-    block_renderer wr = create_block_renderer(camera, "res/atlas.png");
-    block_renderer lr = create_liquid_renderer(camera, "res/atlas.png");
+    block_renderer wr = create_block_renderer(camera, ATLAS_PATH, CAUSTIC_PATH);
+    block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, CAUSTIC_PATH);
     skybox sky = create_skybox(camera);
 
     renderer r = {

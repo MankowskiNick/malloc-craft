@@ -71,7 +71,7 @@ skybox create_skybox(camera* cam) {
     f_add_attrib(&vbo, 1, 2, 3 * sizeof(float), 5 * sizeof(float)); // texture coords
 
     // load sky texture
-    texture sky = t_init("res/skybox.png", 1);
+    texture sky = t_init(SKYBOX_PATH, SKYBOX_TEXTURE_INDEX);
 
     // shader program
     shader vert_shader = create_shader("res/shaders/skybox.vert", GL_VERTEX_SHADER);

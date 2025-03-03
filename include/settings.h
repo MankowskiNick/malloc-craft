@@ -35,6 +35,14 @@
 // Render as wireframe? Useful for debugging
 // #define WIREFRAME
 
+#define ATLAS_PATH "res/textures/atlas.png"
+#define SKYBOX_PATH "res/textures/skybox.png"
+#define CAUSTIC_PATH "res/textures/caustic.png"
+
+#define ATLAS_TEXTURE_INDEX 0
+#define CAUSTIC_TEXTURE_INDEX 1
+#define SKYBOX_TEXTURE_INDEX 2
+
 // Vsync on?  Comment to disable
 #define VSYNC
 

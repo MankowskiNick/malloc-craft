@@ -5,8 +5,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-block_renderer create_liquid_renderer(camera* cam, char* atlas_path) {
-    texture atlas = t_init(atlas_path, 0);
+block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* caustic_path) {
+    texture atlas = t_init(atlas_path, ATLAS_TEXTURE_INDEX);
+    texture caustic = t_init(caustic_path, CAUSTIC_TEXTURE_INDEX);
     
     camera_cache cam_cache = {
         .x = cam->position[0],
@@ -28,6 +29,7 @@ block_renderer create_liquid_renderer(camera* cam, char* atlas_path) {
         .cam = cam,
         .program = program,
         .atlas = atlas,
+        .caustic = caustic,
         .vao = vao,
         .cube_vbo = cube_vbo,
         .instance_vbo = instance_vbo

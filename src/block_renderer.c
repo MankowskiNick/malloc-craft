@@ -6,8 +6,9 @@
 #include <glad/glad.h>
 
 
-block_renderer create_block_renderer(camera* cam, char* atlas_path) {
-    texture atlas = t_init(atlas_path, 0);
+block_renderer create_block_renderer(camera* cam, char* atlas_path, char* caustic_path) {
+    texture atlas = t_init(atlas_path, ATLAS_TEXTURE_INDEX);
+    texture caustic = t_init(caustic_path, CAUSTIC_TEXTURE_INDEX);
     
     camera_cache cam_cache = {
         .x = cam->position[0],
@@ -29,6 +30,7 @@ block_renderer create_block_renderer(camera* cam, char* atlas_path) {
         .cam = cam,
         .program = program,
         .atlas = atlas,
+        .caustic = caustic,
         .vao = vao,
         .cube_vbo = cube_vbo,
         .instance_vbo = instance_vbo
@@ -67,6 +69,9 @@ void send_atlas(block_renderer* sr) {
 
     uint atlas_size_loc = glGetUniformLocation(sr->program.id, "atlasSize");
     glUniform1f(atlas_size_loc, (float)ATLAS_SIZE);
+
+    glActiveTexture(GL_TEXTURE0 + sr->caustic.tex_index);
+    glBindTexture(GL_TEXTURE_2D, sr->caustic.id);
 }
 
 void send_fog(block_renderer* sr) {
