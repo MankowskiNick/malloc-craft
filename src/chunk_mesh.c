@@ -49,6 +49,7 @@ int* chunk_mesh_to_buffer(side_instance* sides, int num_sides) {
         data[index + 3] = sides[i].atlas_x;
         data[index + 4] = sides[i].atlas_y;
         data[index + 5] = sides[i].side;
+        data[index + 6] = sides[i].underwater;
     }
     return data;
 }

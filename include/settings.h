@@ -20,12 +20,6 @@
 // Chunks are cached in memory to reduce load times, how large should the cache be?
 #define CHUNK_CACHE_SIZE 1024
 
-// Radius of chunks to redner
-#define CHUNK_RENDER_DISTANCE 20
-
-// Render distance - also serves as the fog distance
-#define RENDER_DISTANCE 500.0f
-
 
 
 
@@ -46,6 +40,13 @@
 // Vsync on?  Comment to disable
 #define VSYNC
 
+
+// Radius of chunks to redner
+#define CHUNK_RENDER_DISTANCE 20
+
+// Render distance - also serves as the fog distance
+#define RENDER_DISTANCE 500.0f
+
 // Allow transparent leaves?  Transparent leaves can negatively impact performance.
 // Comment to disable
 #define TRANSPARENT_LEAVES
@@ -65,6 +66,7 @@
 // Water settings
 #define WATER_OFFSET 0.2f
 #define WATER_HEIGHT 1.0f
+#define WATER_DISTANCE 50.0f
 
 
 

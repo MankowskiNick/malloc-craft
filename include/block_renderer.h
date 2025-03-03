@@ -23,6 +23,8 @@ void send_view_matrix(block_renderer* br);
 void send_proj_matrix(block_renderer* br);
 void send_atlas(block_renderer* br);
 void send_fog(block_renderer* br);
+void send_time(block_renderer* br);
+void send_water_info(block_renderer* br);
 
 void render_sides(block_renderer* br, int* side_data, int num_sides);
 

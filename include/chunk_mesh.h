@@ -3,12 +3,14 @@
 
 #include <camera.h>
 
-#define VBO_WIDTH 6
+#define VBO_WIDTH 7
 
 typedef struct {
     int x, y, z;
-    int atlas_x, atlas_y;
+    short atlas_x, atlas_y;
     short side;
+    short face;
+    short underwater;
 } side_instance;
 
 typedef struct {

@@ -76,14 +76,14 @@ short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) 
     return AIR;
 }
 
-int get_side_visible(
+void get_side_visible(
     int x, int y, int z,
     short side, 
     chunk* c,
-    chunk* adj
+    chunk* adj,
+    int* visible_out,
+    int* underwater_out
 ) {
-    uint visible = 0;
-
     // calculate adjacent block
     short adjacent_id = get_adjacent_block(x, y, z, side, c, adj);
 
@@ -92,7 +92,12 @@ int get_side_visible(
 
     // calculate visibility 
     block_type* adjacent = get_block_type(adjacent_id);
-    visible = adjacent_id == AIR || get_block_type(adjacent_id)->transparent != current->transparent;
+    uint visible = adjacent_id == AIR || get_block_type(adjacent_id)->transparent != current->transparent;
+
+    // check if we are underwater
+    if (adjacent_id == WATER) {
+        *underwater_out = 1;
+    }
 
     // make sure transparent neighbors are visible
     if (adjacent != NULL && adjacent->transparent != current->transparent) {
@@ -117,14 +122,16 @@ int get_side_visible(
             break;
     }
 
-    return visible;
+    *visible_out = visible;
+    // *underwater_out = underwater;
 }
 
-void pack_side(int x_0, int y_0, int z_0, short side, short type, side_instance* data) {
+void pack_side(int x_0, int y_0, int z_0, short side, short type, uint underwater, side_instance* data) {
     data->x = x_0;
     data->y = y_0;
     data->z = z_0;
     data->side = side;
+    data->underwater = (short)underwater;
     block_type* block = get_block_type(type);
     data->atlas_x = block->face_atlas_coords[side][0];
     data->atlas_y = block->face_atlas_coords[side][1];
@@ -147,7 +154,10 @@ void pack_block(
             adj = adj_chunks[side];
         }
 
-        if (!get_side_visible(x, y, z, side, c, adj)) {
+        int visible = 0;
+        int underwater = 0;
+        get_side_visible(x, y, z, side, c, adj, &visible, &underwater);
+        if (!visible) {
             continue;
         }
 
@@ -166,6 +176,7 @@ void pack_block(
             world_x, world_y, world_z, 
             side, 
             block_id,
+            underwater,
             &((*chunk_side_data)[*num_sides])
         );
         (*num_sides)++;
@@ -343,6 +354,4 @@ void sort_chunk() {
         packet->transparent_data = NULL;
     }
     packet->transparent_data = chunk_mesh_to_buffer(packet->transparent_sides, packet->num_transparent_sides);
-    // packet->transparent_data = chunk_mesh_to_float_array_old(packet->transparent_sides, 
-    //                                                         packet->num_transparent_sides);
 }

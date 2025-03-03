@@ -4,13 +4,19 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in ivec3 aInstancePos;
 layout (location = 2) in ivec2 aAtlasCoord;
 layout (location = 3) in int aSide;
+layout (location = 4) in int aUnderwater;
 
 out vec2 texCoord;
+out float y;
 out vec2 atlasCoord;
 out float dist;
+out float underwater;
 
 uniform mat4 view;
 uniform mat4 proj;
+// uniform float waterOffset;
+// uniform float waterLevel;
+uniform float time;
 
 vec3 transformFace(vec3 pos, int face) {
     if(face == 0) { // front face (+X)
@@ -33,10 +39,17 @@ void main()
 {
     vec3 instancePos = vec3(aInstancePos);
     vec3 worldPos = transformFace(aPos, aSide) + instancePos;
+
     gl_Position = proj * view * vec4(worldPos, 1.0);
 
     texCoord = vec2(aPos.x, aPos.y);
     atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
 
+    // offset water level for waves
+    y = worldPos.y;
+    y -= sin(worldPos.x * 0.5 + time) * 0.075;
+    y -= sin(worldPos.z * 0.5 + time) * 0.075;
+
     dist = length(gl_Position.xyz);
+    underwater = float(aUnderwater);
 }

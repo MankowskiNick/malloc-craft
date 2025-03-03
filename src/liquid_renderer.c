@@ -38,14 +38,6 @@ block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* caust
     return br;
 }
 
-void send_water_info(block_renderer* br) {
-    glUniform1f(glGetUniformLocation(br->program.id, "waterOffset"), WATER_OFFSET);
-    glUniform1f(glGetUniformLocation(br->program.id, "waterLevel"), (float)WORLDGEN_WATER_LEVEL);
-
-    float current_time = (float)glfwGetTime();
-    glUniform1f(glGetUniformLocation(br->program.id, "time"), current_time);
-}
-
 void render_liquids(block_renderer* br, chunk_mesh** packet, int num_packets) {
     use_program(br->program);
     bind_vao(br->vao);
@@ -55,6 +47,7 @@ void render_liquids(block_renderer* br, chunk_mesh** packet, int num_packets) {
     send_atlas(br);
     send_fog(br);
     send_water_info(br);
+    send_time(br);
 
     send_cube_vbo(br->vao, br->cube_vbo);
 
