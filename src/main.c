@@ -24,11 +24,7 @@ int main() {
             .pitch = 0.0f
         }
     };
-
-    // skybox s = create_skybox();
-
-    // shader_program program;
-    // r_init(&program, &(player.cam));
+    
     renderer r = create_renderer(&(player.cam));
 
     i_init(window, &player);
