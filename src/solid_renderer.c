@@ -1,4 +1,4 @@
-#include <world_renderer.h>
+#include <solid_renderer.h>
 #include <mesh.h>
 #include <sort.h>
 #include <block.h>
@@ -6,7 +6,7 @@
 #include <glad/glad.h>
 
 
-world_renderer create_world_renderer(camera* cam, char* atlas_path) {
+solid_renderer create_solid_renderer(camera* cam, char* atlas_path) {
     // r_cam_ref = cam;
     
     texture atlas = t_init(atlas_path, 0);
@@ -39,7 +39,7 @@ world_renderer create_world_renderer(camera* cam, char* atlas_path) {
         }
     }
 
-    world_renderer wr = {
+    solid_renderer wr = {
         .cam = cam,
         // .cam_cache = cam_cache,
         .program = program,
@@ -52,7 +52,7 @@ world_renderer create_world_renderer(camera* cam, char* atlas_path) {
     return wr;
 }
 
-void destroy_world_renderer(world_renderer wr) {
+void destroy_solid_renderer(solid_renderer wr) {
     delete_vao(wr.vao);
     delete_vbo(wr.cube_vbo);
     delete_vbo(wr.instance_vbo);
@@ -61,21 +61,21 @@ void destroy_world_renderer(world_renderer wr) {
     m_cleanup();
 }
 
-void send_view_matrix(world_renderer* wr) {
+void send_view_matrix(solid_renderer* wr) {
     mat4 view;
     get_view_matrix(*(wr->cam), &view);
     uint view_loc = glGetUniformLocation(wr->program.id, "view");
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float*)view);
 }
 
-void send_proj_matrix(world_renderer* wr) {
+void send_proj_matrix(solid_renderer* wr) {
     mat4 proj;
     get_projection_matrix(&proj, 45.0f, 800.0f / 600.0f, 0.1f, RENDER_DISTANCE);
     uint proj_loc = glGetUniformLocation(wr->program.id, "proj");
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 }
 
-void send_atlas(world_renderer* wr) {
+void send_atlas(solid_renderer* wr) {
     glActiveTexture(GL_TEXTURE0 + wr->atlas.tex_index);
     glBindTexture(GL_TEXTURE_2D, wr->atlas.id);
     uint atlas_loc = glGetUniformLocation(wr->program.id, "atlas");
@@ -85,14 +85,14 @@ void send_atlas(world_renderer* wr) {
     glUniform1f(atlas_size_loc, (float)ATLAS_SIZE);
 }
 
-void send_fog(world_renderer* wr) {
+void send_fog(solid_renderer* wr) {
     uint fog_loc = glGetUniformLocation(wr->program.id, "fogDistance");
     glUniform1f(fog_loc, RENDER_DISTANCE);
 }
 
 
 
-void render_sides(world_renderer* wr, int* side_data, int num_sides) {
+void render_sides(solid_renderer* wr, int* side_data, int num_sides) {
     bind_vao(wr->vao);
     buffer_data(wr->instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
     i_add_attrib(&(wr->instance_vbo), 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
@@ -107,7 +107,7 @@ void render_sides(world_renderer* wr, int* side_data, int num_sides) {
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_sides);
 }
 
-void render_world(world_renderer* wr, chunk_mesh** packet, int num_packets) {
+void render_solids(solid_renderer* wr, chunk_mesh** packet, int num_packets) {
     use_program(wr->program);
     bind_vao(wr->vao);
 

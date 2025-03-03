@@ -3,11 +3,11 @@
 
 #include <camera.h>
 #include <shader.h>
-#include <world_renderer.h>
+#include <solid_renderer.h>
 #include <skybox.h>
 
 typedef struct {
-    world_renderer wr;
+    solid_renderer wr;
     skybox sky;
     camera_cache cam_cache;
     camera* cam;

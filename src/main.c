@@ -43,7 +43,7 @@ int main() {
         glfwPollEvents();
     }
 
-    // destroy_renderer(&r);
+    destroy_renderer(&r);
 
     glfwDestroyWindow(window);
     glfwTerminate();

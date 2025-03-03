@@ -1,6 +1,6 @@
 #include <render.h>
 
-#include <world_renderer.h>
+#include <solid_renderer.h>
 #include <skybox.h>
 #include <glad/glad.h>
 #include <chunk_mesh.h>
@@ -37,7 +37,7 @@ renderer create_renderer(camera* camera) {
 
     glViewport(0, 0, WIDTH, HEIGHT);
 
-    world_renderer wr = create_world_renderer(camera, "res/atlas.png");
+    solid_renderer wr = create_solid_renderer(camera, "res/atlas.png");
     skybox sky = create_skybox();
 
     renderer r = {
@@ -53,8 +53,8 @@ renderer create_renderer(camera* camera) {
     return r;
 }
 
-void r_cleanup(renderer* r) {
-    destroy_world_renderer(r->wr);
+void destroy_renderer(renderer* r) {
+    destroy_solid_renderer(r->wr);
     skybox_cleanup(&(r->sky));
 }
 
@@ -116,7 +116,7 @@ void render(renderer* r) {
     int num_packets = 0;
     chunk_mesh** packet = get_packets(r, &num_packets);
 
-    render_world(&(r->wr), packet, num_packets);
+    render_solids(&(r->wr), packet, num_packets);
     // render_skybox(&sky, &cam);
     // render_world(&wr);
 }
