@@ -55,13 +55,13 @@ renderer create_renderer(camera* camera) {
     block_renderer wr = create_block_renderer(camera, ATLAS_PATH, CAUSTIC_PATH);
     block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, CAUSTIC_PATH);
     skybox sky = create_skybox(camera);
-    // sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
+    sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
 
     renderer r = {
         .wr = wr,
         .lr = lr,
         .sky = sky,
-        // .s = s,
+        .s = s,
         .cam_cache = {
             .x = camera->position[0],
             .z = camera->position[2],
@@ -143,7 +143,9 @@ void render(renderer* r) {
     glDisable(GL_DEPTH_TEST);
     render_skybox(&(r->sky));
     glEnable(GL_DEPTH_TEST);
-    // render_sun(&(r->s));
+
+    render_sun(&(r->s));
+
     glClear(GL_DEPTH_BUFFER_BIT);
     
     render_solids(&(r->wr), packet, num_packets);

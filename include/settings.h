@@ -68,7 +68,7 @@
 // Sun settings
 #define SUN_SLICES 15
 #define SUN_STACKS 15
-#define SUN_RADIUS 0.05f
+#define SUN_RADIUS 0.1f
 #define SUN_INTENSITY 1.0f
 
 // Water settings

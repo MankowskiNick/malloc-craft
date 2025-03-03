@@ -4,6 +4,7 @@
 #include <math.h>
 #include <util.h>
 #include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 float* get_sun_vertices(float color[3], int* count) {
     // Each stack has 2*(slices+1) vertices (for a triangle strip)
@@ -45,6 +46,7 @@ sun create_sun(camera* cam, float r, float b, float g) {
 
     VAO vao = create_vao();
     VBO vbo = create_vbo(GL_STATIC_DRAW);
+    
 
     shader vertex_shader = create_shader("res/shaders/sun.vert", GL_VERTEX_SHADER);
     shader fragment_shader = create_shader("res/shaders/sun.frag", GL_FRAGMENT_SHADER);
@@ -58,13 +60,16 @@ sun create_sun(camera* cam, float r, float b, float g) {
     int count;
     float* vertices = get_sun_vertices(color, &count);
 
+    use_program(program);
+    bind_vao(vao);
+
     // buffer points to GPU
     buffer_data(vbo, GL_STATIC_DRAW, vertices, count * sizeof(float));
     f_add_attrib(&vbo, 0, 3, 0, 3 * sizeof(float));
 
     sun s = {
         .x = 0.0f,
-        .y = 0.0f,
+        .y = 1.0f,
         .z = 0.0f,
 
         .r = r,
@@ -96,7 +101,8 @@ void update_sun(sun* s, float t) {
 }
 
 void render_sun(sun* s) {
-    update_sun(s, 0.0f);
+    
+    update_sun(s, (float)glfwGetTime());
 
     use_program(s->program);
     bind_vao(s->vao);
