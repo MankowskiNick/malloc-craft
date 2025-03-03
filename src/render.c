@@ -1,6 +1,7 @@
 #include <render.h>
 
 #include <block_renderer.h>
+#include <liquid_renderer.h>
 #include <skybox.h>
 #include <glad/glad.h>
 #include <chunk_mesh.h>
@@ -52,10 +53,12 @@ renderer create_renderer(camera* camera) {
     }
 
     block_renderer wr = create_block_renderer(camera, "res/atlas.png");
+    block_renderer lr = create_liquid_renderer(camera, "res/atlas.png");
     skybox sky = create_skybox(camera);
 
     renderer r = {
         .wr = wr,
+        .lr = lr,
         .sky = sky,
         .cam_cache = {
             .x = camera->position[0],
@@ -134,7 +137,7 @@ void render(renderer* r) {
     render_skybox(&(r->sky));
     glClear(GL_DEPTH_BUFFER_BIT);
     render_solids(&(r->wr), packet, num_packets);
-    // render water
+    render_liquids(&(r->lr), packet, num_packets);
     render_transparent(&(r->wr), packet, num_packets);
 
     free(packet);

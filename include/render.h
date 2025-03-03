@@ -8,6 +8,7 @@
 
 typedef struct {
     block_renderer wr;
+    block_renderer lr;
     skybox sky;
     camera_cache cam_cache;
     camera* cam;

@@ -27,7 +27,6 @@ block_renderer create_block_renderer(camera* cam, char* atlas_path) {
 
     block_renderer sr = {
         .cam = cam,
-        // .cam_cache = cam_cache,
         .program = program,
         .atlas = atlas,
         .vao = vao,
