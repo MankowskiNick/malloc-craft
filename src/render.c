@@ -1,11 +1,13 @@
 #include <render.h>
 
-#include <solid_renderer.h>
+#include <block_renderer.h>
 #include <skybox.h>
 #include <glad/glad.h>
 #include <chunk_mesh.h>
 #include <mesh.h>
 #include <sort.h>
+#include <world.h>
+#include <util.h>
 #include <settings.h>
 
 #define CAMERA_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1
@@ -37,7 +39,19 @@ renderer create_renderer(camera* camera) {
 
     glViewport(0, 0, WIDTH, HEIGHT);
 
-    solid_renderer wr = create_solid_renderer(camera, "res/atlas.png");
+    w_init();
+    m_init(camera);
+
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+            int x = (int)(camera->position[0]) - CHUNK_RENDER_DISTANCE + i;
+            int z = (int)(camera->position[2]) - CHUNK_RENDER_DISTANCE + j;
+            get_chunk_mesh(x, z);
+            load_chunk();
+        }
+    }
+
+    block_renderer wr = create_block_renderer(camera, "res/atlas.png");
     skybox sky = create_skybox(camera);
 
     renderer r = {
@@ -54,7 +68,8 @@ renderer create_renderer(camera* camera) {
 }
 
 void destroy_renderer(renderer* r) {
-    destroy_solid_renderer(r->wr);
+    m_cleanup();
+    destroy_block_renderer(r->wr);
     skybox_cleanup(&(r->sky));
 }
 
@@ -117,8 +132,10 @@ void render(renderer* r) {
     chunk_mesh** packet = get_packets(r, &num_packets);
 
     render_skybox(&(r->sky));
+    glClear(GL_DEPTH_BUFFER_BIT);
     render_solids(&(r->wr), packet, num_packets);
     // render water
-    // render transparent
+    render_transparent(&(r->wr), packet, num_packets);
 
+    free(packet);
 }
