@@ -1,8 +1,9 @@
+
 #version 330 core
 
 in vec2 texCoord; // coordinate of the quad [0, 1]
 in vec2 atlasCoord; // coordinate of the texture in the atlas [0, 32]
-in float dist; // distance from the camera
+in float underwater; // 1 if the fragment is underwater, 0 otherwise
 
 out vec4 FragColor;
 
@@ -11,8 +12,11 @@ uniform float atlasSize;
 uniform float fogDistance;
 
 void main() {
-    float u = dist / fogDistance;
-    u = clamp(u, 0.0, 1.0);
     vec2 coord = (atlasCoord + texCoord) / atlasSize;
-    FragColor = mix(texture(atlas, coord), vec4(1.0, 1.0, 1.0, 1.0), u);
+    if (underwater == 1) {
+        FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+    }
+    else {
+        FragColor = texture(atlas, coord);
+    }
 }

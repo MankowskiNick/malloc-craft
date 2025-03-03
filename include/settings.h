@@ -54,6 +54,10 @@
 #define SKYBOX_STACKS 15
 #define SKYBOX_RADIUS 1.0f
 
+// Water settings
+#define WATER_OFFSET 0.2f
+#define WATER_HEIGHT 1.0f
+
 
 
 

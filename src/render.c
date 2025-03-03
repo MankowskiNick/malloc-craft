@@ -134,10 +134,15 @@ void render(renderer* r) {
     int num_packets = 0;
     chunk_mesh** packet = get_packets(r, &num_packets);
 
+    glClear(GL_COLOR_BUFFER_BIT);
     render_skybox(&(r->sky));
+
     glClear(GL_DEPTH_BUFFER_BIT);
+    
     render_solids(&(r->wr), packet, num_packets);
+
     render_liquids(&(r->lr), packet, num_packets);
+
     render_transparent(&(r->wr), packet, num_packets);
 
     free(packet);
