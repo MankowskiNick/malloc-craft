@@ -2,7 +2,6 @@
 #define BUFFER_H
 
 #include <util.h>
-#include <glad/glad.h>
 
 typedef struct {
     uint id;

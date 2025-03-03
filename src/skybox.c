@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <math.h>
 #include <cglm/cglm.h>
+#include <glad/glad.h>
 
 #define PI 3.141592653
 

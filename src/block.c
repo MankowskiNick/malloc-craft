@@ -4,6 +4,7 @@
 #include <world.h>
 #include <player_instance.h>
 #include <cglm/cglm.h>
+#include <glad/glad.h>
 
 
 float get_empty_dist(camera cam) {
@@ -103,6 +104,25 @@ block_type* get_block_type(short id) {
     }
     return NULL;
 }
+
+void send_cube_vbo(VAO vao, VBO vbo) {
+    float faceVertices[] = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f
+    };
+
+    bind_vao(vao);
+    buffer_data(vbo, GL_STATIC_DRAW, faceVertices, 6 * 3 * sizeof(float));
+    f_add_attrib(&vbo, 0, 3, 0, 3 * sizeof(float)); // position
+    #include <vao.h>
+    #include <vbo.h>
+    use_vbo(vbo);
+}
+
 
 block_type TYPES[] = {
     {
