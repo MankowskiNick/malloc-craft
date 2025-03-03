@@ -32,6 +32,7 @@ typedef struct {
     uint id;
     char* name;
     int transparent;
+    int liquid;
     int face_atlas_coords[6][2];
 } block_type;
 

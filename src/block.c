@@ -108,6 +108,7 @@ block_type TYPES[] = {
     {
         .id = 0,
         .name = "air",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {-1, -1},
@@ -121,6 +122,7 @@ block_type TYPES[] = {
     {
         .id = 1,
         .name = "grass",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {1, 0},
@@ -134,6 +136,7 @@ block_type TYPES[] = {
     {
         .id = 2,
         .name = "dirt",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {2, 0},
@@ -147,6 +150,7 @@ block_type TYPES[] = {
     {
         .id = 3,
         .name = "stone",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {3, 0},
@@ -160,6 +164,7 @@ block_type TYPES[] = {
     {
         .id = 4,
         .name = "weezer",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             
@@ -174,6 +179,7 @@ block_type TYPES[] = {
     {
         .id = 5,
         .name = "oak_log",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {7, 0},
@@ -187,6 +193,7 @@ block_type TYPES[] = {
     {
         .id = 6,
         .name = "oak_leaves",
+        .liquid = 0,
         #ifdef TRANSPARENT_LEAVES
             .transparent = 1,
             .face_atlas_coords = {
@@ -213,6 +220,7 @@ block_type TYPES[] = {
         .id = 7,
         .name = "water",
         .transparent = 1,
+        .liquid = 1,
         .face_atlas_coords = {
             {10, 0},
             {10, 0},
@@ -225,6 +233,7 @@ block_type TYPES[] = {
     {
         .id = 8,
         .name = "glass",
+        .liquid = 0,
         .transparent = 1,
         .face_atlas_coords = {
             {11, 0},
@@ -238,6 +247,7 @@ block_type TYPES[] = {
     {
         .id = 9,
         .name = "sand",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {6, 0},
@@ -251,6 +261,7 @@ block_type TYPES[] = {
     {
         .id = 10,
         .name = "cactus",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {12, 0},
@@ -264,6 +275,7 @@ block_type TYPES[] = {
     {
         .id = 11,
         .name = "cactus_top",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {12, 0},
@@ -277,6 +289,7 @@ block_type TYPES[] = {
     {
         .id = 12,
         .name = "oak_planks",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {16, 0},
