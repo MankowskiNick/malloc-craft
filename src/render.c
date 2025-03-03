@@ -38,7 +38,7 @@ renderer create_renderer(camera* camera) {
     glViewport(0, 0, WIDTH, HEIGHT);
 
     solid_renderer wr = create_solid_renderer(camera, "res/atlas.png");
-    skybox sky = create_skybox();
+    skybox sky = create_skybox(camera);
 
     renderer r = {
         .wr = wr,
@@ -116,7 +116,9 @@ void render(renderer* r) {
     int num_packets = 0;
     chunk_mesh** packet = get_packets(r, &num_packets);
 
+    render_skybox(&(r->sky));
     render_solids(&(r->wr), packet, num_packets);
-    // render_skybox(&sky, &cam);
-    // render_world(&wr);
+    // render water
+    // render transparent
+
 }

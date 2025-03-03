@@ -90,8 +90,6 @@ void send_fog(solid_renderer* wr) {
     glUniform1f(fog_loc, RENDER_DISTANCE);
 }
 
-
-
 void render_sides(solid_renderer* wr, int* side_data, int num_sides) {
     bind_vao(wr->vao);
     buffer_data(wr->instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));

@@ -54,7 +54,7 @@ float* get_vertices(int* count) {
     return vertices;
 }
 
-skybox create_skybox() {
+skybox create_skybox(camera* cam) {
 
     int count;
     float* data = get_vertices(&count);
@@ -86,7 +86,8 @@ skybox create_skybox() {
         .vao = vao,
         .vbo = vbo,
         .program = program,
-        .texture = sky
+        .texture = sky,
+        .cam = cam
     };
 
     return s;
@@ -126,14 +127,14 @@ void send_texture(skybox* s) {
     glUniform1i(tex_loc, s->texture.tex_index);
 }
 
-void render_skybox(skybox* s, camera* cam) {
+void render_skybox(skybox* s) {
     glDisable(GL_DEPTH_TEST);
     use_program(s->program);
     bind_vao(s->vao);
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    send_sky_view_matrix(s, cam);
+    send_sky_view_matrix(s, s->cam);
     send_sky_proj_matrix(s);
     send_texture(s);
 

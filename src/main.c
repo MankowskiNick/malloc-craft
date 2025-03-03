@@ -25,9 +25,9 @@ int main() {
         }
     };
 
-    skybox s = create_skybox();
+    // skybox s = create_skybox();
 
-    shader_program program;
+    // shader_program program;
     // r_init(&program, &(player.cam));
     renderer r = create_renderer(&(player.cam));
 
