@@ -20,12 +20,6 @@
 // Chunks are cached in memory to reduce load times, how large should the cache be?
 #define CHUNK_CACHE_SIZE 1024
 
-// Radius of chunks to redner
-#define CHUNK_RENDER_DISTANCE 20
-
-// Render distance - also serves as the fog distance
-#define RENDER_DISTANCE 500.0f
-
 
 
 
@@ -35,8 +29,23 @@
 // Render as wireframe? Useful for debugging
 // #define WIREFRAME
 
+#define ATLAS_PATH "res/textures/atlas.png"
+#define SKYBOX_PATH "res/textures/skybox.png"
+#define CAUSTIC_PATH "res/textures/caustic.png"
+
+#define ATLAS_TEXTURE_INDEX 0
+#define CAUSTIC_TEXTURE_INDEX 1
+#define SKYBOX_TEXTURE_INDEX 2
+
 // Vsync on?  Comment to disable
 #define VSYNC
+
+
+// Radius of chunks to redner
+#define CHUNK_RENDER_DISTANCE 20
+
+// Render distance - also serves as the fog distance
+#define RENDER_DISTANCE 500.0f
 
 // Allow transparent leaves?  Transparent leaves can negatively impact performance.
 // Comment to disable
@@ -57,6 +66,7 @@
 // Water settings
 #define WATER_OFFSET 0.2f
 #define WATER_HEIGHT 1.0f
+#define WATER_DISTANCE 50.0f
 
 
 

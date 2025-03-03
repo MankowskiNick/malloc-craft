@@ -33,7 +33,7 @@ typedef struct {
     char* name;
     int transparent;
     int liquid;
-    int face_atlas_coords[6][2];
+    short face_atlas_coords[6][2];
 } block_type;
 
 extern block_type TYPES[];
