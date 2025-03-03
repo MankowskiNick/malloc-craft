@@ -4,6 +4,8 @@
 #define HEIGHT 600
 #define TITLE "malloc-craft"
 
+#define TIME_SCALE 1.0f
+
 
 
 
@@ -62,6 +64,12 @@
 #define SKYBOX_SLICES 15
 #define SKYBOX_STACKS 15
 #define SKYBOX_RADIUS 1.0f
+
+// Sun settings
+#define SUN_SLICES 15
+#define SUN_STACKS 15
+#define SUN_RADIUS 0.05f
+#define SUN_INTENSITY 1.0f
 
 // Water settings
 #define WATER_OFFSET 0.2f

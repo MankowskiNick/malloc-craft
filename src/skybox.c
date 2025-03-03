@@ -8,7 +8,7 @@
 
 #define PI 3.141592653
 
-float* get_vertices(int* count) {
+float* get_sky_vertices(int* count) {
     // Each stack has 2*(slices+1) vertices (for a triangle strip)
     // Each vertex has 5 elements (x,y,z,tx,ty)
     int vertices_per_stack = 2 * (SKYBOX_SLICES + 1);
@@ -57,7 +57,7 @@ float* get_vertices(int* count) {
 skybox create_skybox(camera* cam) {
 
     int count;
-    float* data = get_vertices(&count);
+    float* data = get_sky_vertices(&count);
 
     // create VAO and VBO
     VAO vao = create_vao();
