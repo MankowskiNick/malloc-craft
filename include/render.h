@@ -3,10 +3,19 @@
 
 #include <camera.h>
 #include <shader.h>
+#include <block_renderer.h>
+#include <skybox.h>
 
-void render_cube();
-void r_init(shader_program* program, camera* camera);
-void r_cleanup();
-void render(camera cam, shader_program program);
+typedef struct {
+    block_renderer wr;
+    block_renderer lr;
+    skybox sky;
+    camera_cache cam_cache;
+    camera* cam;
+} renderer;
+
+renderer create_renderer(camera* camera);
+void destroy_renderer(renderer* r);
+void render(renderer* r);
 
 #endif

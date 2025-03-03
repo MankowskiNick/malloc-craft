@@ -14,12 +14,15 @@ typedef struct {
 typedef struct {
     int x, z;
     side_instance* opaque_sides;
+    side_instance* liquid_sides;
     side_instance* transparent_sides;
     int num_opaque_sides;
     int num_transparent_sides;
+    int num_liquid_sides;
 
     int* transparent_data;
     int* opaque_data;
+    int* liquid_data;
 } chunk_mesh;
 
 void chunk_mesh_init(camera* camera);

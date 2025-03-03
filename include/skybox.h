@@ -16,12 +16,13 @@ typedef struct {
     float* vertices;
     float* texture_coords;
     int vertex_count;
+    camera* cam;
 
     shader_program program;
 } skybox;
 
-skybox create_skybox();
+skybox create_skybox(camera* cam);
 void skybox_cleanup(skybox* s);
-void render_skybox(skybox* s, camera* cam);
+void render_skybox(skybox* s);
 
 #endif

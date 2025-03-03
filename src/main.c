@@ -25,10 +25,11 @@ int main() {
         }
     };
 
-    skybox s = create_skybox();
+    // skybox s = create_skybox();
 
-    shader_program program;
-    r_init(&program, &(player.cam));
+    // shader_program program;
+    // r_init(&program, &(player.cam));
+    renderer r = create_renderer(&(player.cam));
 
     i_init(window, &player);
 
@@ -36,13 +37,13 @@ int main() {
         
         update_camera();
 
-        render(player.cam, program);
+        render(&r);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    r_cleanup();
+    destroy_renderer(&r);
 
     glfwDestroyWindow(window);
     glfwTerminate();

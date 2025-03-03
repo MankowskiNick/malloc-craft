@@ -4,6 +4,10 @@
 #include <cglm/cglm.h>
 
 typedef struct {
+    float x, z;
+} camera_cache;
+
+typedef struct {
     vec3 position;
     vec3 up;
     vec3 front;

@@ -4,6 +4,7 @@
 #include <world.h>
 #include <player_instance.h>
 #include <cglm/cglm.h>
+#include <glad/glad.h>
 
 
 float get_empty_dist(camera cam) {
@@ -104,10 +105,30 @@ block_type* get_block_type(short id) {
     return NULL;
 }
 
+void send_cube_vbo(VAO vao, VBO vbo) {
+    float faceVertices[] = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f
+    };
+
+    bind_vao(vao);
+    buffer_data(vbo, GL_STATIC_DRAW, faceVertices, 6 * 3 * sizeof(float));
+    f_add_attrib(&vbo, 0, 3, 0, 3 * sizeof(float)); // position
+    #include <vao.h>
+    #include <vbo.h>
+    use_vbo(vbo);
+}
+
+
 block_type TYPES[] = {
     {
         .id = 0,
         .name = "air",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {-1, -1},
@@ -121,6 +142,7 @@ block_type TYPES[] = {
     {
         .id = 1,
         .name = "grass",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {1, 0},
@@ -134,6 +156,7 @@ block_type TYPES[] = {
     {
         .id = 2,
         .name = "dirt",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {2, 0},
@@ -147,6 +170,7 @@ block_type TYPES[] = {
     {
         .id = 3,
         .name = "stone",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {3, 0},
@@ -160,6 +184,7 @@ block_type TYPES[] = {
     {
         .id = 4,
         .name = "weezer",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             
@@ -174,6 +199,7 @@ block_type TYPES[] = {
     {
         .id = 5,
         .name = "oak_log",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {7, 0},
@@ -187,6 +213,7 @@ block_type TYPES[] = {
     {
         .id = 6,
         .name = "oak_leaves",
+        .liquid = 0,
         #ifdef TRANSPARENT_LEAVES
             .transparent = 1,
             .face_atlas_coords = {
@@ -213,6 +240,7 @@ block_type TYPES[] = {
         .id = 7,
         .name = "water",
         .transparent = 1,
+        .liquid = 1,
         .face_atlas_coords = {
             {10, 0},
             {10, 0},
@@ -225,6 +253,7 @@ block_type TYPES[] = {
     {
         .id = 8,
         .name = "glass",
+        .liquid = 0,
         .transparent = 1,
         .face_atlas_coords = {
             {11, 0},
@@ -238,6 +267,7 @@ block_type TYPES[] = {
     {
         .id = 9,
         .name = "sand",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {6, 0},
@@ -251,6 +281,7 @@ block_type TYPES[] = {
     {
         .id = 10,
         .name = "cactus",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {12, 0},
@@ -264,6 +295,7 @@ block_type TYPES[] = {
     {
         .id = 11,
         .name = "cactus_top",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {12, 0},
@@ -277,6 +309,7 @@ block_type TYPES[] = {
     {
         .id = 12,
         .name = "oak_planks",
+        .liquid = 0,
         .transparent = 0,
         .face_atlas_coords = {
             {16, 0},

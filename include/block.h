@@ -4,6 +4,8 @@
 #include <block_models.h>
 #include <player_instance.h>
 #include <settings.h>
+#include <vao.h>
+#include <vbo.h>
 #include <util.h>
 
 #define VERTS_PER_SIDE 6
@@ -15,6 +17,8 @@ extern float CUBE_VERTICES[];
 
 void break_block(player_instance player);
 void place_block(player_instance player);
+
+void send_cube_vbo(VAO vao, VBO vbo);
 
 block_type* get_block_type(short id);
 
