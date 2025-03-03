@@ -21,6 +21,9 @@ typedef struct {
 
 sun create_sun(camera* cam, float r, float g, float b);
 void sun_cleanup(sun* s);
+
+void send_sun_info(shader_program* p, sun* s);
+
 void update_sun(sun* s, float t);
 void render_sun(sun* s);
 

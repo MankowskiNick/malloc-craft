@@ -71,6 +71,11 @@
 #define SUN_RADIUS 0.1f
 #define SUN_INTENSITY 1.0f
 
+// Ambient light
+#define AMBIENT_R_INTENSITY 0.1f
+#define AMBIENT_G_INTENSITY 0.1f
+#define AMBIENT_B_INTENSITY 0.1f
+
 // Water settings
 #define WATER_OFFSET 0.2f
 #define WATER_HEIGHT 1.0f

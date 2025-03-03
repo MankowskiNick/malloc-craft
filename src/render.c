@@ -148,11 +148,11 @@ void render(renderer* r) {
 
     glClear(GL_DEPTH_BUFFER_BIT);
     
-    render_solids(&(r->wr), packet, num_packets);
+    render_solids(&(r->wr), &(r->s), packet, num_packets);
 
     render_liquids(&(r->lr), packet, num_packets);
 
-    render_transparent(&(r->wr), packet, num_packets);
+    render_transparent(&(r->wr), &(r->s), packet, num_packets);
 
     free(packet);
 }

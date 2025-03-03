@@ -2,9 +2,9 @@
 
 out vec4 FragColor;
 
-uniform float intensity;
-uniform vec3 color;
+uniform float sunIntensity;
+uniform vec3 sunColor;
 
 void main() {
-    FragColor = vec4(intensity * color, 1.0);
+    FragColor = vec4(sunIntensity * sunColor, 1.0);
 }

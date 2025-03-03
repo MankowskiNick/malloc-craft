@@ -95,9 +95,18 @@ void sun_cleanup(sun* s) {
     free(s->vertices);
 }
 
+void send_sun_info(shader_program* p, sun* s) {
+    glUniform3f(glGetUniformLocation(p->id, "sunPos"), s->x, s->y, s->z);
+    glUniform1f(glGetUniformLocation(p->id, "sunIntensity"), SUN_INTENSITY);
+    glUniform3f(glGetUniformLocation(p->id, "sunColor"), s->r, s->g, s->b);
+}
+
 void update_sun(sun* s, float t) {
-    s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
-    s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
+    // s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
+    // s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
+    s->y = 0.3f;
+    s->x = cos(t * TIME_SCALE);
+    s->z = sin(t * TIME_SCALE);
 }
 
 void render_sun(sun* s) {
@@ -111,10 +120,7 @@ void render_sun(sun* s) {
     send_sky_view_matrix(&(s->program), s->cam);
     send_sky_proj_matrix(&(s->program));
 
-    glUniform1f(glGetUniformLocation(s->program.id, "intensity"), SUN_INTENSITY);
-    glUniform3f(glGetUniformLocation(s->program.id, "color"), s->r, s->g, s->b);
-    glUniform3f(glGetUniformLocation(s->program.id, "sunPos"), s->x, s->y, s->z);
-    
+    send_sun_info(&(s->program), s);
 
     int vertices_per_stack = 2 * (SKYBOX_SLICES + 1);
     
