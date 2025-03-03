@@ -24,5 +24,7 @@ typedef struct {
 skybox create_skybox(camera* cam);
 void skybox_cleanup(skybox* s);
 void render_skybox(skybox* s);
+void send_sky_view_matrix(shader_program* p, camera* cam);
+void send_sky_proj_matrix(shader_program* p);
 
 #endif

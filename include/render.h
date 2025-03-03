@@ -11,7 +11,7 @@ typedef struct {
     block_renderer wr;
     block_renderer lr;
     skybox sky;
-    // sun s;
+    sun s;
 
     camera_cache cam_cache;
     camera* cam;

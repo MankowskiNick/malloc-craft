@@ -106,17 +106,17 @@ void get_rotation_matrix(camera* cam, mat4* out) {
     glm_mat4_inv(view, *out);
 }
 
-void send_sky_view_matrix(skybox* s, camera* cam) {
+void send_sky_view_matrix(shader_program* p, camera* cam) {
     mat4 view;
     get_rotation_matrix(cam, &view);
-    uint view_loc = glGetUniformLocation(s->program.id, "view");
+    uint view_loc = glGetUniformLocation(p->id, "view");
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float*)view);
 }
 
-void send_sky_proj_matrix(skybox* s) {
+void send_sky_proj_matrix(shader_program* p) {
     mat4 proj;
     get_projection_matrix(&proj, 45.0f, 800.0f / 600.0f, 0.1f, RENDER_DISTANCE);
-    uint proj_loc = glGetUniformLocation(s->program.id, "proj");
+    uint proj_loc = glGetUniformLocation(p->id, "proj");
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 }
 
@@ -134,8 +134,8 @@ void render_skybox(skybox* s) {
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    send_sky_view_matrix(s, s->cam);
-    send_sky_proj_matrix(s);
+    send_sky_view_matrix(&(s->program), s->cam);
+    send_sky_proj_matrix(&(s->program));
     send_texture(s);
 
     int vertices_per_stack = 2 * (SKYBOX_SLICES + 1);
