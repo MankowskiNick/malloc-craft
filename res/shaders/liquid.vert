@@ -11,6 +11,7 @@ out vec2 atlasCoord;
 out float underwater;
 out float y;
 out vec3 normal;
+out vec3 fragPos;
 
 uniform mat4 view;
 uniform mat4 proj;
@@ -67,5 +68,5 @@ void main()
     );
     
     normal = normalize(cross(dz, dx));
-    // underwater = y < (waterLevel + 1.0 - waterOffset) ? 1.0 : 0.0;
+    fragPos = worldPos;
 }

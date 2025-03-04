@@ -97,15 +97,18 @@ void send_sun_info(shader_program* p, sun* s) {
     glUniform3f(glGetUniformLocation(p->id, "sunPos"), s->x, s->y, s->z);
     glUniform1f(glGetUniformLocation(p->id, "sunIntensity"), SUN_INTENSITY);
     glUniform3f(glGetUniformLocation(p->id, "sunColor"), s->r, s->g, s->b);
+    glUniform1f(glGetUniformLocation(p->id, "sunSpecularStrength"), SUN_SPECULAR_STRENGTH);
+    glUniform3f(glGetUniformLocation(p->id, "cameraPos"), s->cam->position[0], s->cam->position[1], s->cam->position[2]);
+    glUniform1f(glGetUniformLocation(p->id, "waterShininess"), WATER_SHININESS);
 }
 
 void update_sun(sun* s, float t) {
-    // s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
-    // s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
+    s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
+    s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
 
-    s->y = 0.3f;
-    s->x = cos(t * TIME_SCALE);
-    s->z = sin(t * TIME_SCALE);
+    // s->y = 0.1f;
+    // s->x = cos(t * TIME_SCALE);
+    // s->z = sin(t * TIME_SCALE);
 }
 
 void render_sun(sun* s) {

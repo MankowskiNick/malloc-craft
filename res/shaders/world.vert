@@ -35,18 +35,18 @@ vec3 transformFace(vec3 pos, int face) {
 }
 
 vec3 getNormal(vec3 pos, int face) {
-    if(face == 0) { // front face (+X)
-        return vec3(1.0, 0.0, 0.0);
-    } else if(face == 1) { // back face (-X)
-        return vec3(-1.0, 0.0, 0.0);
-    } else if(face == 2) { // left face (-Z)
+    if (face == 0) {
         return vec3(0.0, 0.0, 1.0);
-    } else if(face == 3) { // right face (+Z)
+    } else if (face == 1) {
         return vec3(0.0, 0.0, -1.0);
-    } else if(face == 4) { // top face (+Y)
-        return vec3(0, 1.0, 0);
-    } else if(face == 5) { // bottom face (-Y)
-        return vec3(0.0, -1.0, 0);
+    } else if (face == 2) {
+        return vec3(-1.0, 0.0, 0.0);
+    } else if (face == 3) {
+        return vec3(1.0, 0.0, 0.0);
+    } else if (face == 4) {
+        return vec3(0.0, 1.0, 0.0);
+    } else if (face == 5) {
+        return vec3(0.0, -1.0, 0.0);
     }
     return vec3(0.0, 0.0, 0.0);
 }

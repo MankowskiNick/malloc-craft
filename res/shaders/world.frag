@@ -64,18 +64,26 @@ vec4 getStandardColor(vec2 coord) {
 void main() {
     vec2 coord = (atlasCoord + texCoord) / atlasSize;
 
-    vec3 bumpedNormal = normalize(normal + texture(bump, coord).xyz);
+    // get bumped normal
+    // vec3 bumpedNormal = normalize(normal + texture(bump, coord).xyz);
+    vec3 bumpedNormal = normal;
 
+    // normalize sun position(also direction, since this is global)
     vec3 sun = normalize(sunPos);
+
+    // calculate ambient and diffuse lighting
     float intensity = max(dot(bumpedNormal, sun), 0.0) * sunIntensity;
     vec3 lightIntensity = ambientLight + (sunColor * intensity);
     
+    // underwater blocks are handled differently than standard blocks
+    // underwater blocks are colored by the caustic texture and are bluer
     if (underwater == 1.0 && y <= waterLevel + 1.0 - waterOffset) {
         vec4 baseColor = getUnderwaterColor(coord); 
 
-        
         FragColor = vec4(baseColor.rgb * lightIntensity, baseColor.a);
     }
+
+    // standard blocks 
     else {
         vec4 baseColor = getStandardColor(coord);
         FragColor = vec4(baseColor.rgb * lightIntensity, baseColor.a);
