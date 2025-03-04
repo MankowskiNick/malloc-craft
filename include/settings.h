@@ -4,7 +4,7 @@
 #define HEIGHT 600
 #define TITLE "malloc-craft"
 
-#define TIME_SCALE 1.0f
+#define TIME_SCALE 0.1f
 
 
 
@@ -72,9 +72,9 @@
 #define SUN_INTENSITY 1.0f
 
 // Ambient light
-#define AMBIENT_R_INTENSITY 0.1f
-#define AMBIENT_G_INTENSITY 0.1f
-#define AMBIENT_B_INTENSITY 0.1f
+#define AMBIENT_R_INTENSITY 0.3f
+#define AMBIENT_G_INTENSITY 0.3f
+#define AMBIENT_B_INTENSITY 0.3f
 
 // Water settings
 #define WATER_OFFSET 0.2f

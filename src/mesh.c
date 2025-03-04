@@ -225,10 +225,10 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     // get chunk and adjacent chunks
     chunk* c = get_chunk(x, z);
     chunk* adj_chunks[4] = {
-        get_chunk(x + 1, z),
-        get_chunk(x - 1, z),
+        get_chunk(x, z + 1),
         get_chunk(x, z - 1),
-        get_chunk(x, z + 1)
+        get_chunk(x - 1, z),
+        get_chunk(x + 1, z)
     };
 
     // pack chunk data into packet
