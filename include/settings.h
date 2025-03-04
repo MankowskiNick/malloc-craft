@@ -32,12 +32,14 @@
 // #define WIREFRAME
 
 #define ATLAS_PATH "res/textures/atlas.png"
+#define BUMP_PATH "res/textures/bump.png"
 #define SKYBOX_PATH "res/textures/skybox.png"
 #define CAUSTIC_PATH "res/textures/caustic.png"
 
 #define ATLAS_TEXTURE_INDEX 0
-#define CAUSTIC_TEXTURE_INDEX 1
-#define SKYBOX_TEXTURE_INDEX 2
+#define BUMP_TEXTURE_INDEX 1
+#define CAUSTIC_TEXTURE_INDEX 2
+#define SKYBOX_TEXTURE_INDEX 3
 
 // Vsync on?  Comment to disable
 #define VSYNC

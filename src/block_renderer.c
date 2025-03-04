@@ -7,8 +7,9 @@
 #include <GLFW/glfw3.h>
 
 
-block_renderer create_block_renderer(camera* cam, char* atlas_path, char* caustic_path) {
+block_renderer create_block_renderer(camera* cam, char* atlas_path, char* bump_path, char* caustic_path) {
     texture atlas = t_init(atlas_path, ATLAS_TEXTURE_INDEX);
+    texture bump = t_init(bump_path, BUMP_TEXTURE_INDEX);
     texture caustic = t_init(caustic_path, CAUSTIC_TEXTURE_INDEX);
     
     camera_cache cam_cache = {
@@ -31,6 +32,7 @@ block_renderer create_block_renderer(camera* cam, char* atlas_path, char* causti
         .cam = cam,
         .program = program,
         .atlas = atlas,
+        .bump = bump,
         .caustic = caustic,
         .vao = vao,
         .cube_vbo = cube_vbo,
@@ -67,6 +69,11 @@ void send_atlas(block_renderer* br) {
     glBindTexture(GL_TEXTURE_2D, br->atlas.id);
     uint atlas_loc = glGetUniformLocation(br->program.id, "atlas");
     glUniform1i(atlas_loc, br->atlas.tex_index);
+
+    glActiveTexture(GL_TEXTURE0 + br->bump.tex_index);
+    glBindTexture(GL_TEXTURE_2D, br->bump.id);
+    uint bump_loc = glGetUniformLocation(br->program.id, "bump");
+    glUniform1i(bump_loc, br->bump.tex_index);
 
     uint atlas_size_loc = glGetUniformLocation(br->program.id, "atlasSize");
     glUniform1f(atlas_size_loc, (float)ATLAS_SIZE);

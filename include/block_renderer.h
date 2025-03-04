@@ -14,10 +14,11 @@ typedef struct {
     shader_program program;
     camera* cam;
     texture atlas;
+    texture bump;
     texture caustic;
 } block_renderer;
 
-block_renderer create_block_renderer(camera* cam, char* atlas, char* caustic);
+block_renderer create_block_renderer(camera* cam, char* atlas, char* bump, char* caustic);
 void destroy_block_renderer(block_renderer wr);
 
 void send_view_matrix(block_renderer* br);

@@ -3,7 +3,7 @@
 
 #include <block_renderer.h>
 
-block_renderer create_liquid_renderer(camera* cam, char* atlas, char* caustic);
+block_renderer create_liquid_renderer(camera* cam, char* atlas, char* bump, char* caustic);
 
 void render_liquids(block_renderer* br, sun* sun, chunk_mesh** packet, int num_packets);
 

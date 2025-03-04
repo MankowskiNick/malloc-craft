@@ -5,8 +5,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* caustic_path) {
+block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* bump_path, char* caustic_path) {
     texture atlas = t_init(atlas_path, ATLAS_TEXTURE_INDEX);
+    texture bump = t_init(bump_path, BUMP_TEXTURE_INDEX);
     texture caustic = t_init(caustic_path, CAUSTIC_TEXTURE_INDEX);
     
     camera_cache cam_cache = {
@@ -29,6 +30,7 @@ block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* caust
         .cam = cam,
         .program = program,
         .atlas = atlas,
+        .bump = bump,
         .caustic = caustic,
         .vao = vao,
         .cube_vbo = cube_vbo,

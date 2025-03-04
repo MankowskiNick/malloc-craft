@@ -12,6 +12,7 @@ out vec4 FragColor;
 // textures
 uniform float atlasSize;
 uniform sampler2D atlas;
+uniform sampler2D bump;
 uniform sampler2D caustic;
 
 // fog
@@ -63,8 +64,10 @@ vec4 getStandardColor(vec2 coord) {
 void main() {
     vec2 coord = (atlasCoord + texCoord) / atlasSize;
 
+    vec3 bumpedNormal = normalize(normal + texture(bump, coord).xyz);
+
     vec3 sun = normalize(sunPos);
-    float intensity = max(dot(normal, sun), 0.0) * sunIntensity;
+    float intensity = max(dot(bumpedNormal, sun), 0.0) * sunIntensity;
     vec3 lightIntensity = ambientLight + (sunColor * intensity);
     
     if (underwater == 1.0 && y <= waterLevel + 1.0 - waterOffset) {

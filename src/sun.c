@@ -100,12 +100,12 @@ void send_sun_info(shader_program* p, sun* s) {
 }
 
 void update_sun(sun* s, float t) {
-    s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
-    s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
+    // s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
+    // s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
 
-    // s->y = 0.3f;
-    // s->x = cos(t * TIME_SCALE);
-    // s->z = sin(t * TIME_SCALE);
+    s->y = 0.3f;
+    s->x = cos(t * TIME_SCALE);
+    s->z = sin(t * TIME_SCALE);
 }
 
 void render_sun(sun* s) {
