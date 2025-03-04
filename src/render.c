@@ -150,7 +150,7 @@ void render(renderer* r) {
     
     render_solids(&(r->wr), &(r->s), packet, num_packets);
 
-    render_liquids(&(r->lr), packet, num_packets);
+    render_liquids(&(r->lr), &(r->s), packet, num_packets);
 
     render_transparent(&(r->wr), &(r->s), packet, num_packets);
 

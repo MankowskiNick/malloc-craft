@@ -128,6 +128,7 @@ void render_solids(block_renderer* br, sun* sun, chunk_mesh** packet, int num_pa
     send_fog(br);
     send_time(br);
     send_sun_info(&(br->program), sun);
+    send_ambient_light(&(br->program));
 
     send_cube_vbo(br->vao, br->cube_vbo);
 

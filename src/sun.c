@@ -30,8 +30,6 @@ float* get_sun_vertices(float color[3], int* count) {
             vertices[index++] = SUN_RADIUS * cos(theta2);             // y
             vertices[index++] = SUN_RADIUS * sin(theta2) * sin(phi);  // z
             
-            float v1 = (float)stack / SUN_STACKS;
-            
             vertices[index++] = SUN_RADIUS * sin(theta1) * cos(phi);  // x
             vertices[index++] = SUN_RADIUS * cos(theta1);             // y
             vertices[index++] = SUN_RADIUS * sin(theta1) * sin(phi);  // z
@@ -102,11 +100,12 @@ void send_sun_info(shader_program* p, sun* s) {
 }
 
 void update_sun(sun* s, float t) {
-    // s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
-    // s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
-    s->y = 0.3f;
-    s->x = cos(t * TIME_SCALE);
-    s->z = sin(t * TIME_SCALE);
+    s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
+    s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
+
+    // s->y = 0.3f;
+    // s->x = cos(t * TIME_SCALE);
+    // s->z = sin(t * TIME_SCALE);
 }
 
 void render_sun(sun* s) {

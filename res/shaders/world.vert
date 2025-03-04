@@ -40,9 +40,9 @@ vec3 getNormal(vec3 pos, int face) {
     } else if(face == 1) { // back face (-X)
         return vec3(-1.0, 0.0, 0.0);
     } else if(face == 2) { // left face (-Z)
-        return vec3(0.0, 0.0, -1.0);
-    } else if(face == 3) { // right face (+Z)
         return vec3(0.0, 0.0, 1.0);
+    } else if(face == 3) { // right face (+Z)
+        return vec3(0.0, 0.0, -1.0);
     } else if(face == 4) { // top face (+Y)
         return vec3(0, 1.0, 0);
     } else if(face == 5) { // bottom face (-Y)

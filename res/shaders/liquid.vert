@@ -10,6 +10,7 @@ out vec2 texCoord;
 out vec2 atlasCoord;
 out float underwater;
 out float y;
+out vec3 normal;
 
 uniform mat4 view;
 uniform mat4 proj;
@@ -43,8 +44,7 @@ void main()
     y = worldPos.y;
     if (worldPos.y == waterLevel + 1.0) {
         worldPos.y -= waterOffset;
-        worldPos.y += sin(worldPos.x * 0.5 + time) * 0.075;
-        worldPos.y += sin(worldPos.z * 0.5 + time) * 0.075;
+        worldPos.y += 0.075 * sin(0.5 * (worldPos.x + worldPos.z) + time);
     }
     gl_Position = proj * view * vec4(worldPos, 1.0);
 
@@ -52,5 +52,20 @@ void main()
     atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
 
     underwater = float(aUnderwater);
+
+    // calculate normal vector
+    vec3 dx = vec3(
+        1.0,
+        0.075 * 0.5 * cos(0.5 * (worldPos.x + worldPos.z) + time),
+        0.0
+    );
+
+    vec3 dz = vec3(
+        0.0,
+        0.075 * 0.5 * cos(0.5 * (worldPos.x + worldPos.z) + time),
+        1.0
+    );
+    
+    normal = normalize(cross(dz, dx));
     // underwater = y < (waterLevel + 1.0 - waterOffset) ? 1.0 : 0.0;
 }

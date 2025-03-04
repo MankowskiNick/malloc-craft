@@ -38,7 +38,7 @@ block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* caust
     return br;
 }
 
-void render_liquids(block_renderer* br, chunk_mesh** packet, int num_packets) {
+void render_liquids(block_renderer* br, sun* sun, chunk_mesh** packet, int num_packets) {
     use_program(br->program);
     bind_vao(br->vao);
 
@@ -48,6 +48,8 @@ void render_liquids(block_renderer* br, chunk_mesh** packet, int num_packets) {
     send_fog(br);
     send_water_info(br);
     send_time(br);
+    send_sun_info(&(br->program), sun);
+    send_ambient_light(&(br->program));
 
     send_cube_vbo(br->vao, br->cube_vbo);
 
