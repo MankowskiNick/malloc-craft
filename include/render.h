@@ -5,11 +5,14 @@
 #include <shader.h>
 #include <block_renderer.h>
 #include <skybox.h>
+#include <sun.h>
 
 typedef struct {
     block_renderer wr;
     block_renderer lr;
     skybox sky;
+    sun s;
+
     camera_cache cam_cache;
     camera* cam;
 } renderer;

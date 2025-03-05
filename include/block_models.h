@@ -4,10 +4,10 @@
 #include <settings.h>
 #include <util.h>
 
-#define FRONT  0.0f
-#define BACK   1.0f
-#define LEFT   2.0f
-#define RIGHT  3.0f
+#define RIGHT  0.0f
+#define LEFT   1.0f
+#define BACK   2.0f
+#define FRONT  3.0f
 #define TOP    4.0f
 #define BOTTOM 5.0f
 #define UNKNOWN_SIDE -1.0f

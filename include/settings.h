@@ -4,6 +4,8 @@
 #define HEIGHT 600
 #define TITLE "malloc-craft"
 
+#define TIME_SCALE 0.1f
+
 
 
 
@@ -30,12 +32,14 @@
 // #define WIREFRAME
 
 #define ATLAS_PATH "res/textures/atlas.png"
+#define BUMP_PATH "res/textures/bump.png"
 #define SKYBOX_PATH "res/textures/skybox.png"
 #define CAUSTIC_PATH "res/textures/caustic.png"
 
 #define ATLAS_TEXTURE_INDEX 0
-#define CAUSTIC_TEXTURE_INDEX 1
-#define SKYBOX_TEXTURE_INDEX 2
+#define BUMP_TEXTURE_INDEX 1
+#define CAUSTIC_TEXTURE_INDEX 2
+#define SKYBOX_TEXTURE_INDEX 3
 
 // Vsync on?  Comment to disable
 #define VSYNC
@@ -62,6 +66,19 @@
 #define SKYBOX_SLICES 15
 #define SKYBOX_STACKS 15
 #define SKYBOX_RADIUS 1.0f
+
+// Sun settings
+#define SUN_SLICES 15
+#define SUN_STACKS 15
+#define SUN_RADIUS 0.1f
+#define SUN_INTENSITY 1.0f
+#define SUN_SPECULAR_STRENGTH 1.0f
+#define WATER_SHININESS 500.0f
+
+// Ambient light
+#define AMBIENT_R_INTENSITY 0.3f
+#define AMBIENT_G_INTENSITY 0.3f
+#define AMBIENT_B_INTENSITY 0.3f
 
 // Water settings
 #define WATER_OFFSET 0.2f
