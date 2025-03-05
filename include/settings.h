@@ -72,8 +72,8 @@
 #define SUN_STACKS 15
 #define SUN_RADIUS 0.1f
 #define SUN_INTENSITY 1.0f
-#define SUN_SPECULAR_STRENGTH 1.0f
-#define WATER_SHININESS 500.0f
+#define SUN_SPECULAR_STRENGTH 10.0f
+#define WATER_SHININESS 5000.0f
 
 // Ambient light
 #define AMBIENT_R_INTENSITY 0.3f
