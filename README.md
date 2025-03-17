@@ -1,7 +1,8 @@
 # malloc-craft
 A Minecraft-like voxel game written in C using OpenGL. This project focuses on memory management and modern graphics programming techniques to create a block-based 3D world where players can build and explore.
 
-![image](https://github.com/user-attachments/assets/e545a467-4824-49f4-b7b0-020aaff5a91c)
+![image](https://github.com/user-attachments/assets/1179efd2-565b-4036-8956-bd05cc46198c)
+
 
 ## Key Features
 - Procedural terrain generation with multiple biomes
