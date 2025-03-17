@@ -3,6 +3,7 @@
 #include <sort.h>
 #include <block.h>
 #include <world.h>
+#include <util.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -59,7 +60,7 @@ void send_view_matrix(block_renderer* br) {
 
 void send_proj_matrix(block_renderer* br) {
     mat4 proj;
-    get_projection_matrix(&proj, 45.0f, 800.0f / 600.0f, 0.1f, RENDER_DISTANCE);
+    get_projection_matrix(&proj, RADS(FOV), (float)WIDTH / (float)HEIGHT, 0.1f, RENDER_DISTANCE);
     uint proj_loc = glGetUniformLocation(br->program.id, "proj");
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 }

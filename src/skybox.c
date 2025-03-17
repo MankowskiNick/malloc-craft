@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <util.h>
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 
@@ -115,7 +116,7 @@ void send_sky_view_matrix(shader_program* p, camera* cam) {
 
 void send_sky_proj_matrix(shader_program* p) {
     mat4 proj;
-    get_projection_matrix(&proj, 45.0f, 800.0f / 600.0f, 0.1f, RENDER_DISTANCE);
+    get_projection_matrix(&proj, RADS(FOV), (float)WIDTH / (float)HEIGHT, 0.1f, RENDER_DISTANCE);
     uint proj_loc = glGetUniformLocation(p->id, "proj");
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 }

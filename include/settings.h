@@ -54,7 +54,10 @@
 #define SHADOW_BIAS             0.0025f
 
 // Radius of chunks to redner
-#define CHUNK_RENDER_DISTANCE 20
+#define CHUNK_RENDER_DISTANCE 16
+
+// FOV
+#define FOV 60.0f
 
 // Render distance - also serves as the fog distance
 #define RENDER_DISTANCE 500.0f
