@@ -34,20 +34,20 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     int liquid_offset = 0;
     for (int i = 0; i < count; i++) {
         chunk_mesh* mesh = packet[i];
-        
-        memcpy(transparent_data + transparent_offset, 
-            mesh->transparent_data, 
-            mesh->num_transparent_sides * VBO_WIDTH * sizeof(int));
+
+        chunk_mesh_to_buffer(transparent_data + transparent_offset, 
+            mesh->transparent_sides, 
+            mesh->num_transparent_sides);
         transparent_offset += mesh->num_transparent_sides * VBO_WIDTH;
         
-        memcpy(opaque_data + opaque_offset, 
-            mesh->opaque_data, 
-            mesh->num_opaque_sides * VBO_WIDTH * sizeof(int));
+        chunk_mesh_to_buffer(opaque_data + opaque_offset, 
+            mesh->opaque_sides, 
+            mesh->num_opaque_sides);
         opaque_offset += mesh->num_opaque_sides * VBO_WIDTH;
         
-        memcpy(liquid_data + liquid_offset, 
-            mesh->liquid_data, 
-            mesh->num_liquid_sides * VBO_WIDTH * sizeof(int));
+        chunk_mesh_to_buffer(liquid_data + liquid_offset, 
+            mesh->liquid_sides, 
+            mesh->num_liquid_sides);
         liquid_offset += mesh->num_liquid_sides * VBO_WIDTH;
     }
 

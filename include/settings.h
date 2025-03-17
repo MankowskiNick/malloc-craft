@@ -51,7 +51,7 @@
 #define SHADOW_RENDER_DIST  200.0f
 
 // Radius of chunks to redner
-#define CHUNK_RENDER_DISTANCE 16
+#define CHUNK_RENDER_DISTANCE 20
 
 // Render distance - also serves as the fog distance
 #define RENDER_DISTANCE 500.0f

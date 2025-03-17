@@ -21,15 +21,11 @@ typedef struct {
     int num_opaque_sides;
     int num_transparent_sides;
     int num_liquid_sides;
-
-    int* transparent_data;
-    int* opaque_data;
-    int* liquid_data;
 } chunk_mesh;
 
 void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);
-int* chunk_mesh_to_buffer(side_instance* sides, int num_sides);
+void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides);
 void sort_transparent_sides(chunk_mesh* packet);
 
 #endif
