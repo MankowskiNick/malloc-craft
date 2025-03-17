@@ -55,6 +55,7 @@ void render_liquids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* p
     send_shadow_texture(&(br->program), map);
     send_sun_matrices(&(br->program), sun);
     send_ambient_light(&(br->program));
+    send_shadow_info(&(br->program));
 
     send_cube_vbo(br->vao, br->cube_vbo);
 

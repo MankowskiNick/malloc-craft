@@ -107,6 +107,13 @@ void send_ambient_light(shader_program* p) {
     glUniform3f(glGetUniformLocation(p->id, "ambientLight"), AMBIENT_R_INTENSITY, AMBIENT_G_INTENSITY, AMBIENT_B_INTENSITY);
 }
 
+
+void send_shadow_info(shader_program* p) {
+    glUniform1f(glGetUniformLocation(p->id, "shadowSoftness"), SHADOW_SOFTNESS);
+    glUniform1f(glGetUniformLocation(p->id, "shadowBias"), SHADOW_BIAS);
+    glUniform1i(glGetUniformLocation(p->id, "shadowSamples"), SHADOW_SAMPLES);
+}
+
 void render_sides(block_renderer* br, int* side_data, int num_sides) {
     bind_vao(br->vao);
     buffer_data(br->instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
@@ -138,6 +145,7 @@ void render_solids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* pa
     send_ambient_light(&(br->program));
     send_sun_matrices(&(br->program), sun);
     send_shadow_texture(&(br->program), map);
+    send_shadow_info(&(br->program));
 
     send_cube_vbo(br->vao, br->cube_vbo);
 
@@ -146,15 +154,6 @@ void render_solids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* pa
             packet->opaque_data,
             packet->num_opaque_sides);
     }
-
-    // for (int i = 0; i < num_packets; i++) {
-    //     if (packet[i] == NULL) {
-    //         continue;
-    //     }
-    //     render_sides(br,
-    //         packet[i]->opaque_data,
-    //         packet[i]->num_opaque_sides);
-    // }
 
     stop_program();
 }
@@ -172,6 +171,7 @@ void render_transparent(block_renderer* br, sun* sun, shadow_map* map, world_mes
     send_sun_matrices(&(br->program), sun);
     send_shadow_texture(&(br->program), map);
     send_ambient_light(&(br->program));
+    send_shadow_info(&(br->program));
 
     send_cube_vbo(br->vao, br->cube_vbo);
 

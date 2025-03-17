@@ -4,7 +4,7 @@
 #define HEIGHT 900
 #define TITLE "malloc-craft"
 
-#define TIME_SCALE 0.1f
+#define TIME_SCALE 0.005f
 
 
 
@@ -46,9 +46,12 @@
 #define VSYNC
 
 // Shadow map settings
-#define SHADOW_MAP_WIDTH    10000
-#define SHADOW_MAP_HEIGHT   10000
-#define SHADOW_RENDER_DIST  200.0f
+#define SHADOW_MAP_WIDTH        10000
+#define SHADOW_MAP_HEIGHT       10000
+#define SHADOW_RENDER_DIST      200.0f
+#define SHADOW_SOFTNESS         3.0f
+#define SHADOW_SAMPLES          4
+#define SHADOW_BIAS             0.0025f
 
 // Radius of chunks to redner
 #define CHUNK_RENDER_DISTANCE 20

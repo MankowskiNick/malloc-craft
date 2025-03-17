@@ -16,6 +16,11 @@ uniform sampler2D bump;
 uniform float atlasSize;
 uniform sampler2D shadowMap;
 
+// shadows
+uniform float shadowSoftness;
+uniform float shadowBias;
+uniform int shadowSamples;
+
 // fog
 uniform float fogDistance;
 
@@ -54,16 +59,28 @@ vec3 getShadowIntensity(vec2 coord) {
     uvCoord.y = 0.5 * fragLightPos.y + 0.5;
 
     float z = 0.5 * fragLightPos.z + 0.5;
-    float depth = texture(shadowMap, uvCoord).r;
-
-    float bias = 0.0025;
-
-    if (depth <= z - bias) {
-        return vec3(0.0, 0.0, 0.0);
+    
+    // total shadow if night time
+    if (sunPos.y < -0.2) {
+        return vec3(0.0);
     }
-    else {
-        return vec3(1.0, 1.0, 1.0);
+    
+    // PCF (Percentage-Closer Filtering)
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    
+    int sampleCount = 0;
+    for(int x = -(shadowSamples / 2); x <= (shadowSamples / 2); ++x) {
+        for(int y = -(shadowSamples / 2); y <= (shadowSamples / 2); ++y) {
+            vec2 sampleCoord = uvCoord + vec2(x, y) * texelSize * shadowSoftness;
+            float depth = texture(shadowMap, sampleCoord).r;
+            shadow += (depth < z - shadowBias) ? 0.0 : 1.0;
+            sampleCount++;
+        }
     }
+    shadow /= float(sampleCount);
+    
+    return vec3(shadow);
 }
 
 void main() {

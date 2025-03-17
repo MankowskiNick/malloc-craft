@@ -30,6 +30,7 @@ void send_fog(block_renderer* br);
 void send_time(block_renderer* br);
 void send_water_info(block_renderer* br);
 void send_ambient_light(shader_program* p);
+void send_shadow_info(shader_program* p);
 
 void render_sides(block_renderer* br, int* side_data, int num_sides);
 
