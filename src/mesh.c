@@ -255,9 +255,7 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     packet->num_opaque_sides = opaque_side_count;
     packet->num_transparent_sides = transparent_side_count;
     packet->num_liquid_sides = liquid_side_count;
-    packet->opaque_data = chunk_mesh_to_buffer(opaque_sides, opaque_side_count);
-    packet->transparent_data = chunk_mesh_to_buffer(transparent_sides, transparent_side_count);
-    packet->liquid_data = chunk_mesh_to_buffer(liquid_sides, liquid_side_count);
+    
     packet->opaque_sides = opaque_sides;
     packet->transparent_sides = transparent_sides;
     packet->liquid_sides = liquid_sides;
@@ -276,10 +274,10 @@ chunk_mesh* update_chunk_mesh_at(int x, int z) {
     }
 
     queue_remove(&sort_queue, packet, chunk_mesh_equals);
-    free(packet->opaque_data);
-    packet->opaque_data = NULL;
-    free(packet->transparent_data);
-    packet->transparent_data = NULL;
+    // free(packet->opaque_data);
+    // packet->opaque_data = NULL;
+    // free(packet->transparent_data);
+    // packet->transparent_data = NULL;
     free(packet->opaque_sides);
     packet->opaque_sides = NULL;
     free(packet->transparent_sides);
@@ -348,10 +346,4 @@ void sort_chunk() {
     }
 
     sort_transparent_sides(packet);
-
-    if (packet->transparent_data != NULL) {
-        free(packet->transparent_data);
-        packet->transparent_data = NULL;
-    }
-    packet->transparent_data = chunk_mesh_to_buffer(packet->transparent_sides, packet->num_transparent_sides);
 }

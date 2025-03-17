@@ -35,31 +35,22 @@ float distance_to_camera(const void* item) {
     );
 }
 
-int* chunk_mesh_to_buffer(side_instance* sides, int num_sides) {
+void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides) {
     // x y z type side
-    int* data = malloc(num_sides * VBO_WIDTH * sizeof(int));
-    assert(data != NULL && "Failed to allocate memory for float array");
-
     for (int i = 0; i < num_sides; i++) {
         int index = i * VBO_WIDTH;
         side_instance side = sides[i];
-        data[index + 0] = sides[i].x;
-        data[index + 1] = sides[i].y;
-        data[index + 2] = sides[i].z;
-        data[index + 3] = sides[i].atlas_x;
-        data[index + 4] = sides[i].atlas_y;
-        data[index + 5] = sides[i].side;
-        data[index + 6] = sides[i].underwater;
+        head[index + 0] = sides[i].x;
+        head[index + 1] = sides[i].y;
+        head[index + 2] = sides[i].z;
+        head[index + 3] = sides[i].atlas_x;
+        head[index + 4] = sides[i].atlas_y;
+        head[index + 5] = sides[i].side;
+        head[index + 6] = sides[i].underwater;
     }
-    return data;
+    // return data;
 }
 
 void sort_transparent_sides(chunk_mesh* packet) {
     quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_instance), distance_to_camera);
-    if (packet->transparent_data != NULL) {
-        free(packet->transparent_data);
-        packet->transparent_data = NULL;
-    }
-    packet->transparent_data = chunk_mesh_to_buffer(packet->transparent_sides, packet->num_transparent_sides);
-
 }

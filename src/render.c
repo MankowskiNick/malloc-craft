@@ -10,6 +10,7 @@
 #include <world.h>
 #include <util.h>
 #include <settings.h>
+#include <world_mesh.h>
 
 #define CAMERA_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1
 
@@ -82,7 +83,7 @@ void destroy_renderer(renderer* r) {
     // sun_cleanup(&(r->s));
 }
 
-chunk_mesh** get_packets(renderer* r, int* num_packets) {
+world_mesh* get_world_mesh(renderer* r, int* num_packets) {
     int x = r->cam->position[0];
     int z = r->cam->position[2];
     int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(x);
@@ -133,14 +134,22 @@ chunk_mesh** get_packets(renderer* r, int* num_packets) {
 
     *num_packets = count;
 
-    return packet;
+    world_mesh* world = create_world_mesh(packet, count);
+    if (!world) {
+        assert(false && "Failed to create world mesh\n");
+    }
+
+    // Free the original chunk meshes
+    free(packet);
+    
+    return world;
 }
 
 void render(renderer* r) {
     int num_packets = 0;
-    chunk_mesh** packet = get_packets(r, &num_packets);
+    world_mesh* packet = get_world_mesh(r, &num_packets);
 
-    shadow_map_render(&(r->map), &(r->s), packet, num_packets);
+    shadow_map_render(&(r->map), &(r->s), packet);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
     glBindTexture(GL_TEXTURE_2D, r->map.texture);
     
@@ -154,11 +163,14 @@ void render(renderer* r) {
 
     glClear(GL_DEPTH_BUFFER_BIT);
     
-    render_solids(&(r->wr), &(r->s), &(r->map), packet, num_packets);
+    render_solids(&(r->wr), &(r->s), &(r->map), packet);
 
-    render_liquids(&(r->lr), &(r->s), &(r->map), packet, num_packets);
+    render_liquids(&(r->lr), &(r->s), &(r->map), packet);
 
-    render_transparent(&(r->wr), &(r->s), &(r->map), packet, num_packets);
+    render_transparent(&(r->wr), &(r->s), &(r->map), packet);
 
+    free(packet->transparent_data);
+    free(packet->opaque_data);
+    free(packet->liquid_data);
     free(packet);
 }

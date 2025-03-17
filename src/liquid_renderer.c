@@ -41,7 +41,7 @@ block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* bump_
     return br;
 }
 
-void render_liquids(block_renderer* br, sun* sun, shadow_map* map, chunk_mesh** packet, int num_packets) {
+void render_liquids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet) {
     use_program(br->program);
     bind_vao(br->vao);
 
@@ -58,12 +58,9 @@ void render_liquids(block_renderer* br, sun* sun, shadow_map* map, chunk_mesh** 
 
     send_cube_vbo(br->vao, br->cube_vbo);
 
-    for (int i = 0; i < num_packets; i++) {
-        if (packet[i] == NULL) {
-            continue;
-        }
+    if (packet != NULL) {
         render_sides(br,
-            packet[i]->liquid_data,
-            packet[i]->num_liquid_sides);
+            packet->liquid_data,
+            packet->num_liquid_sides);
     }
 }

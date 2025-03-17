@@ -8,6 +8,7 @@
 #include <chunk_mesh.h>
 #include <sun.h>
 #include <shadow_map.h>
+#include <world_mesh.h>
 
 typedef struct {
     VAO vao;
@@ -32,7 +33,7 @@ void send_ambient_light(shader_program* p);
 
 void render_sides(block_renderer* br, int* side_data, int num_sides);
 
-void render_solids(block_renderer* br, sun* sun, shadow_map* map, chunk_mesh** packet, int num_packets);
-void render_transparent(block_renderer* br, sun* sun, shadow_map* map, chunk_mesh** packet, int num_packets);
+void render_solids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet);
+void render_transparent(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet);
 
 #endif

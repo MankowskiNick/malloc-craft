@@ -124,7 +124,7 @@ void render_sides(block_renderer* br, int* side_data, int num_sides) {
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_sides);
 }
 
-void render_solids(block_renderer* br, sun* sun, shadow_map* map, chunk_mesh** packet, int num_packets) {
+void render_solids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet) {
     use_program(br->program);
     bind_vao(br->vao);
 
@@ -141,19 +141,25 @@ void render_solids(block_renderer* br, sun* sun, shadow_map* map, chunk_mesh** p
 
     send_cube_vbo(br->vao, br->cube_vbo);
 
-    for (int i = 0; i < num_packets; i++) {
-        if (packet[i] == NULL) {
-            continue;
-        }
+    if (packet != NULL) {
         render_sides(br,
-            packet[i]->opaque_data,
-            packet[i]->num_opaque_sides);
+            packet->opaque_data,
+            packet->num_opaque_sides);
     }
+
+    // for (int i = 0; i < num_packets; i++) {
+    //     if (packet[i] == NULL) {
+    //         continue;
+    //     }
+    //     render_sides(br,
+    //         packet[i]->opaque_data,
+    //         packet[i]->num_opaque_sides);
+    // }
 
     stop_program();
 }
 
-void render_transparent(block_renderer* br, sun* sun, shadow_map* map, chunk_mesh** packet, int num_packets) {
+void render_transparent(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet) {
     use_program(br->program);
     bind_vao(br->vao);
 
@@ -169,13 +175,10 @@ void render_transparent(block_renderer* br, sun* sun, shadow_map* map, chunk_mes
 
     send_cube_vbo(br->vao, br->cube_vbo);
 
-    for (int i = 0; i < num_packets; i++) {
-        if (packet[i] == NULL) {
-            continue;
-        }
+    if (packet != NULL) {
         render_sides(br,
-            packet[i]->transparent_data,
-            packet[i]->num_transparent_sides);
+            packet->transparent_data,
+            packet->num_transparent_sides);
     }
 
     stop_program();
