@@ -1,7 +1,7 @@
 
 // Screen width & height
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 1200
+#define HEIGHT 900
 #define TITLE "malloc-craft"
 
 #define TIME_SCALE 0.1f
@@ -51,7 +51,7 @@
 #define SHADOW_RENDER_DIST  200.0f
 
 // Radius of chunks to redner
-#define CHUNK_RENDER_DISTANCE 20
+#define CHUNK_RENDER_DISTANCE 12
 
 // Render distance - also serves as the fog distance
 #define RENDER_DISTANCE 500.0f

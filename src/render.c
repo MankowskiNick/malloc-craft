@@ -143,6 +143,10 @@ void render(renderer* r) {
     shadow_map_render(&(r->map), &(r->s), packet, num_packets);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
     glBindTexture(GL_TEXTURE_2D, r->map.texture);
+    // int w, h;
+    // w = WIDTH;
+    // h = HEIGHT;
+    // glViewport(0, 0, w, h);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

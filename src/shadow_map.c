@@ -131,6 +131,10 @@ void render_depth(shadow_map* map, int* side_data, int num_sides) {
 }
 
 void shadow_map_render(shadow_map* map, sun* s, chunk_mesh** packet, int num_packets) {
+    // Save current viewport
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
     glBindFramebuffer(GL_FRAMEBUFFER, map->fbo);
     glViewport(0, 0, map->width, map->height);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -158,5 +162,8 @@ void shadow_map_render(shadow_map* map, sun* s, chunk_mesh** packet, int num_pac
 
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, WIDTH, HEIGHT);
+    
+    // Restore the viewport to what it was before
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
 }
