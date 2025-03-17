@@ -40,10 +40,15 @@
 #define BUMP_TEXTURE_INDEX 1
 #define CAUSTIC_TEXTURE_INDEX 2
 #define SKYBOX_TEXTURE_INDEX 3
+#define SHADOW_MAP_TEXTURE_INDEX 4
 
 // Vsync on?  Comment to disable
 #define VSYNC
 
+// Shadow map settings
+#define SHADOW_MAP_WIDTH    10000
+#define SHADOW_MAP_HEIGHT   10000
+#define SHADOW_RENDER_DIST  200.0f
 
 // Radius of chunks to redner
 #define CHUNK_RENDER_DISTANCE 20

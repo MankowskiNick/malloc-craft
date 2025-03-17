@@ -14,6 +14,7 @@ out vec4 FragColor;
 uniform sampler2D atlas;
 uniform sampler2D bump;
 uniform float atlasSize;
+uniform sampler2D shadowMap;
 
 // fog
 uniform float fogDistance;
@@ -23,6 +24,8 @@ uniform float waterLevel;
 uniform float waterOffset;
 
 // sun
+uniform mat4 sunView;
+uniform mat4 sunProj;
 uniform vec3 sunPos;
 uniform vec3 sunColor;
 uniform float sunIntensity;
@@ -43,6 +46,26 @@ float getSpecular(vec3 normal, vec3 lightDir, vec3 viewDir, float strength, floa
     return strength * spec;
 }
 
+vec3 getShadowIntensity(vec2 coord) {
+    vec3 fragLightPos = vec3(sunProj * sunView * vec4(fragPos, 1.0));
+
+    vec2 uvCoord;
+    uvCoord.x = 0.5 * fragLightPos.x + 0.5;
+    uvCoord.y = 0.5 * fragLightPos.y + 0.5;
+
+    float z = 0.5 * fragLightPos.z + 0.5;
+    float depth = texture(shadowMap, uvCoord).r;
+
+    float bias = 0.001;
+
+    if (depth <= z - bias) {
+        return vec3(0.0, 0.0, 0.0);
+    }
+    else {
+        return vec3(1.0, 1.0, 1.0);
+    }
+}
+
 void main() {
 
     // get the texture coordinate
@@ -60,10 +83,12 @@ void main() {
 
     // specular lighting
     vec3 viewDir = normalize(cameraPos - fragPos);
+
     float spec = getSpecular(bumpedNormal, sun, viewDir, sunSpecularStrength, waterShininess);
 
     // light intensity
-    vec3 lightIntensity = ambientLight + (sunColor * diffuse) + (sunColor * spec);
+    vec3 shadowFactor = getShadowIntensity(texCoord);
+    vec3 lightIntensity = ambientLight + (shadowFactor * sunColor * diffuse) + (shadowFactor * sunColor * spec);
     
     if (y == waterLevel + 1.0) {
         vec4 baseColor = texture(atlas, coord);
