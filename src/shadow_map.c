@@ -130,7 +130,7 @@ void render_depth(shadow_map* map, int* side_data, int num_sides) {
 
 }
 
-void shadow_map_render(shadow_map* map, sun* s, chunk_mesh** packet, int num_packets) {
+void shadow_map_render(shadow_map* map, sun* s, world_mesh* packet) {
     // Save current viewport
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -147,17 +147,26 @@ void shadow_map_render(shadow_map* map, sun* s, chunk_mesh** packet, int num_pac
     // send cube vbo
     send_cube_vbo(map->vao, map->cube_vbo);
 
-    // render scene here
-    for (int i = 0; i < num_packets; i++) {
-        if (packet[i] == NULL) {
-            continue;
-        }
+    // // render scene here
+    // for (int i = 0; i < num_packets; i++) {
+    //     if (packet[i] == NULL) {
+    //         continue;
+    //     }
+    //     render_depth(map,
+    //         packet[i]->opaque_data,
+    //         packet[i]->num_opaque_sides);
+    //     render_depth(map,
+    //         packet[i]->transparent_data,
+    //         packet[i]->num_transparent_sides);
+    // }
+
+    if (packet != NULL) {
         render_depth(map,
-            packet[i]->opaque_data,
-            packet[i]->num_opaque_sides);
+            packet->opaque_data,
+            packet->num_opaque_sides);
         render_depth(map,
-            packet[i]->transparent_data,
-            packet[i]->num_transparent_sides);
+            packet->transparent_data,
+            packet->num_transparent_sides);
     }
 
 

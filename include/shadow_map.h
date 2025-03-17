@@ -7,6 +7,7 @@
 #include <vao.h>
 #include <vbo.h>
 #include <sun.h>
+#include <world_mesh.h>
 #include <settings.h>
 
 typedef struct {
@@ -22,7 +23,7 @@ typedef struct {
 shadow_map create_shadow_map(uint width, uint height);
 void shadow_map_cleanup(shadow_map* map);
 
-void shadow_map_render(shadow_map* map, sun* s, chunk_mesh** packet, int num_packets);
+void shadow_map_render(shadow_map* map, sun* s, world_mesh* packet);
 
 void send_sun_matrices(shader_program* program, sun* sun);
 void send_shadow_texture(shader_program* program, shadow_map* map);
