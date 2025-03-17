@@ -12,6 +12,7 @@ out vec2 atlasCoord;
 out float dist;
 out float underwater;
 out vec3 normal;
+out vec3 fragPos;
 
 uniform mat4 view;
 uniform mat4 proj;
@@ -68,4 +69,6 @@ void main() {
     dist = length(gl_Position.xyz);
     underwater = float(aUnderwater);
     normal = getNormal(aPos, aSide);
+
+    fragPos = worldPos;
 }

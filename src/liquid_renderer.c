@@ -4,6 +4,7 @@
 #include <time.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <shadow_map.h>
 
 block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* bump_path, char* caustic_path) {
     texture atlas = t_init(atlas_path, ATLAS_TEXTURE_INDEX);
@@ -40,7 +41,7 @@ block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* bump_
     return br;
 }
 
-void render_liquids(block_renderer* br, sun* sun, chunk_mesh** packet, int num_packets) {
+void render_liquids(block_renderer* br, sun* sun, shadow_map* map, chunk_mesh** packet, int num_packets) {
     use_program(br->program);
     bind_vao(br->vao);
 
@@ -51,6 +52,8 @@ void render_liquids(block_renderer* br, sun* sun, chunk_mesh** packet, int num_p
     send_water_info(br);
     send_time(br);
     send_sun_info(&(br->program), sun);
+    send_shadow_texture(&(br->program), map);
+    send_sun_matrices(&(br->program), sun);
     send_ambient_light(&(br->program));
 
     send_cube_vbo(br->vao, br->cube_vbo);

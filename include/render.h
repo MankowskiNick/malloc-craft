@@ -6,12 +6,14 @@
 #include <block_renderer.h>
 #include <skybox.h>
 #include <sun.h>
+#include <shadow_map.h>
 
 typedef struct {
     block_renderer wr;
     block_renderer lr;
     skybox sky;
     sun s;
+    shadow_map map;
 
     camera_cache cam_cache;
     camera* cam;

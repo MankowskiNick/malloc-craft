@@ -56,6 +56,7 @@ renderer create_renderer(camera* camera) {
     block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     skybox sky = create_skybox(camera);
     sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
+    shadow_map map = create_shadow_map(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
 
     renderer r = {
         .wr = wr,
@@ -67,6 +68,7 @@ renderer create_renderer(camera* camera) {
             .z = camera->position[2],
         },
         .cam = camera,
+        .map = map,
     };
 
     return r;
@@ -100,9 +102,9 @@ chunk_mesh** get_packets(renderer* r, int* num_packets) {
             int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
             int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
 
-            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
-                continue;
-            }
+            // if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
+            //     continue;
+            // }
 
             chunk_mesh* mesh = get_chunk_mesh(x, z);
 
@@ -138,6 +140,10 @@ void render(renderer* r) {
     int num_packets = 0;
     chunk_mesh** packet = get_packets(r, &num_packets);
 
+    shadow_map_render(&(r->map), &(r->s), packet, num_packets);
+    glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
+    glBindTexture(GL_TEXTURE_2D, r->map.texture);
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glDisable(GL_DEPTH_TEST);
@@ -148,11 +154,11 @@ void render(renderer* r) {
 
     glClear(GL_DEPTH_BUFFER_BIT);
     
-    render_solids(&(r->wr), &(r->s), packet, num_packets);
+    render_solids(&(r->wr), &(r->s), &(r->map), packet, num_packets);
 
-    render_liquids(&(r->lr), &(r->s), packet, num_packets);
+    render_liquids(&(r->lr), &(r->s), &(r->map), packet, num_packets);
 
-    render_transparent(&(r->wr), &(r->s), packet, num_packets);
+    render_transparent(&(r->wr), &(r->s), &(r->map), packet, num_packets);
 
     free(packet);
 }
