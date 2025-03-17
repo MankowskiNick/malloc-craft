@@ -71,26 +71,30 @@ void shadow_map_cleanup(shadow_map* map) {
     glDeleteTextures(1, &map->texture);
 }
 
-void get_sun_view_matrix(vec3 pos, mat4* view) {
-    glm_lookat(pos, 
-        (vec3){0.0f, 0.0f, 0.0f},
+void get_sun_view_matrix(vec3 pos, vec3 player_pos, mat4* view) {
+    vec3 sun_pos = {pos[0] + player_pos[0], pos[1] + player_pos[1], pos[2] + player_pos[2]};
+    glm_lookat(sun_pos, 
+        player_pos,
         (vec3){0.0f, 1.0f, 0.0f},
         *view);
-} 
+}
 
 void get_sun_proj_matrix(mat4* proj, sun* s) {
     float x = s->cam->position[0];
     float y = s->cam->position[1];
     float z = s->cam->position[2];
-    glm_ortho(x - SHADOW_RENDER_DIST, x + SHADOW_RENDER_DIST, 
-        y - SHADOW_RENDER_DIST, y + SHADOW_RENDER_DIST, 
-        z - SHADOW_RENDER_DIST, z +SHADOW_RENDER_DIST, 
+    glm_ortho(-SHADOW_RENDER_DIST, SHADOW_RENDER_DIST, 
+        -SHADOW_RENDER_DIST, SHADOW_RENDER_DIST, 
+        -SHADOW_RENDER_DIST, SHADOW_RENDER_DIST, 
         *proj);
 }
 
 void send_sun_matrices(shader_program* program, sun* sun) {
     mat4 view;
-    get_sun_view_matrix((vec3){sun->x, sun->y, sun->z}, &view);
+    get_sun_view_matrix(
+        (vec3){sun->x, sun->y, sun->z}, 
+        (vec3){sun->cam->position[0], sun->cam->position[1], sun->cam->position[2]},
+        &view);
     uint view_loc = glGetUniformLocation(program->id, "sunView");
     glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float*)view);
 

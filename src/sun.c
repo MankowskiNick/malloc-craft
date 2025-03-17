@@ -114,6 +114,7 @@ void update_sun(sun* s, float t) {
     // s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
     // s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
 
+
     // s->y = 0.5f;
     // s->x = cos(t * TIME_SCALE);
     // s->z = sin(t * TIME_SCALE);

@@ -75,9 +75,9 @@ vec3 getShadowIntensity(vec2 coord) {
     float z = 0.5 * fragLightPos.z + 0.5;
     float depth = texture(shadowMap, uvCoord).r;
 
-    float bias = 0.01;
+    float bias = 0.005;
 
-    if (depth < z - bias || sunPos.y < -0.1) {
+    if (depth < z - bias || sunPos.y < -0.2) {
         return vec3(0.0, 0.0, 0.0);
     }
     else {
