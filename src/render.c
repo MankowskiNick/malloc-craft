@@ -102,9 +102,9 @@ chunk_mesh** get_packets(renderer* r, int* num_packets) {
             int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
             int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
 
-            // if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
-            //     continue;
-            // }
+            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
+                continue;
+            }
 
             chunk_mesh* mesh = get_chunk_mesh(x, z);
 
