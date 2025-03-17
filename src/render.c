@@ -82,7 +82,7 @@ void destroy_renderer(renderer* r) {
     // sun_cleanup(&(r->s));
 }
 
-chunk_mesh** get_packets(renderer* r, int* num_packets) {
+chunk_mesh* get_packets(renderer* r, int* num_packets) {
     int x = r->cam->position[0];
     int z = r->cam->position[2];
     int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(x);
@@ -133,16 +133,79 @@ chunk_mesh** get_packets(renderer* r, int* num_packets) {
 
     *num_packets = count;
 
-    return packet;
+    // get mega chunk - all chunks combined into one
+    chunk_mesh* mega_chunk = malloc(sizeof(chunk_mesh));
+    mega_chunk->x = player_chunk_x;
+    mega_chunk->z = player_chunk_z;
+
+    // First pass: Calculate total memory needed
+    int total_transparent_sides = 0;
+    int total_opaque_sides = 0;
+    int total_liquid_sides = 0;
+
+    for (int i = 0; i < count; i++) {
+        chunk_mesh* mesh = packet[i];
+        total_transparent_sides += mesh->num_transparent_sides;
+        total_opaque_sides += mesh->num_opaque_sides;
+        total_liquid_sides += mesh->num_liquid_sides;
+    }
+
+    // Allocate all memory at once
+    int* transparent_data = malloc(total_transparent_sides * VBO_WIDTH * sizeof(int));
+    int* opaque_data = malloc(total_opaque_sides * VBO_WIDTH * sizeof(int));
+    int* liquid_data = malloc(total_liquid_sides * VBO_WIDTH * sizeof(int));
+
+    if (!transparent_data || !opaque_data || !liquid_data) {
+        // Handle allocation failure
+        free(transparent_data);
+        free(opaque_data);
+        free(liquid_data);
+        // Return error or use fallback
+    }
+
+    // Second pass: Copy data
+    int transparent_offset = 0;
+    int opaque_offset = 0;
+    int liquid_offset = 0;
+
+    for (int i = 0; i < count; i++) {
+        chunk_mesh* mesh = packet[i];
+        
+        memcpy(transparent_data + transparent_offset, 
+            mesh->transparent_data, 
+            mesh->num_transparent_sides * VBO_WIDTH * sizeof(int));
+        transparent_offset += mesh->num_transparent_sides * VBO_WIDTH;
+        
+        memcpy(opaque_data + opaque_offset, 
+            mesh->opaque_data, 
+            mesh->num_opaque_sides * VBO_WIDTH * sizeof(int));
+        opaque_offset += mesh->num_opaque_sides * VBO_WIDTH;
+        
+        memcpy(liquid_data + liquid_offset, 
+            mesh->liquid_data, 
+            mesh->num_liquid_sides * VBO_WIDTH * sizeof(int));
+        liquid_offset += mesh->num_liquid_sides * VBO_WIDTH;
+    }
+    mega_chunk->transparent_data = transparent_data;
+    mega_chunk->opaque_data = opaque_data;
+    mega_chunk->liquid_data = liquid_data;
+    mega_chunk->num_transparent_sides = transparent_offset / VBO_WIDTH;
+    mega_chunk->num_opaque_sides = opaque_offset / VBO_WIDTH;
+    mega_chunk->num_liquid_sides = liquid_offset / VBO_WIDTH;
+
+    free(packet);
+
+    return mega_chunk;
+    // return packet;
 }
 
 void render(renderer* r) {
     int num_packets = 0;
-    chunk_mesh** packet = get_packets(r, &num_packets);
+    chunk_mesh* packet = get_packets(r, &num_packets);
 
-    shadow_map_render(&(r->map), &(r->s), packet, num_packets);
-    glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
-    glBindTexture(GL_TEXTURE_2D, r->map.texture);
+    // shadow_map_render(&(r->map), &(r->s), packet, num_packets);
+    // glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
+    // glBindTexture(GL_TEXTURE_2D, r->map.texture);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -160,5 +223,8 @@ void render(renderer* r) {
 
     render_transparent(&(r->wr), &(r->s), &(r->map), packet, num_packets);
 
+    free(packet->transparent_data);
+    free(packet->opaque_data);
+    free(packet->liquid_data);
     free(packet);
 }
