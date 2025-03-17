@@ -72,8 +72,8 @@ void main() {
     vec2 coord = (atlasCoord + texCoord) / atlasSize;
 
     // get bumped normal
-    // vec3 bumpedNormal = normalize(normal + texture(bump, coord).xyz);
-    vec3 bumpedNormal = normal;
+    vec3 bumpedNormal = normalize(normal + texture(bump, coord).xyz);
+    // vec3 bumpedNormal = normal;
 
     // normalize sun position(also direction, since this is global)
     vec3 sun = normalize(sunPos);
