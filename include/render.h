@@ -17,6 +17,8 @@ typedef struct {
 
     camera_cache cam_cache;
     camera* cam;
+
+    world_mesh* mesh;
 } renderer;
 
 renderer create_renderer(camera* camera);

@@ -12,6 +12,8 @@
 #include <settings.h>
 #include <world_mesh.h>
 
+#include <GLFW/glfw3.h>
+
 #define CAMERA_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1
 
 camera* r_cam_ref;
@@ -70,6 +72,7 @@ renderer create_renderer(camera* camera) {
         },
         .cam = camera,
         .map = map,
+        .mesh = NULL
     };
 
     return r;
@@ -90,6 +93,11 @@ world_mesh* get_world_mesh(renderer* r, int* num_packets) {
     int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(z);
 
     int movedBlocks = ((int)x == (int)r->cam_cache.x && (int)z == (int)r->cam_cache.z) ? 0 : 1;
+    if (!movedBlocks && r->mesh != NULL) {
+        printf("Returning cached mesh\n");;
+        return r->mesh;
+    }
+
     if (movedBlocks) {
         r->cam_cache.x = x;
         r->cam_cache.z = z;
@@ -141,18 +149,38 @@ world_mesh* get_world_mesh(renderer* r, int* num_packets) {
 
     // Free the original chunk meshes
     free(packet);
+
+    // Set the renderer's mesh to the new world mesh
+    if (r->mesh != NULL) {
+        free(r->mesh->opaque_data);
+        free(r->mesh->transparent_data);
+        free(r->mesh->liquid_data);
+        free(r->mesh);
+    }
+
+    r->mesh = world;
     
     return world;
 }
 
 void render(renderer* r) {
     int num_packets = 0;
-    world_mesh* packet = get_world_mesh(r, &num_packets);
 
+    // profile
+    double start, end;
+
+    // start = glfwGetTime();
+    world_mesh* packet = get_world_mesh(r, &num_packets);
+    // end = glfwGetTime();
+    // printf("Time to get world mesh: %f ms\n", (end - start) * 1000.0);
+
+    start = glfwGetTime();
     shadow_map_render(&(r->map), &(r->s), packet);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
     glBindTexture(GL_TEXTURE_2D, r->map.texture);
-    
+    end = glfwGetTime();
+    printf("Time to render shadow map: %f ms\n", (end - start) * 1000.0);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glDisable(GL_DEPTH_TEST);
@@ -163,14 +191,15 @@ void render(renderer* r) {
 
     glClear(GL_DEPTH_BUFFER_BIT);
     
+    // start = glfwGetTime();
     render_solids(&(r->wr), &(r->s), &(r->map), packet);
-
     render_liquids(&(r->lr), &(r->s), &(r->map), packet);
-
     render_transparent(&(r->wr), &(r->s), &(r->map), packet);
+    // end = glfwGetTime();
+    // printf("Time to render solids, liquids, and transparent: %f ms\n", (end - start) * 1000.0);
 
-    free(packet->transparent_data);
-    free(packet->opaque_data);
-    free(packet->liquid_data);
-    free(packet);
+    // free(packet->transparent_data);
+    // free(packet->opaque_data);
+    // free(packet->liquid_data);
+    // free(packet);
 }

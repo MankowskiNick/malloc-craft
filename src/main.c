@@ -33,7 +33,11 @@ int main() {
         
         update_camera();
 
+        double start = glfwGetTime();
         render(&r);
+        double end = glfwGetTime();
+        printf("Frame time: %.3f ms\n", (end - start) * 1000.0);
+        printf("FPS: %.2f\n", 1.0 / (end - start));
 
         glfwSwapBuffers(window);
         glfwPollEvents();

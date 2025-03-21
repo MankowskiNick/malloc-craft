@@ -46,8 +46,8 @@
 #define VSYNC
 
 // Shadow map settings
-#define SHADOW_MAP_WIDTH        10000
-#define SHADOW_MAP_HEIGHT       10000
+#define SHADOW_MAP_WIDTH        5000
+#define SHADOW_MAP_HEIGHT       5000
 #define SHADOW_RENDER_DIST      200.0f
 #define SHADOW_SOFTNESS         3.0f
 #define SHADOW_SAMPLES          4

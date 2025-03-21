@@ -114,7 +114,7 @@ void send_shadow_texture(shader_program* program, shadow_map* map) {
 void render_depth(shadow_map* map, int* side_data, int num_sides) {
     use_program(map->program);
     bind_vao(map->vao);
-    buffer_data(map->instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
+    buffer_data(map->instance_vbo, GL_DYNAMIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
     i_add_attrib(&(map->instance_vbo), 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
     i_add_attrib(&(map->instance_vbo), 2, 2, 3 * sizeof(int), VBO_WIDTH * sizeof(int)); // atlas coords
     i_add_attrib(&(map->instance_vbo), 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
@@ -146,19 +146,6 @@ void shadow_map_render(shadow_map* map, sun* s, world_mesh* packet) {
 
     // send cube vbo
     send_cube_vbo(map->vao, map->cube_vbo);
-
-    // // render scene here
-    // for (int i = 0; i < num_packets; i++) {
-    //     if (packet[i] == NULL) {
-    //         continue;
-    //     }
-    //     render_depth(map,
-    //         packet[i]->opaque_data,
-    //         packet[i]->num_opaque_sides);
-    //     render_depth(map,
-    //         packet[i]->transparent_data,
-    //         packet[i]->num_transparent_sides);
-    // }
 
     if (packet != NULL) {
         render_depth(map,

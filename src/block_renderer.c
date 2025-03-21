@@ -117,7 +117,7 @@ void send_shadow_info(shader_program* p) {
 
 void render_sides(block_renderer* br, int* side_data, int num_sides) {
     bind_vao(br->vao);
-    buffer_data(br->instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
+    buffer_data(br->instance_vbo, GL_DYNAMIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
     i_add_attrib(&(br->instance_vbo), 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
     i_add_attrib(&(br->instance_vbo), 2, 2, 3 * sizeof(int), VBO_WIDTH * sizeof(int)); // atlas coords
     i_add_attrib(&(br->instance_vbo), 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
