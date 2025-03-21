@@ -6,6 +6,15 @@ A Minecraft-like voxel game written in C using OpenGL. This project focuses on m
 <img width="1195" alt="grafik" src="https://github.com/user-attachments/assets/e306427b-4685-433a-bbf4-f632135aa5b2" />
 <img width="1195" alt="grafik" src="https://github.com/user-attachments/assets/126101ba-31f5-4e5f-aa1f-111a24711e28" />
 
+## tmp
+main
+Average frame time: 0.013 seconds
+Average FPS: 74.38
+
+features/optimize 
+Average frame time: 0.012 seconds
+Average FPS: 80.58
+
 
 ## Key Features
 - Procedural terrain generation with multiple biomes

@@ -174,12 +174,12 @@ void render(renderer* r) {
     // end = glfwGetTime();
     // printf("Time to get world mesh: %f ms\n", (end - start) * 1000.0);
 
-    start = glfwGetTime();
+    // start = glfwGetTime();
     shadow_map_render(&(r->map), &(r->s), packet);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
     glBindTexture(GL_TEXTURE_2D, r->map.texture);
-    end = glfwGetTime();
-    printf("Time to render shadow map: %f ms\n", (end - start) * 1000.0);
+    // end = glfwGetTime();
+    // printf("Time to render shadow map: %f ms\n", (end - start) * 1000.0);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

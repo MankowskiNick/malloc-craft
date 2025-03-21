@@ -29,19 +29,28 @@ int main() {
 
     i_init(window, &player);
 
+    int frames = 0;
+    double start, end;
+    double frametime;
     while (!glfwWindowShouldClose(window)) {
         
         update_camera();
 
-        double start = glfwGetTime();
+        start = glfwGetTime();
         render(&r);
-        double end = glfwGetTime();
-        printf("Frame time: %.3f ms\n", (end - start) * 1000.0);
-        printf("FPS: %.2f\n", 1.0 / (end - start));
+        end = glfwGetTime();
+        frametime += end - start;
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        frames++;
     }
+
+    // Calculate and print the average frame time
+    frametime /= frames;
+    printf("Average frame time: %.3f seconds\n", frametime);
+    printf("Average FPS: %.2f\n", 1.0 / frametime);
 
     destroy_renderer(&r);
 
