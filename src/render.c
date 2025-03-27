@@ -57,7 +57,7 @@ renderer create_renderer(camera* camera) {
     block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     skybox sky = create_skybox(camera);
     sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
-    shadow_map map = create_shadow_map(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
+    framebuffer map = create_shadow_map(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
 
     renderer r = {
         .wr = wr,
@@ -69,7 +69,7 @@ renderer create_renderer(camera* camera) {
             .z = camera->position[2],
         },
         .cam = camera,
-        .map = map,
+        .shadow_map = map,
     };
 
     return r;
@@ -149,9 +149,9 @@ void render(renderer* r) {
     int num_packets = 0;
     world_mesh* packet = get_world_mesh(r, &num_packets);
 
-    shadow_map_render(&(r->map), &(r->s), packet);
+    shadow_map_render(&(r->shadow_map), &(r->s), packet);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
-    glBindTexture(GL_TEXTURE_2D, r->map.texture);
+    glBindTexture(GL_TEXTURE_2D, r->shadow_map.texture);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -163,11 +163,11 @@ void render(renderer* r) {
 
     glClear(GL_DEPTH_BUFFER_BIT);
     
-    render_solids(&(r->wr), &(r->s), &(r->map), packet);
+    render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
 
-    render_liquids(&(r->lr), &(r->s), &(r->map), packet);
+    render_liquids(&(r->lr), &(r->s), &(r->shadow_map), packet);
 
-    render_transparent(&(r->wr), &(r->s), &(r->map), packet);
+    render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
 
     free(packet->transparent_data);
     free(packet->opaque_data);

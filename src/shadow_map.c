@@ -5,7 +5,7 @@
 #include <vbo.h>
 #include <block.h>
 
-shadow_map create_shadow_map(uint width, uint height) {
+framebuffer create_shadow_map(uint width, uint height) {
 
     // create fbo
     uint fbo;
@@ -52,7 +52,7 @@ shadow_map create_shadow_map(uint width, uint height) {
     // unbind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    shadow_map map = {
+    framebuffer map = {
         .width = width,
         .height = height,
         .fbo = fbo,
@@ -64,11 +64,6 @@ shadow_map create_shadow_map(uint width, uint height) {
     };
 
     return map;
-}
-
-void shadow_map_cleanup(shadow_map* map) {
-    glDeleteFramebuffers(1, &map->fbo);
-    glDeleteTextures(1, &map->texture);
 }
 
 void get_sun_view_matrix(vec3 pos, vec3 player_pos, mat4* view) {
@@ -104,14 +99,14 @@ void send_sun_matrices(shader_program* program, sun* sun) {
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 }
 
-void send_shadow_texture(shader_program* program, shadow_map* map) {
+void send_shadow_texture(shader_program* program, framebuffer* map) {
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
     glBindTexture(GL_TEXTURE_2D, map->texture);
     uint shadow_loc = glGetUniformLocation(program->id, "shadowMap");
     glUniform1i(shadow_loc, SHADOW_MAP_TEXTURE_INDEX);
 }
 
-void render_depth(shadow_map* map, int* side_data, int num_sides) {
+void render_depth(framebuffer* map, int* side_data, int num_sides) {
     use_program(map->program);
     bind_vao(map->vao);
     buffer_data(map->instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
@@ -130,7 +125,7 @@ void render_depth(shadow_map* map, int* side_data, int num_sides) {
 
 }
 
-void shadow_map_render(shadow_map* map, sun* s, world_mesh* packet) {
+void shadow_map_render(framebuffer* map, sun* s, world_mesh* packet) {
     // Save current viewport
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -146,19 +141,6 @@ void shadow_map_render(shadow_map* map, sun* s, world_mesh* packet) {
 
     // send cube vbo
     send_cube_vbo(map->vao, map->cube_vbo);
-
-    // // render scene here
-    // for (int i = 0; i < num_packets; i++) {
-    //     if (packet[i] == NULL) {
-    //         continue;
-    //     }
-    //     render_depth(map,
-    //         packet[i]->opaque_data,
-    //         packet[i]->num_opaque_sides);
-    //     render_depth(map,
-    //         packet[i]->transparent_data,
-    //         packet[i]->num_transparent_sides);
-    // }
 
     if (packet != NULL) {
         render_depth(map,

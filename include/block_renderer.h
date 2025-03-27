@@ -34,7 +34,7 @@ void send_shadow_info(shader_program* p);
 
 void render_sides(block_renderer* br, int* side_data, int num_sides);
 
-void render_solids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet);
-void render_transparent(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet);
+void render_solids(block_renderer* br, sun* sun, framebuffer* shadow_map, world_mesh* packet);
+void render_transparent(block_renderer* br, sun* sun, framebuffer* shadow_map, world_mesh* packet);
 
 #endif
