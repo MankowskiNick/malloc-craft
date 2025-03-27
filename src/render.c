@@ -83,7 +83,6 @@ void destroy_renderer(renderer* r) {
     destroy_block_renderer(r->wr);
     destroy_block_renderer(r->lr);
     skybox_cleanup(&(r->sky));
-    // sun_cleanup(&(r->s));
 }
 
 world_mesh* get_world_mesh(renderer* r, int* num_packets) {
@@ -94,7 +93,6 @@ world_mesh* get_world_mesh(renderer* r, int* num_packets) {
 
     int movedBlocks = ((int)x == (int)r->cam_cache.x && (int)z == (int)r->cam_cache.z) ? 0 : 1;
     if (!movedBlocks && r->mesh != NULL) {
-        printf("Returning cached mesh\n");;
         return r->mesh;
     }
 
@@ -166,20 +164,11 @@ world_mesh* get_world_mesh(renderer* r, int* num_packets) {
 void render(renderer* r) {
     int num_packets = 0;
 
-    // profile
-    double start, end;
-
-    // start = glfwGetTime();
     world_mesh* packet = get_world_mesh(r, &num_packets);
-    // end = glfwGetTime();
-    // printf("Time to get world mesh: %f ms\n", (end - start) * 1000.0);
-
-    // start = glfwGetTime();
+    
     shadow_map_render(&(r->map), &(r->s), packet);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
     glBindTexture(GL_TEXTURE_2D, r->map.texture);
-    // end = glfwGetTime();
-    // printf("Time to render shadow map: %f ms\n", (end - start) * 1000.0);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -191,15 +180,7 @@ void render(renderer* r) {
 
     glClear(GL_DEPTH_BUFFER_BIT);
     
-    // start = glfwGetTime();
     render_solids(&(r->wr), &(r->s), &(r->map), packet);
     render_liquids(&(r->lr), &(r->s), &(r->map), packet);
     render_transparent(&(r->wr), &(r->s), &(r->map), packet);
-    // end = glfwGetTime();
-    // printf("Time to render solids, liquids, and transparent: %f ms\n", (end - start) * 1000.0);
-
-    // free(packet->transparent_data);
-    // free(packet->opaque_data);
-    // free(packet->liquid_data);
-    // free(packet);
 }
