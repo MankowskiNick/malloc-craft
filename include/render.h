@@ -19,8 +19,14 @@ typedef struct {
     camera* cam;
 } renderer;
 
+typedef struct { 
+    renderer* r;
+    world_mesh* packet;
+    int num_packets;
+} render_args;
+
 renderer create_renderer(camera* camera);
 void destroy_renderer(renderer* r);
-void render(renderer* r);
+void render(render_args* args);
 
 #endif

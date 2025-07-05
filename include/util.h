@@ -7,6 +7,8 @@
 
 #define RADS(deg) ((deg) * (PI / 180.0f))
 
+#define CAMERA_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1
+
 typedef unsigned int uint;
 
 #endif

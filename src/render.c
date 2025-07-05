@@ -12,25 +12,7 @@
 #include <settings.h>
 #include <world_mesh.h>
 
-#define CAMERA_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1
-
-camera* r_cam_ref;
-
-float chunk_distance_to_camera(const void* item) {
-    chunk_mesh* packet = *(chunk_mesh**)item;
-    // camera coords to chunk coords
-    float x = (r_cam_ref->position[0] / (float)CHUNK_SIZE);
-    float z = (r_cam_ref->position[2] / (float)CHUNK_SIZE);
-
-    return -1.0f * sqrt(
-        pow((float)(packet->x + 0.5f) - x, 2) +
-        pow((float)(packet->z + 0.5f) - z, 2)
-    );
-}
-
 renderer create_renderer(camera* camera) {
-    r_cam_ref = camera;
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -83,71 +65,20 @@ void destroy_renderer(renderer* r) {
     // sun_cleanup(&(r->s));
 }
 
-world_mesh* get_world_mesh(renderer* r, int* num_packets) {
-    int x = r->cam->position[0];
-    int z = r->cam->position[2];
-    int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(x);
-    int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(z);
+void render(render_args* args) {
+    assert(args != NULL && "Render args are NULL\n");
 
-    int movedBlocks = ((int)x == (int)r->cam_cache.x && (int)z == (int)r->cam_cache.z) ? 0 : 1;
-    if (movedBlocks) {
-        r->cam_cache.x = x;
-        r->cam_cache.z = z;
+    renderer* r = args->r;
+    world_mesh* packet = args->packet;
+    int num_packets = args->num_packets;
+
+    if (r == NULL || packet == NULL) {
+        assert(false && "Renderer or world mesh is NULL\n");
     }
 
-    chunk_mesh** packet = NULL;
-    int count = 0;
-
-    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
-            int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
-            int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
-
-            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
-                continue;
-            }
-
-            chunk_mesh* mesh = get_chunk_mesh(x, z);
-
-            if (mesh == NULL) {
-                continue;
-            }
-
-            packet = realloc(packet, (count + 1) * sizeof(chunk_mesh*));
-            packet[count] = mesh;
-            count++;
-
-            if (x >= player_chunk_x - 1 
-                && x <= player_chunk_x + 1 
-                && z >= player_chunk_z - 1
-                && z <= player_chunk_z + 1
-                && movedBlocks) {
-                queue_chunk_for_sorting(mesh);
-            }
-        }
+    if (num_packets <= 0) {
+        return; // No packets to render
     }
-
-    sort_chunk();
-    load_chunk();
-
-    quicksort(packet, count, sizeof(chunk_mesh*), chunk_distance_to_camera);
-
-    *num_packets = count;
-
-    world_mesh* world = create_world_mesh(packet, count);
-    if (!world) {
-        assert(false && "Failed to create world mesh\n");
-    }
-
-    // Free the original chunk meshes
-    free(packet);
-    
-    return world;
-}
-
-void render(renderer* r) {
-    int num_packets = 0;
-    world_mesh* packet = get_world_mesh(r, &num_packets);
 
     shadow_map_render(&(r->map), &(r->s), packet);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
