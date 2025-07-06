@@ -117,8 +117,6 @@ world_mesh* get_world_mesh(mesh_args* args) {
         assert(false && "mesh_args pointer is NULL\n");
     }
 
-    // pthread_mutex_lock(&wm_mutex);
-
     int x = args->x;
     int z = args->z;
 
@@ -127,27 +125,20 @@ world_mesh* get_world_mesh(mesh_args* args) {
         wm_camera_cache.x = x;
         wm_camera_cache.z = z;
     } else if (wm_mesh_cache != NULL) {
-        world_mesh* cached = wm_mesh_cache;
-        // pthread_mutex_unlock(&wm_mutex);
-        return cached;
+        return wm_mesh_cache; // No need to regenerate if camera hasn't moved
     }
-
-    // get_chunk_meshes(args);
 
     world_mesh* world = create_world_mesh(args->packet, *args->num_packets);
     if (!world) {
-        // pthread_mutex_unlock(&wm_mutex);
         assert(false && "Failed to create world mesh\n");
     }
 
     // Free the original chunk meshes
-    // free(args->packet);
     if (wm_mesh_cache != NULL) {
         free_world_mesh(wm_mesh_cache);
     }
     wm_mesh_cache = world;
-
-    // pthread_mutex_unlock(&wm_mutex);
+    
     return world;
 }
 

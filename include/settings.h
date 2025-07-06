@@ -17,7 +17,7 @@
 
 // How many chunks can be loaded per frame.  
 // Higher values will load chunks faster, but may cause stuttering.
-#define CHUNK_LOAD_PER_FRAME 1
+#define CHUNK_LOAD_PER_FRAME 8
 
 // Chunks are cached in memory to reduce load times, how large should the cache be?
 #define CHUNK_CACHE_SIZE 1024
@@ -53,7 +53,7 @@
 #define SHADOW_SAMPLES          4
 #define SHADOW_BIAS             0.0025f
 
-// Radius of chunks to redner
+// Radius of chunks to render
 #define CHUNK_RENDER_DISTANCE 16
 
 // FOV
