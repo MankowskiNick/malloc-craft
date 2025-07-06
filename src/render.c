@@ -41,6 +41,9 @@ renderer create_renderer(camera* camera) {
     sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
     shadow_map map = create_shadow_map(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
 
+    pthread_mutex_t lock;
+    pthread_mutex_init(&lock, NULL);
+
     renderer r = {
         .wr = wr,
         .lr = lr,
@@ -52,6 +55,7 @@ renderer create_renderer(camera* camera) {
         },
         .cam = camera,
         .map = map,
+        .lock = lock
     };
 
     return r;
@@ -62,6 +66,7 @@ void destroy_renderer(renderer* r) {
     destroy_block_renderer(r->wr);
     destroy_block_renderer(r->lr);
     skybox_cleanup(&(r->sky));
+    pthread_mutex_destroy(&(r->lock));
     // sun_cleanup(&(r->s));
 }
 
@@ -93,15 +98,11 @@ void render(render_args* args) {
     render_sun(&(r->s));
 
     glClear(GL_DEPTH_BUFFER_BIT);
-    
+
+    pthread_mutex_lock(&(r->lock));
     render_solids(&(r->wr), &(r->s), &(r->map), packet);
-
     render_liquids(&(r->lr), &(r->s), &(r->map), packet);
-
     render_transparent(&(r->wr), &(r->s), &(r->map), packet);
-
-    free(packet->transparent_data);
-    free(packet->opaque_data);
-    free(packet->liquid_data);
-    free(packet);
+    pthread_mutex_unlock(&(r->lock));
+    
 }

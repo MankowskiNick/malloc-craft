@@ -4,7 +4,7 @@
 #include <cglm/cglm.h>
 
 typedef struct {
-    float x, z;
+    float x, y, z;
 } camera_cache;
 
 typedef struct {

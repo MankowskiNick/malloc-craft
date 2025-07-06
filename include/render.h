@@ -7,6 +7,7 @@
 #include <skybox.h>
 #include <sun.h>
 #include <shadow_map.h>
+#include <pthread.h>
 
 typedef struct {
     block_renderer wr;
@@ -17,6 +18,8 @@ typedef struct {
 
     camera_cache cam_cache;
     camera* cam;
+
+    pthread_mutex_t lock;
 } renderer;
 
 typedef struct { 

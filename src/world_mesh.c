@@ -5,24 +5,20 @@
 #include <sort.h>
 #include <util.h>
 #include <mesh.h>
+#include <pthread.h>
 
-camera* wm_cam_ref = NULL;
+camera_cache wm_cam_ref;
+world_mesh* wm_cached_mesh = NULL;
+pthread_mutex_t wm_lock;
 
 void wm_init(camera* camera) {
-    wm_cam_ref = camera;
+    if (camera == NULL) {
+        assert(false && "Camera pointer is NULL\n");
+    }
     chunk_mesh_init(camera);
-}
-
-float chunk_distance_to_camera(const void* item) {
-    chunk_mesh* packet = *(chunk_mesh**)item;
-    // camera coords to chunk coords
-    float x = (wm_cam_ref->position[0] / (float)CHUNK_SIZE);
-    float z = (wm_cam_ref->position[2] / (float)CHUNK_SIZE);
-
-    return -1.0f * sqrt(
-        pow((float)(packet->x + 0.5f) - x, 2) +
-        pow((float)(packet->z + 0.5f) - z, 2)
-    );
+    wm_cached_mesh = NULL;
+    wm_cam_ref.x = camera->position[0];
+    wm_cam_ref.z = camera->position[2];
 }
 
 world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
@@ -103,78 +99,39 @@ void free_world_mesh(world_mesh* mesh) {
     free(mesh);
 }
 
-world_mesh* get_world_mesh(get_world_mesh_args* args) {
-
-    if (wm_cam_ref == NULL) {
-        assert(false && "World mesh not initialized. Call wm_init(camera) first.\n");
-    }
-
-    if (args == NULL) {
+world_mesh* get_world_mesh(chunk_args* args) {
+    if (args == NULL) 
         assert(false && "get_world_mesh_args pointer is NULL\n");
-    }
-
-    int* num_packets = args->num_packets;
-    if (num_packets == NULL) {
+    if (args->packet == NULL) 
+        assert(false && "packet pointer is NULL\n");
+    if (args->num_packets == NULL) 
         assert(false && "num_packets pointer is NULL\n");
+
+    pthread_mutex_lock(&wm_lock);
+    chunk_mesh** packet = args->packet;
+    if (packet == NULL) {
+        pthread_mutex_unlock(&wm_lock);
+        assert(false && "packet pointer is NULL\n");
     }
-    int x = args->x;
-    int z = args->z;
+    pthread_mutex_unlock(&wm_lock);
+    
+    int num_packets = *(args->num_packets);
 
-    int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(x);
-    int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(z);
-
-    int movedBlocks = ((int)x == (int)(wm_cam_ref->position[0]) && (int)z == (int)(wm_cam_ref->position[2])) ? 0 : 1;
-    if (movedBlocks) {
-        wm_cam_ref->position[0] = x;
-        wm_cam_ref->position[2] = z;
-    }
-
-    chunk_mesh** packet = NULL;
-    int count = 0;
-
-    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
-            int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
-            int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
-
-            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
-                continue;
-            }
-
-            chunk_mesh* mesh = get_chunk_mesh(x, z);
-
-            if (mesh == NULL) {
-                continue;
-            }
-
-            packet = realloc(packet, (count + 1) * sizeof(chunk_mesh*));
-            packet[count] = mesh;
-            count++;
-
-            if (x >= player_chunk_x - 1 
-                && x <= player_chunk_x + 1 
-                && z >= player_chunk_z - 1
-                && z <= player_chunk_z + 1
-                && movedBlocks) {
-                queue_chunk_for_sorting(mesh);
-            }
-        }
-    }
-
-    sort_chunk();
-    load_chunk();
-
-    quicksort(packet, count, sizeof(chunk_mesh*), chunk_distance_to_camera);
-
-    *num_packets = count;
-
-    world_mesh* world = create_world_mesh(packet, count);
+    pthread_mutex_lock(&wm_lock);
+    world_mesh* world = create_world_mesh(packet, num_packets);
     if (!world) {
         assert(false && "Failed to create world mesh\n");
     }
+    pthread_mutex_unlock(&wm_lock);
 
     // Free the original chunk meshes
     free(packet);
+
+    // maybe need mutex lock here
+    pthread_mutex_lock(&wm_lock);
+    free_world_mesh(wm_cached_mesh);
+    wm_cached_mesh = world;
+    pthread_mutex_unlock(&wm_lock);
     
     return world;
 }

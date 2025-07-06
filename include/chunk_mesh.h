@@ -23,9 +23,17 @@ typedef struct {
     int num_liquid_sides;
 } chunk_mesh;
 
+typedef struct {
+    int x;
+    int z;
+    int* num_packets;
+    chunk_mesh** packet; // This should be an array of chunk_mesh pointers
+} chunk_args;
+
 void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);
 void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides);
+chunk_mesh** get_chunk_meshes(chunk_args* args);
 void sort_transparent_sides(chunk_mesh* packet);
 
 #endif
