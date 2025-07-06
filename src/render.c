@@ -99,9 +99,4 @@ void render(render_args* args) {
     render_liquids(&(r->lr), &(r->s), &(r->map), packet);
 
     render_transparent(&(r->wr), &(r->s), &(r->map), packet);
-
-    free(packet->transparent_data);
-    free(packet->opaque_data);
-    free(packet->liquid_data);
-    free(packet);
 }

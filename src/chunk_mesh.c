@@ -2,13 +2,16 @@
 #include <block.h>
 #include <sort.h>
 #include <chunk.h>
+#include <mesh.h>
 #include <assert.h>
 
 
-camera* cm_cam_ref;
+camera_cache cm_camera_cache = {0, 0, 0};
 
 void chunk_mesh_init(camera* camera) {
-    cm_cam_ref = camera;
+    cm_camera_cache.x = camera->position[0];
+    cm_camera_cache.y = camera->position[1];
+    cm_camera_cache.z = camera->position[2];
 }
 
 int chunk_coord_equals(void* a, void* b) {
@@ -29,9 +32,9 @@ float distance_to_camera(const void* item) {
 
     // multiply by -1 to sort in descending order
     return -1.0f * sqrt(
-        pow((float)(side->x) - cm_cam_ref->position[0], 2) +
-        pow((float)(side->y) - cm_cam_ref->position[1], 2) +
-        pow((float)(side->z) - cm_cam_ref->position[2], 2)
+        pow((float)(side->x) - cm_camera_cache.x, 2) +
+        pow((float)(side->y) - cm_camera_cache.y, 2) +
+        pow((float)(side->z) - cm_camera_cache.z, 2)
     );
 }
 
@@ -53,4 +56,55 @@ void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides) {
 
 void sort_transparent_sides(chunk_mesh* packet) {
     quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_instance), distance_to_camera);
+}
+
+void get_world_meshes(mesh_args* args) {
+
+    int x = args->x;
+    int z = args->z;
+
+    int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(x);
+    int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(z);
+
+    int movedBlocks = ((int)x == (int)(cm_camera_cache.x) && (int)z == (int)(cm_camera_cache.z)) ? 0 : 1;
+
+    chunk_mesh** packet = NULL;
+    int count = 0;
+
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+            int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
+            int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
+
+            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
+                continue;
+            }
+
+            chunk_mesh* mesh = get_chunk_mesh(x, z);
+
+            if (mesh == NULL) {
+                continue;
+            }
+
+            packet = realloc(packet, (count + 1) * sizeof(chunk_mesh*));
+            packet[count] = mesh;
+            count++;
+
+            if (x >= player_chunk_x - 1 
+                && x <= player_chunk_x + 1 
+                && z >= player_chunk_z - 1
+                && z <= player_chunk_z + 1
+                && movedBlocks) {
+                queue_chunk_for_sorting(mesh);
+            }
+        }
+    }
+
+    sort_chunk();
+    load_chunk();
+
+    quicksort(packet, count, sizeof(chunk_mesh*), distance_to_camera);
+
+    *args->num_packets = count;
+    args->packet = packet;
 }

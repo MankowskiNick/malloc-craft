@@ -33,7 +33,7 @@ int main() {
     i_init(window, &player);
 
     int num_packets = 0;
-    get_world_mesh_args args = {
+    mesh_args args = {
         .x = (int)player.cam.position[0],
         .z = (int)player.cam.position[2],
         .num_packets = &num_packets
@@ -52,7 +52,7 @@ int main() {
         pthread_t render_thread, mesh_thread;
         void* mesh_result;
 
-        get_world_mesh_args args = {
+        mesh_args args = {
             .x = (int)player.cam.position[0],
             .z = (int)player.cam.position[2],
             .num_packets = &num_packets
