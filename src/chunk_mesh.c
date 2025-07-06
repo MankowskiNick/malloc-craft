@@ -58,7 +58,7 @@ void sort_transparent_sides(chunk_mesh* packet) {
     quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_instance), distance_to_camera);
 }
 
-void get_world_meshes(mesh_args* args) {
+void get_chunk_meshes(mesh_args* args) {
 
     int x = args->x;
     int z = args->z;
@@ -105,6 +105,9 @@ void get_world_meshes(mesh_args* args) {
 
     quicksort(packet, count, sizeof(chunk_mesh*), distance_to_camera);
 
+    if (args->num_packets == NULL) {
+        args->num_packets = malloc(sizeof(int));
+    }
     *args->num_packets = count;
     args->packet = packet;
 }

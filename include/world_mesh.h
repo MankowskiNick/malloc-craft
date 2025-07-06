@@ -18,4 +18,7 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count);
 world_mesh* get_world_mesh(mesh_args* args);
 void free_world_mesh(world_mesh* mesh);
 
+void lock_world_mesh();
+void unlock_world_mesh();
+
 #endif

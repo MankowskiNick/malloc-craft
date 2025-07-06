@@ -34,6 +34,6 @@ void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);
 void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides);
 void sort_transparent_sides(chunk_mesh* packet);
-void get_world_meshes(mesh_args* args);
+void get_chunk_meshes(mesh_args* args);
 
 #endif

@@ -5,10 +5,16 @@
 #include <camera.h>
 #include <chunk_mesh.h>
 #include <queue.h>
+#include <pthread.h>
 
 DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals);
 typedef chunk_mesh_map_hashmap chunk_mesh_map;
 chunk_mesh_map chunk_packets;
+
+// Mutexes for shared structures
+pthread_mutex_t chunk_packets_mutex;
+pthread_mutex_t sort_queue_mutex;
+pthread_mutex_t chunk_load_queue_mutex;
 
 queue_node* sort_queue = NULL;
 queue_node* chunk_load_queue = NULL;
@@ -18,12 +24,20 @@ void m_init(camera* camera) {
     queue_init(&sort_queue);
     queue_init(&chunk_load_queue);
     chunk_mesh_init(camera);
+
+    pthread_mutex_init(&chunk_packets_mutex, NULL);
+    pthread_mutex_init(&sort_queue_mutex, NULL);
+    pthread_mutex_init(&chunk_load_queue_mutex, NULL);
 }
 
 void m_cleanup() {
     chunk_mesh_map_free(&chunk_packets);
     queue_cleanup(&sort_queue);
     queue_cleanup(&chunk_load_queue);
+
+    pthread_mutex_destroy(&chunk_packets_mutex);
+    pthread_mutex_destroy(&sort_queue_mutex);
+    pthread_mutex_destroy(&chunk_load_queue_mutex);
 }
 
 short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
@@ -261,19 +275,26 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     packet->liquid_sides = liquid_sides;
 
     chunk_coord coord = {x, z};
+    pthread_mutex_lock(&chunk_packets_mutex);
     chunk_mesh_map_insert(&chunk_packets, coord, *packet);
+    pthread_mutex_unlock(&chunk_packets_mutex);
     
     return packet;
 }
 
 chunk_mesh* update_chunk_mesh_at(int x, int z) {
     chunk_coord coord = {x, z};
+    pthread_mutex_lock(&chunk_packets_mutex);
     chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, coord);
+    pthread_mutex_unlock(&chunk_packets_mutex);
     if (packet == NULL) {
         assert(false && "Packet does not exist");
     }
 
+    pthread_mutex_lock(&sort_queue_mutex);
     queue_remove(&sort_queue, packet, chunk_mesh_equals);
+    pthread_mutex_unlock(&sort_queue_mutex);
+
     // free(packet->opaque_data);
     // packet->opaque_data = NULL;
     // free(packet->transparent_data);
@@ -283,7 +304,9 @@ chunk_mesh* update_chunk_mesh_at(int x, int z) {
     free(packet->transparent_sides);
     packet->transparent_sides = NULL;
 
+    pthread_mutex_lock(&chunk_packets_mutex);
     chunk_mesh_map_remove(&chunk_packets, coord);
+    pthread_mutex_unlock(&chunk_packets_mutex);
 
     return create_chunk_mesh(x, z);
 }
@@ -296,15 +319,21 @@ chunk_mesh* update_chunk_mesh(int x, int z) {
     // Check which chunks exist first
     for (int i = 0; i < 5; i++) {
         chunk_coord coord = coords[i];
-        if (chunk_mesh_map_get(&chunk_packets, coord)) {
+        pthread_mutex_lock(&chunk_packets_mutex);
+        int exists = chunk_mesh_map_get(&chunk_packets, coord) != NULL;
+        pthread_mutex_unlock(&chunk_packets_mutex);
+        if (exists) {
             update_chunk_mesh_at(coord.x, coord.z);
         }
     }
     
     // Return the central chunk mesh
     chunk_coord center = {x, z};
+    pthread_mutex_lock(&chunk_packets_mutex);
+    chunk_mesh* result = chunk_mesh_map_get(&chunk_packets, center);
+    pthread_mutex_unlock(&chunk_packets_mutex);
 
-    return chunk_mesh_map_get(&chunk_packets, center);
+    return result;
 }
 
 chunk_mesh* get_chunk_mesh(int x, int z) {
@@ -314,19 +343,27 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
     coord->x = x;
     coord->z = z;
 
+    pthread_mutex_lock(&chunk_packets_mutex);
     chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, *coord);
+    pthread_mutex_unlock(&chunk_packets_mutex);
+
     if (packet != NULL) {
         free(coord);
         return packet;
     }
 
+    pthread_mutex_lock(&chunk_load_queue_mutex);
     queue_push(&chunk_load_queue, coord, chunk_coord_equals);
+    pthread_mutex_unlock(&chunk_load_queue_mutex);
+
     return NULL;
 }
 
 void load_chunk() {
     for (int i = 0; i < CHUNK_LOAD_PER_FRAME; i++) {
+        pthread_mutex_lock(&chunk_load_queue_mutex);
         chunk_coord* coord = (chunk_coord*)queue_pop(&chunk_load_queue);
+        pthread_mutex_unlock(&chunk_load_queue_mutex);
         if (coord == NULL) {
             continue;
         }
@@ -336,11 +373,15 @@ void load_chunk() {
 }
 
 void queue_chunk_for_sorting(chunk_mesh* packet) {
+    pthread_mutex_lock(&sort_queue_mutex);
     queue_push(&sort_queue, packet, chunk_mesh_equals);
+    pthread_mutex_unlock(&sort_queue_mutex);
 }
 
 void sort_chunk() {
+    pthread_mutex_lock(&sort_queue_mutex);
     chunk_mesh* packet = (chunk_mesh*)queue_pop(&sort_queue);
+    pthread_mutex_unlock(&sort_queue_mutex);
     if (packet == NULL) {
         return;
     }

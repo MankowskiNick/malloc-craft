@@ -80,6 +80,8 @@ void render(render_args* args) {
         return; // No packets to render
     }
 
+    lock_world_mesh();
+
     shadow_map_render(&(r->map), &(r->s), packet);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
     glBindTexture(GL_TEXTURE_2D, r->map.texture);
@@ -99,4 +101,6 @@ void render(render_args* args) {
     render_liquids(&(r->lr), &(r->s), &(r->map), packet);
 
     render_transparent(&(r->wr), &(r->s), &(r->map), packet);
+
+    unlock_world_mesh();
 }

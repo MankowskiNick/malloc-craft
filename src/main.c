@@ -35,9 +35,9 @@ int main() {
     int num_packets = 0;
     mesh_args args = {
         .x = (int)player.cam.position[0],
-        .z = (int)player.cam.position[2],
-        .num_packets = &num_packets
+        .z = (int)player.cam.position[2]
     };
+    get_chunk_meshes(&args);
     world_mesh* cur_mesh = get_world_mesh(&args);
     world_mesh* prev_mesh = NULL;
 
@@ -49,26 +49,26 @@ int main() {
         update_camera();
 
         // here we want to multithread mesh generation and rendering
-        pthread_t render_thread, mesh_thread;
+        pthread_t worldgen_thread, mesh_thread;
         void* mesh_result;
 
-        mesh_args args = {
-            .x = (int)player.cam.position[0],
-            .z = (int)player.cam.position[2],
-            .num_packets = &num_packets
-        };
+        args.x = player.cam.position[0];
+        args.z = player.cam.position[2];
+
+        pthread_create(&worldgen_thread, NULL, (void* (*)(void*))get_chunk_meshes, &args);
         pthread_create(&mesh_thread, NULL, (void* (*)(void*))get_world_mesh, &args);
         // world_mesh* mesh = get_world_mesh(&args);
 
         render_args r_args = {
             .r = &r,
             .packet = cur_mesh,
-            .num_packets = num_packets
+            .num_packets = *(args.num_packets)
         };
 
 
         render(&r_args);
 
+        // pthread_join(worldgen_thread, NULL);
         pthread_join(mesh_thread, &mesh_result);
         cur_mesh = (world_mesh*)mesh_result;
 
