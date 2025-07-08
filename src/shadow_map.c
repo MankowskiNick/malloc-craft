@@ -147,19 +147,6 @@ void shadow_map_render(shadow_map* map, sun* s, world_mesh* packet) {
     // send cube vbo
     send_cube_vbo(map->vao, map->cube_vbo);
 
-    // // render scene here
-    // for (int i = 0; i < num_packets; i++) {
-    //     if (packet[i] == NULL) {
-    //         continue;
-    //     }
-    //     render_depth(map,
-    //         packet[i]->opaque_data,
-    //         packet[i]->num_opaque_sides);
-    //     render_depth(map,
-    //         packet[i]->transparent_data,
-    //         packet[i]->num_transparent_sides);
-    // }
-
     if (packet != NULL) {
         render_depth(map,
             packet->opaque_data,

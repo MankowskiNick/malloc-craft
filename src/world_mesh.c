@@ -20,30 +20,16 @@ void wm_init(camera* camera) {
     chunk_mesh_init(camera);
 }
 
-// float chunk_distance_to_camera(const void* item) {
-//     chunk_mesh* packet = *(chunk_mesh**)item;
-//     // camera coords to chunk coords
-//     float x = (wm_cam_ref->position[0] / (float)CHUNK_SIZE);
-//     float z = (wm_cam_ref->position[2] / (float)CHUNK_SIZE);
-
-//     return -1.0f * sqrt(
-//         pow((float)(packet->x + 0.5f) - x, 2) +
-//         pow((float)(packet->z + 0.5f) - z, 2)
-//     );
-// }
-
 world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     // First pass: Calculate total memory needed
     int total_transparent_sides = 0;
     int total_opaque_sides = 0;
     int total_liquid_sides = 0;
     for (int i = 0; i < count; i++) {
-        pthread_mutex_lock(&wm_mutex);
         chunk_mesh* mesh = packet[i];
         total_transparent_sides += mesh->num_transparent_sides;
         total_opaque_sides += mesh->num_opaque_sides;
         total_liquid_sides += mesh->num_liquid_sides;
-        pthread_mutex_unlock(&wm_mutex);
     }
 
     // Allocate all memory at once
@@ -112,7 +98,7 @@ void free_world_mesh(world_mesh* mesh) {
     free(mesh);
 }
 
-world_mesh* get_world_mesh(mesh_args* args) {
+void get_world_mesh(mesh_args* args) {
     if (args == NULL) {
         assert(false && "mesh_args pointer is NULL\n");
     }
@@ -125,9 +111,11 @@ world_mesh* get_world_mesh(mesh_args* args) {
         wm_camera_cache.x = x;
         wm_camera_cache.z = z;
     } else if (wm_mesh_cache != NULL) {
-        return wm_mesh_cache; // No need to regenerate if camera hasn't moved
+        // cached camera should already be in args
+        return;
     }
 
+    lock_world_mesh();
     world_mesh* world = create_world_mesh(args->packet, *args->num_packets);
     if (!world) {
         assert(false && "Failed to create world mesh\n");
@@ -138,8 +126,8 @@ world_mesh* get_world_mesh(mesh_args* args) {
         free_world_mesh(wm_mesh_cache);
     }
     wm_mesh_cache = world;
-    
-    return world;
+    args->world_mesh = wm_mesh_cache; // Update the args to point to the new world mesh
+    unlock_world_mesh();
 }
 
 void lock_world_mesh() {
