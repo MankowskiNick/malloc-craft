@@ -4,7 +4,10 @@
 #include <chunk.h>
 #include <mesh.h>
 #include <assert.h>
+#include <pthread.h>
+#include <unistd.h>
 
+pthread_mutex_t cm_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 camera_cache cm_camera_cache = {0, 0, 0};
 
@@ -105,9 +108,36 @@ void get_chunk_meshes(mesh_args* args) {
 
     quicksort(packet, count, sizeof(chunk_mesh*), distance_to_camera);
 
+    lock_chunk_mesh();
     if (args->num_packets == NULL) {
         args->num_packets = malloc(sizeof(int));
     }
     *args->num_packets = count;
     args->packet = packet;
+    unlock_chunk_mesh();
+
+}
+
+void update_chunk_meshes(mesh_args* args) {
+    if (args == NULL) {
+        assert(false && "mesh_args pointer is NULL\n");
+    }
+    get_chunk_meshes(args);
+
+    usleep(TICK_RATE);
+    update_chunk_meshes(args);
+}
+
+void lock_chunk_mesh() {
+    pthread_mutex_lock(&cm_mutex);
+}
+
+void unlock_chunk_mesh() {
+    pthread_mutex_unlock(&cm_mutex);
+}
+
+void start_chunk_mesh_updater(mesh_args* args) {
+    pthread_t updater_thread;
+    pthread_create(&updater_thread, NULL, (void* (*)(void*))update_chunk_meshes, args);
+    pthread_detach(updater_thread);
 }

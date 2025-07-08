@@ -46,5 +46,9 @@ int chunk_mesh_equals(void* a, void* b);
 void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides);
 void sort_transparent_sides(chunk_mesh* packet);
 void get_chunk_meshes(mesh_args* args);
+void start_chunk_mesh_updater(mesh_args* args);
+
+void lock_chunk_mesh();
+void unlock_chunk_mesh();
 
 #endif

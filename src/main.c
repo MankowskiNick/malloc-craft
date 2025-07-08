@@ -6,6 +6,7 @@
 #include <settings.h>
 #include <player_instance.h>
 #include <skybox.h>
+#include <chunk_mesh.h>
 #include <pthread.h>
 
 int main() {
@@ -41,27 +42,28 @@ int main() {
     get_chunk_meshes(&args);
     get_world_mesh(&args);
 
+    start_chunk_mesh_updater(&args);
+    start_world_mesh_updater(&args);
+
+
     while (!glfwWindowShouldClose(window)) {
 
         args.x = player.cam.position[0];
         args.z = player.cam.position[2];
 
-        pthread_t worldgen_thread, mesh_thread;
-        pthread_create(&worldgen_thread, NULL, (void* (*)(void*))get_chunk_meshes, &args);
-        pthread_create(&mesh_thread, NULL, (void* (*)(void*))get_world_mesh, &args);
-
-
         update_camera();
 
+        lock_chunk_mesh();
         lock_world_mesh();
         render_args r_args = {
             .r = &r,
             .packet = args.world_mesh,
             .num_packets = *(args.num_packets)
         };
-        unlock_world_mesh();
+        unlock_chunk_mesh();
 
         render(&r_args);
+        unlock_world_mesh();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
