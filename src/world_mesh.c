@@ -103,6 +103,7 @@ void get_world_mesh(mesh_args* args) {
     int z = args->z;
 
     lock_world_mesh();
+    lock_chunk_mesh();
     world_mesh* world = create_world_mesh(args->packet, *args->num_packets);
     if (!world) {
         assert(false && "Failed to create world mesh\n");
@@ -113,6 +114,7 @@ void get_world_mesh(mesh_args* args) {
         free_world_mesh(args->world_mesh);
     }
     args->world_mesh = world; // Update the args to point to the new world mesh
+    unlock_chunk_mesh();
     unlock_world_mesh();
 }
 

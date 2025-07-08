@@ -329,9 +329,7 @@ chunk_mesh* update_chunk_mesh(int x, int z) {
     
     // Return the central chunk mesh
     chunk_coord center = {x, z};
-    pthread_mutex_lock(&chunk_packets_mutex);
     chunk_mesh* result = chunk_mesh_map_get(&chunk_packets, center);
-    pthread_mutex_unlock(&chunk_packets_mutex);
 
     return result;
 }

@@ -3,6 +3,7 @@
 #include <block.h>
 #include <world.h>
 #include <camera.h>
+#include <chunk_mesh.h>
 #include <settings.h>
 #include <cglm/cglm.h>
 
@@ -188,6 +189,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     if (action == GLFW_PRESS) {
         uint chunk_x, chunk_z, side;
 
+        lock_chunk_mesh();
+        
         camera* cam = &(player->cam);
         chunk* c = get_chunk_at(cam->position[0], cam->position[2], &chunk_x, &chunk_z);
 
@@ -201,6 +204,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             default:
                 break;
         }
+
+        unlock_chunk_mesh();
     }
 }
 
