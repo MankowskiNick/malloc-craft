@@ -62,7 +62,6 @@ void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides) {
         head[index + 5] = sides[i].side;
         head[index + 6] = sides[i].underwater;
     }
-    // return data;
 }
 
 void sort_transparent_sides(chunk_mesh* packet) {

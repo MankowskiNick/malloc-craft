@@ -140,7 +140,6 @@ void shadow_map_render(shadow_map* map, sun* s, world_mesh* packet) {
     glClear(GL_DEPTH_BUFFER_BIT);
 
     use_program(map->program);
-    // bind_vao(map->vao);
 
     send_sun_matrices(&(map->program), s);
 
