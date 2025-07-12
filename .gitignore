@@ -3,3 +3,7 @@ build/
 
 # Ignore Visual Studio Code settings
 .vscode/
+
+# Ignore test results
+test/perf_results.txt
+test/perf_results_combined.txt

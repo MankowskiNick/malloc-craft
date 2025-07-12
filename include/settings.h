@@ -57,7 +57,7 @@
 #define CHUNK_RENDER_DISTANCE 16
 
 // How often to update the world mesh in seconds
-#define TICK_RATE 16 // 16ms is roughly 60 updates per second
+#define TICK_RATE 32 // 32ms is roughly 30 updates per second
 
 // FOV
 #define FOV 60.0f
