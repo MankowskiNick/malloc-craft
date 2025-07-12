@@ -58,14 +58,7 @@ int main() {
         update_camera();
 
         lock_mesh();
-        render_args r_args = {
-            .r = &r,
-            .packet = data.world_mesh,
-            .num_packets = *(data.num_packets)
-        };
-
-        render(&r_args);
-
+        render(&r, data.world_mesh, *(data.num_packets));
         unlock_mesh();
 
         glfwSwapBuffers(window);

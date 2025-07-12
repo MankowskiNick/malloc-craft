@@ -27,6 +27,6 @@ typedef struct {
 
 renderer create_renderer(camera* camera);
 void destroy_renderer(renderer* r);
-void render(render_args* args);
+void render(renderer* r, world_mesh* packet, int num_packets);
 
 #endif

@@ -65,16 +65,9 @@ void destroy_renderer(renderer* r) {
     // sun_cleanup(&(r->s));
 }
 
-void render(render_args* args) {
-    assert(args != NULL && "Render args are NULL\n");
-
-    renderer* r = args->r;
-    world_mesh* packet = args->packet;
-    int num_packets = args->num_packets;
-
-    if (r == NULL || packet == NULL) {
-        assert(false && "Renderer or world mesh is NULL\n");
-    }
+void render(renderer* r, world_mesh* packet, int num_packets) {
+    assert(r != NULL && "Renderer is NULL\n");
+    assert(packet != NULL && "World mesh is NULL\n");
 
     if (num_packets <= 0) {
         return; // No packets to render
