@@ -171,11 +171,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
-    double dx = xpos - WIDTH / 2;//mouse.x;
-    double dy = ypos - HEIGHT / 2;//mouse.y;
-
-    // mouse.x = xpos;
-    // mouse.y = ypos;
+    double dx = xpos - WIDTH / 2;
+    double dy = ypos - HEIGHT / 2;
 
     camera* cam = &(g_data->player->cam);
     cam->yaw += dx * SENSITIVITY;

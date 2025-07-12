@@ -89,8 +89,10 @@ void get_chunk_meshes(game_data* args) {
             if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
                 continue;
             }
-
+            
+            lock_mesh();
             chunk_mesh* mesh = get_chunk_mesh(x, z);
+            unlock_mesh();
 
             if (mesh == NULL) {
                 continue;
