@@ -320,33 +320,26 @@ chunk_mesh* update_chunk_mesh(int x, int z) {
 }
 
 chunk_mesh* get_chunk_mesh(int x, int z) {
-    // chunk_coord coord = {x, z};
     chunk_coord* coord = malloc(sizeof(chunk_coord));
     assert(coord != NULL && "Failed to allocate memory for chunk coord");
     coord->x = x;
     coord->z = z;
 
-    pthread_mutex_lock(&chunk_packets_mutex);
     chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, *coord);
-    pthread_mutex_unlock(&chunk_packets_mutex);
 
     if (packet != NULL) {
         free(coord);
         return packet;
     }
 
-    pthread_mutex_lock(&chunk_load_queue_mutex);
     queue_push(&chunk_load_queue, coord, chunk_coord_equals);
-    pthread_mutex_unlock(&chunk_load_queue_mutex);
 
     return NULL;
 }
 
 void load_chunk() {
     for (int i = 0; i < CHUNK_LOAD_PER_FRAME; i++) {
-        pthread_mutex_lock(&chunk_load_queue_mutex);
         chunk_coord* coord = (chunk_coord*)queue_pop(&chunk_load_queue);
-        pthread_mutex_unlock(&chunk_load_queue_mutex);
         if (coord == NULL) {
             continue;
         }
@@ -356,15 +349,11 @@ void load_chunk() {
 }
 
 void queue_chunk_for_sorting(chunk_mesh* packet) {
-    pthread_mutex_lock(&sort_queue_mutex);
     queue_push(&sort_queue, packet, chunk_mesh_equals);
-    pthread_mutex_unlock(&sort_queue_mutex);
 }
 
 void sort_chunk() {
-    pthread_mutex_lock(&sort_queue_mutex);
     chunk_mesh* packet = (chunk_mesh*)queue_pop(&sort_queue);
-    pthread_mutex_unlock(&sort_queue_mutex);
     if (packet == NULL) {
         return;
     }

@@ -58,11 +58,9 @@ renderer create_renderer(camera* camera) {
 }
 
 void destroy_renderer(renderer* r) {
-    m_cleanup();
     destroy_block_renderer(r->wr);
     destroy_block_renderer(r->lr);
     skybox_cleanup(&(r->sky));
-    // sun_cleanup(&(r->s));
 }
 
 void render(renderer* r, world_mesh* packet, int num_packets) {
@@ -72,7 +70,6 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
     if (num_packets <= 0) {
         return; // No packets to render
     }
-
 
     shadow_map_render(&(r->map), &(r->s), packet);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
@@ -89,8 +86,6 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
     glClear(GL_DEPTH_BUFFER_BIT);
     
     render_solids(&(r->wr), &(r->s), &(r->map), packet);
-
     render_liquids(&(r->lr), &(r->s), &(r->map), packet);
-
     render_transparent(&(r->wr), &(r->s), &(r->map), packet);
 }
