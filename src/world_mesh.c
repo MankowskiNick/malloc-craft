@@ -12,7 +12,6 @@ static pthread_mutex_t wm_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 camera_cache wm_camera_cache = {0, 0, 0};
 
-
 void wm_init(camera* camera) {
     wm_camera_cache.x = camera->position[0];
     wm_camera_cache.y = camera->position[1];
@@ -98,13 +97,25 @@ void free_world_mesh(world_mesh* mesh) {
     free(mesh);
 }
 
-void get_world_mesh(mesh_args* args) {
+void get_world_mesh(game_data* args) {
     int x = args->x;
     int z = args->z;
 
-    lock_world_mesh();
-    lock_chunk_mesh();
+    if (args->world_mesh != NULL) {
+        int movedBlocks = ((int)x == (int)(wm_camera_cache.x) && (int)z == (int)(wm_camera_cache.z)) ? 0 : 1;
+        if (movedBlocks || args->mesh_requires_update) {
+            wm_camera_cache.x = x;
+            wm_camera_cache.z = z;
+        } else {
+            // No need to update if the camera hasn't moved
+            return;
+        }
+    }
+
+    lock_mesh();
+
     world_mesh* world = create_world_mesh(args->packet, *args->num_packets);
+
     if (!world) {
         assert(false && "Failed to create world mesh\n");
     }
@@ -113,36 +124,31 @@ void get_world_mesh(mesh_args* args) {
     if (args->world_mesh != NULL) {
         free_world_mesh(args->world_mesh);
     }
-    args->world_mesh = world; // Update the args to point to the new world mesh
-    unlock_chunk_mesh();
-    unlock_world_mesh();
+    args->world_mesh = world;
+    args->mesh_requires_update = FALSE;
+
+    unlock_mesh();
 }
 
-void lock_world_mesh() {
-    pthread_mutex_lock(&wm_mutex);
-}
-
-void unlock_world_mesh() {
-    pthread_mutex_unlock(&wm_mutex);
-}
-
-void update_world_mesh(mesh_args* args) {
-    if (args == NULL) {
-        assert(false && "mesh_args pointer is NULL\n");
+void update_world_mesh(game_data* data) {
+    if (data == NULL) {
+        assert(false && "game_data pointer is NULL\n");
     }
 
-    if (args->packet == NULL) {
+    if (data->packet == NULL) {
         return;
     }
 
-    get_world_mesh(args);
+    while (data->is_running) {
+        get_world_mesh(data);
+        usleep(TICK_RATE);
+    }
 
-    usleep(TICK_RATE);
-    update_world_mesh(args);
+    return;
 }
 
-void start_world_mesh_updater(mesh_args* args) {
+void start_world_mesh_updater(game_data* data) {
     pthread_t updater_thread;
-    pthread_create(&updater_thread, NULL, (void* (*)(void*))update_world_mesh, args);
+    pthread_create(&updater_thread, NULL, (void* (*)(void*))update_world_mesh, data);
     pthread_detach(updater_thread);
 }

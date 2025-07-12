@@ -7,6 +7,8 @@
 #include <player_instance.h>
 #include <skybox.h>
 #include <chunk_mesh.h>
+#include <mesh.h>
+#include <world.h>
 #include <pthread.h>
 
 int main() {
@@ -26,50 +28,54 @@ int main() {
             .pitch = 0.0f
         }
     };
+
+    game_data data = {
+        .x = (int)player.cam.position[0],
+        .z = (int)player.cam.position[2],
+        .player = &player,
+        .is_running = TRUE
+    };
     
     renderer r = create_renderer(&(player.cam));
 
     wm_init(&(player.cam));
 
-    i_init(window, &player);
+    i_init(window, &data);
 
     int num_packets = 0;
-    mesh_args args = {
-        .x = (int)player.cam.position[0],
-        .z = (int)player.cam.position[2]
-    };
 
-    get_chunk_meshes(&args);
-    get_world_mesh(&args);
+    get_chunk_meshes(&data);
+    get_world_mesh(&data);
 
-    start_chunk_mesh_updater(&args);
-    start_world_mesh_updater(&args);
-
+    start_chunk_mesh_updater(&data);
+    start_world_mesh_updater(&data);
 
     while (!glfwWindowShouldClose(window)) {
 
-        args.x = player.cam.position[0];
-        args.z = player.cam.position[2];
+        data.x = player.cam.position[0];
+        data.z = player.cam.position[2];
 
         update_camera();
 
-        lock_chunk_mesh();
-        lock_world_mesh();
+        lock_mesh();
         render_args r_args = {
             .r = &r,
-            .packet = args.world_mesh,
-            .num_packets = *(args.num_packets)
+            .packet = data.world_mesh,
+            .num_packets = *(data.num_packets)
         };
-        unlock_chunk_mesh();
 
         render(&r_args);
-        unlock_world_mesh();
+
+        unlock_mesh();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     destroy_renderer(&r);
+    i_cleanup();
+    m_cleanup();
+    w_cleanup();
 
     glfwDestroyWindow(window);
     glfwTerminate();

@@ -275,38 +275,25 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     packet->liquid_sides = liquid_sides;
 
     chunk_coord coord = {x, z};
-    pthread_mutex_lock(&chunk_packets_mutex);
     chunk_mesh_map_insert(&chunk_packets, coord, *packet);
-    pthread_mutex_unlock(&chunk_packets_mutex);
     
     return packet;
 }
 
 chunk_mesh* update_chunk_mesh_at(int x, int z) {
     chunk_coord coord = {x, z};
-    pthread_mutex_lock(&chunk_packets_mutex);
     chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, coord);
-    pthread_mutex_unlock(&chunk_packets_mutex);
     if (packet == NULL) {
         assert(false && "Packet does not exist");
     }
-
-    pthread_mutex_lock(&sort_queue_mutex);
     queue_remove(&sort_queue, packet, chunk_mesh_equals);
-    pthread_mutex_unlock(&sort_queue_mutex);
 
-    // free(packet->opaque_data);
-    // packet->opaque_data = NULL;
-    // free(packet->transparent_data);
-    // packet->transparent_data = NULL;
     free(packet->opaque_sides);
     packet->opaque_sides = NULL;
     free(packet->transparent_sides);
     packet->transparent_sides = NULL;
 
-    pthread_mutex_lock(&chunk_packets_mutex);
     chunk_mesh_map_remove(&chunk_packets, coord);
-    pthread_mutex_unlock(&chunk_packets_mutex);
 
     return create_chunk_mesh(x, z);
 }
@@ -319,9 +306,7 @@ chunk_mesh* update_chunk_mesh(int x, int z) {
     // Check which chunks exist first
     for (int i = 0; i < 5; i++) {
         chunk_coord coord = coords[i];
-        pthread_mutex_lock(&chunk_packets_mutex);
         int exists = chunk_mesh_map_get(&chunk_packets, coord) != NULL;
-        pthread_mutex_unlock(&chunk_packets_mutex);
         if (exists) {
             update_chunk_mesh_at(coord.x, coord.z);
         }

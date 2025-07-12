@@ -2,6 +2,7 @@
 #define CHUNK_MESH_H
 
 #include <camera.h>
+#include <player_instance.h>
 
 #define VBO_WIDTH 7
 
@@ -39,16 +40,19 @@ typedef struct {
     int* num_packets;
     chunk_mesh** packet;
     world_mesh* world_mesh;
-} mesh_args;
+    player_instance* player;
+    int is_running;
+    int mesh_requires_update;
+} game_data;
 
 void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);
 void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides);
 void sort_transparent_sides(chunk_mesh* packet);
-void get_chunk_meshes(mesh_args* args);
-void start_chunk_mesh_updater(mesh_args* args);
+void get_chunk_meshes(game_data* args);
+void start_chunk_mesh_updater(game_data* args);
 
-void lock_chunk_mesh();
-void unlock_chunk_mesh();
+void lock_mesh();
+void unlock_mesh();
 
 #endif

@@ -17,7 +17,7 @@
 
 // How many chunks can be loaded per frame.  
 // Higher values will load chunks faster, but may cause stuttering.
-#define CHUNK_LOAD_PER_FRAME 8
+#define CHUNK_LOAD_PER_FRAME 1
 
 // Chunks are cached in memory to reduce load times, how large should the cache be?
 #define CHUNK_CACHE_SIZE 1024
@@ -57,7 +57,7 @@
 #define CHUNK_RENDER_DISTANCE 16
 
 // How often to update the world mesh in seconds
-#define TICK_RATE 64 // 16ms is roughly 60 updates per second
+#define TICK_RATE 16 // 16ms is roughly 60 updates per second
 
 // FOV
 #define FOV 60.0f

@@ -18,6 +18,10 @@ void w_init() {
     chunks = chunk_map_init(CHUNK_CACHE_SIZE);
 }
 
+void w_cleanup() {
+    chunk_map_free(&chunks);
+}
+
 chunk* get_chunk(int x, int z) {
     chunk_coord coord = {x, z};
     chunk** found = chunk_map_get(&chunks, coord);
