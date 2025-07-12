@@ -20,6 +20,9 @@ void wm_init(camera* camera) {
 }
 
 world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
+    assert(packet != NULL && "Chunk mesh pointer is NULL\n");
+    assert(count > 0 && "Count must be greater than zero\n");
+
     // First pass: Calculate total memory needed
     int total_transparent_sides = 0;
     int total_opaque_sides = 0;
