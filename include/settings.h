@@ -44,17 +44,17 @@
 
 // Vsync on?  Comment to disable
 #define VSYNC
+// Radius of chunks to render
+#define CHUNK_RENDER_DISTANCE 16
 
 // Shadow map settings
 #define SHADOW_MAP_WIDTH        10000
 #define SHADOW_MAP_HEIGHT       10000
-#define SHADOW_RENDER_DIST      200.0f
+#define SHADOW_RENDER_DIST      (float) CHUNK_RENDER_DISTANCE * CHUNK_SIZE
 #define SHADOW_SOFTNESS         3.0f
 #define SHADOW_SAMPLES          4
 #define SHADOW_BIAS             0.0025f
 
-// Radius of chunks to render
-#define CHUNK_RENDER_DISTANCE 16
 
 // How often to update the world mesh in seconds
 #define TICK_RATE 32 // 32ms is roughly 30 updates per second
