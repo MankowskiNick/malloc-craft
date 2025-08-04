@@ -11,6 +11,7 @@
 #include <util.h>
 #include <settings.h>
 #include <world_mesh.h>
+#include <assert.h>
 
 renderer create_renderer(camera* camera) {
     glEnable(GL_DEPTH_TEST);

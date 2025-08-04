@@ -6,6 +6,7 @@
 #include <chunk_mesh.h>
 #include <queue.h>
 #include <pthread.h>
+#include <assert.h>
 
 DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals);
 typedef chunk_mesh_map_hashmap chunk_mesh_map;
