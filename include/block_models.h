@@ -36,7 +36,7 @@ typedef struct {
     short face_atlas_coords[6][2];
 } block_type;
 
-extern block_type TYPES[];
+extern block_type* TYPES;
 
 typedef struct {
     int pos[3];

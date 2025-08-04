@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <window.h>
 #include <render.h>
+#include <block.h>
 #include <camera.h>
 #include <input.h>
 #include <settings.h>
@@ -13,10 +14,11 @@
 
 int main() {
     GLFWwindow* window = create_window(TITLE, WIDTH, HEIGHT);
-
     if (!window || !load_gl()) {
         return -1;
     }
+
+    block_init();
 
     player_instance player = {
         .selected_block = 1,

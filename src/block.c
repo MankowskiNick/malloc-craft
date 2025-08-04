@@ -2,10 +2,90 @@
 // #include <render.h>
 #include <mesh.h>
 #include <world.h>
+#include <asset.h>
 #include <player_instance.h>
 #include <cglm/cglm.h>
 #include <glad/glad.h>
+#include <cerealize/cerealize.h>
 
+block_type* TYPES;
+
+void map_json_to_types(json block_types) {
+
+    if (block_types.failure || block_types.root.type != JSON_LIST) {
+        fprintf(stderr, "Failed to deserialize block types: %s\n", block_types.error_text);
+        return;
+    }
+
+    json_list list = block_types.root.value.list;
+
+    if (list.count != BLOCK_COUNT) {
+        fprintf(stderr, "Block types count mismatch: expected %d, got %zu\n", BLOCK_COUNT, list.count);
+        return;
+    }
+
+
+    for (int i = 0; i < BLOCK_COUNT; i++) {
+        json_object obj = list.items[i];
+        if (obj.type != JSON_OBJECT) {
+            fprintf(stderr, "Block type %d is not an object\n", i);
+            continue;
+        }
+        
+        json_object id_obj = json_get_property(obj, "id");
+        json_object name_obj = json_get_property(obj, "name");
+        json_object transparent_obj = json_get_property(obj, "transparent");
+        json_object liquid_obj = json_get_property(obj, "liquid");
+        json_object face_atlas_coords_obj = json_get_property(obj, "face_atlas_coords");
+
+        if (id_obj.type != JSON_NUMBER && name_obj.type != JSON_STRING && 
+            transparent_obj.type != JSON_BOOL && liquid_obj.type != JSON_BOOL && 
+            face_atlas_coords_obj.type != JSON_LIST) {
+            fprintf(stderr, "Block type %d has invalid properties\n", i);
+            continue;
+        }
+
+        TYPES[i].id = (uint)id_obj.value.number;
+        TYPES[i].name = strdup(name_obj.value.string);
+        TYPES[i].transparent = transparent_obj.value.boolean;
+        TYPES[i].liquid = liquid_obj.value.boolean;
+        block_type* type = &TYPES[i];
+
+
+        for (int j = 0; j < 6; j++) {
+            json_object face_coord_obj = face_atlas_coords_obj.value.list.items[j];
+            if (face_coord_obj.type != JSON_LIST || face_coord_obj.value.list.count != 2) {
+                fprintf(stderr, "Block type %d has invalid face_atlas_coords\n", i);
+                continue;
+            }
+            TYPES[i].face_atlas_coords[j][0] = (uint)face_coord_obj.value.list.items[0].value.number;
+            TYPES[i].face_atlas_coords[j][1] = (uint)face_coord_obj.value.list.items[1].value.number;
+        }
+    }
+}
+
+void block_init() {
+    
+    // load block types from file
+    char* block_types_json = read_file_to_string("res/blocks.json");
+    if (block_types_json == NULL) {
+        fprintf(stderr, "Failed to read block types from file\n");
+        return;
+    }
+
+    // Deserialize the block types
+    json block_types = deserialize_json(block_types_json, strlen(block_types_json));
+    free(block_types_json);
+
+    // Initialize block types array
+    TYPES = malloc(sizeof(block_type) * BLOCK_COUNT);
+    if (TYPES == NULL) {
+        fprintf(stderr, "Failed to allocate memory for block types\n");
+        return;
+    }
+
+    map_json_to_types(block_types);
+}
 
 float get_empty_dist(camera cam) {
     vec3 position = {cam.position[0], cam.position[1], cam.position[2]};
@@ -122,202 +202,3 @@ void send_cube_vbo(VAO vao, VBO vbo) {
     #include <vbo.h>
     use_vbo(vbo);
 }
-
-
-block_type TYPES[] = {
-    {
-        .id = 0,
-        .name = "air",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            {-1, -1},
-            {-1, -1},
-            {-1, -1},
-            {-1, -1},
-            {-1, -1},
-            {-1, -1},
-        }
-    },
-    {
-        .id = 1,
-        .name = "grass",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            {1, 0},
-            {1, 0},
-            {1, 0},
-            {1, 0},
-            {0, 0},
-            {2, 0},
-        }
-    },
-    {
-        .id = 2,
-        .name = "dirt",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            {2, 0},
-            {2, 0},
-            {2, 0},
-            {2, 0},
-            {2, 0},
-            {2, 0},
-        }
-    },
-    {
-        .id = 3,
-        .name = "stone",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            {3, 0},
-            {3, 0},
-            {3, 0},
-            {3, 0},
-            {3, 0},
-            {3, 0},
-        }
-    },
-    {
-        .id = 4,
-        .name = "weezer",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            
-            {4, 0},
-            {4, 0},
-            {4, 0},
-            {4, 0},
-            {5, 0},
-            {5, 0},
-        }
-    },
-    {
-        .id = 5,
-        .name = "oak_log",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            {7, 0},
-            {7, 0},
-            {7, 0},
-            {7, 0},
-            {8, 0},
-            {8, 0},
-        }
-    },
-    {
-        .id = 6,
-        .name = "oak_leaves",
-        .liquid = 0,
-        #ifdef TRANSPARENT_LEAVES
-            .transparent = 1,
-            .face_atlas_coords = {
-                {9, 0},
-                {9, 0},
-                {9, 0},
-                {9, 0},
-                {9, 0},
-                {9, 0},
-            }
-        #else
-            .transparent = 0,
-            .face_atlas_coords = {
-                {15, 0},
-                {15, 0},
-                {15, 0},
-                {15, 0},
-                {15, 0},
-                {15, 0},
-            }
-        #endif
-    },
-    {
-        .id = 7,
-        .name = "water",
-        .transparent = 1,
-        .liquid = 1,
-        .face_atlas_coords = {
-            {10, 0},
-            {10, 0},
-            {10, 0},
-            {10, 0},
-            {10, 0},
-            {10, 0},
-        }
-    },
-    {
-        .id = 8,
-        .name = "glass",
-        .liquid = 0,
-        .transparent = 1,
-        .face_atlas_coords = {
-            {11, 0},
-            {11, 0},
-            {11, 0},
-            {11, 0},
-            {11, 0},
-            {11, 0},
-        }
-    },
-    {
-        .id = 9,
-        .name = "sand",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            {6, 0},
-            {6, 0},
-            {6, 0},
-            {6, 0},
-            {6, 0},
-            {6, 0},
-        }
-    },
-    {
-        .id = 10,
-        .name = "cactus",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            {12, 0},
-            {12, 0},
-            {12, 0},
-            {12, 0},
-            {13, 0},
-            {13, 0},
-        }
-    },
-    {
-        .id = 11,
-        .name = "cactus_top",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            {12, 0},
-            {12, 0},
-            {12, 0},
-            {12, 0},
-            {14, 0},
-            {13, 0},
-        }
-    },
-    {
-        .id = 12,
-        .name = "oak_planks",
-        .liquid = 0,
-        .transparent = 0,
-        .face_atlas_coords = {
-            {16, 0},
-            {16, 0},
-            {16, 0},
-            {16, 0},
-            {16, 0},
-            {16, 0},
-        }
-    }
-};

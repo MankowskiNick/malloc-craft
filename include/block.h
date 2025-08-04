@@ -15,6 +15,8 @@
 #define CUBE_VERTICES_WIDTH 6
 extern float CUBE_VERTICES[];
 
+void block_init();
+
 void break_block(player_instance player);
 void place_block(player_instance player);
 
