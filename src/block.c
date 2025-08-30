@@ -6,7 +6,7 @@
 #include <player_instance.h>
 #include <cglm/cglm.h>
 #include <glad/glad.h>
-#include <cerealize/cerealize.h>
+#include <cerialize/cerialize.h>
 
 block_type* TYPES;
 
@@ -20,7 +20,7 @@ void map_json_to_types(json block_types) {
     json_list list = block_types.root.value.list;
 
     if (list.count != BLOCK_COUNT) {
-        fprintf(stderr, "Block types count mismatch: expected %d, got %zu\n", BLOCK_COUNT, list.count);
+        fprintf(stderr, "Block types count mismatch: expected %d, got %i\n", BLOCK_COUNT, list.count);
         return;
     }
 
@@ -143,6 +143,23 @@ void break_block(player_instance player) {
     queue_chunk_for_sorting(new_mesh);
 }
 
+short get_block_id(char* block_type) {
+
+    for (int i = 0; i < BLOCK_COUNT; i++) {
+        if (strcmp(TYPES[i].name, block_type) == 0) {
+            return TYPES[i].id;
+        }
+    }
+
+    printf("ERROR: Block type '%s' not found\n", block_type);
+    return -1;
+}
+
+short get_selected_block(player_instance player) {
+    char* block_id = player.hotbar[player.selected_block];
+    return get_block_id(block_id);
+}
+
 void place_block(player_instance player) {
     camera cam = player.cam;
     float t = get_empty_dist(cam);
@@ -168,7 +185,7 @@ void place_block(player_instance player) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = player.selected_block;
+    c->blocks[chunk_x][chunk_y][chunk_z] = get_selected_block(player);
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
@@ -198,7 +215,5 @@ void send_cube_vbo(VAO vao, VBO vbo) {
     bind_vao(vao);
     buffer_data(vbo, GL_STATIC_DRAW, faceVertices, 6 * 3 * sizeof(float));
     f_add_attrib(&vbo, 0, 3, 0, 3 * sizeof(float)); // position
-    #include <vao.h>
-    #include <vbo.h>
     use_vbo(vbo);
 }

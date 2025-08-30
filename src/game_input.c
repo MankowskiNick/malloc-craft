@@ -79,53 +79,28 @@ void update_camera() {
 
 
 void handle_keypress(int key) {
-    // non movement key presses
-    switch(key) {
-        case GLFW_KEY_ESCAPE:
-            glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
-            g_data->is_running = FALSE;
-            return;
-        case GLFW_KEY_1:
-            g_data->player->selected_block = GRASS;
-            return;
-        case GLFW_KEY_2:
-            g_data->player->selected_block = DIRT;
-            return;
-        case GLFW_KEY_3:
-            g_data->player->selected_block = STONE;
-            return;
-        case GLFW_KEY_4:
-            g_data->player->selected_block = WEEZER;
-            return;
-        case GLFW_KEY_5:
-            g_data->player->selected_block = OAK_LOG;
-            return;
-        case GLFW_KEY_6:
-            g_data->player->selected_block = OAK_PLANKS;
-            return;
-        case GLFW_KEY_7:
-            g_data->player->selected_block = GLASS;
-            return;
-        case GLFW_KEY_8:
-            g_data->player->selected_block = SAND;
-            return;
-        case GLFW_KEY_9:
-            g_data->player->selected_block = CACTUS;
-            return;
-        default:
-            break;
+    /* quick handles for non-movement keys */
+    if (key == GLFW_KEY_ESCAPE) {
+        glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
+        g_data->is_running = FALSE;
+        return;
     }
 
-    // check for existing entry
-    key_entry* cur = key_stack;
-    while(cur != NULL) {
-        if (cur->key == key)
-            return;
-        cur = cur->next;
+    if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9) {
+        int index = key - GLFW_KEY_0;
+        if (index < g_data->player->hotbar_size) {
+            g_data->player->selected_block = index;
+        }
+        return;
     }
 
-    // new entry
-    key_entry* new_entry = malloc(sizeof(key_entry));
+    /* avoid duplicate entries in the key stack */
+    for (key_entry* cur = key_stack; cur != NULL; cur = cur->next) {
+        if (cur->key == key) return;
+    }
+
+    key_entry* new_entry = malloc(sizeof(*new_entry));
+    if (!new_entry) return; /* allocation failed, ignore key */
     new_entry->key = key;
     new_entry->next = key_stack;
     key_stack = new_entry;

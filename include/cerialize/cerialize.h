@@ -62,8 +62,12 @@ typedef struct {
     bool_t failure;
 } json;
 
-char* serialize_json(const json* j);
-json deserialize_json(const char* json_string, cereal_size_t length);
+static inline char* serialize_json(const json* j);
+static inline json deserialize_json(const char* json_string, cereal_size_t length);
+
+// Memory management functions
+static inline void json_free(json* j);
+static inline void json_object_free(json_object* obj);
 
 #define JSON_MAX_ERROR_LENGTH 512
 
@@ -82,21 +86,21 @@ enum lex_type {
     LEX_N = 'n',
 };
 
-bool_t is_whitespace(char cur) {
+static inline bool_t is_whitespace(char cur) {
     return (cur == ' ' || cur == '\t' || cur == '\n' || cur == '\r');
 }
 
-bool_t is_number(char cur) {
+static inline bool_t is_number(char cur) {
     return (cur >= '0' && cur <= '9');
 }
 
 // Accepts a sign or digit as the first character of a number
-bool_t is_number_start(char cur) {
+static inline bool_t is_number_start(char cur) {
     return (cur == '-' || cur == '+' || (cur >= '0' && cur <= '9'));
 }
 
 // skip whitespace until next node
-void skip_whitespace(const char* json_string, cereal_size_t length, cereal_uint_t* i) {
+static inline void skip_whitespace(const char* json_string, cereal_size_t length, cereal_uint_t* i) {
     while (is_whitespace(json_string[*i]) && *i < length) {
         (*i)++;
     }
@@ -108,7 +112,7 @@ void skip_whitespace(const char* json_string, cereal_size_t length, cereal_uint_
 // failure    : track whether parsing failed
 // error_text : error text to append to if the parsing fails
 // TODO: add parameter to store key length, maybe return a struct that gives this?  not sure.
-char* json_parse_string(const char* json_string, cereal_size_t length, cereal_uint_t* i, bool_t* failure, char* error_text) {
+static inline char* json_parse_string(const char* json_string, cereal_size_t length, cereal_uint_t* i, bool_t* failure, char* error_text) {
 
     // opening "'"
     if (json_string[*i] != LEX_QUOTE) {
@@ -171,7 +175,7 @@ char* json_parse_string(const char* json_string, cereal_size_t length, cereal_ui
     return str;
 }
 
-bool_t json_parse_null(const char* json_string, cereal_uint_t* i, bool_t* failure, char* error_text) {
+static inline bool_t json_parse_null(const char* json_string, cereal_uint_t* i, bool_t* failure, char* error_text) {
     // check for "null"
     if (strncmp(&json_string[*i], "null", 4) != 0) {
         strcat(error_text, "cerialize ERROR: Expected 'null' keyword.\n");
@@ -198,7 +202,7 @@ bool_t json_parse_null(const char* json_string, cereal_uint_t* i, bool_t* failur
     }
 }
 
-float json_parse_number(const char* json_string, cereal_size_t length, cereal_uint_t* i, bool_t* failure, char* error_text) {
+static inline float json_parse_number(const char* json_string, cereal_size_t length, cereal_uint_t* i, bool_t* failure, char* error_text) {
     // check for valid number format
     cereal_uint_t start = *i;
     // Accept optional sign at the start
@@ -266,7 +270,7 @@ float json_parse_number(const char* json_string, cereal_size_t length, cereal_ui
     return value;
 }
 
-bool_t json_parse_boolean(const char* json_string, cereal_uint_t* i, bool_t* failure, char* error_text) {
+static inline bool_t json_parse_boolean(const char* json_string, cereal_uint_t* i, bool_t* failure, char* error_text) {
     // Explicitly reject '1' and '0' as booleans
     if (json_string[*i] == '1' && (json_string[*i+1] == '\0' || is_whitespace(json_string[*i+1]) || json_string[*i+1] == ',' || json_string[*i+1] == '}' || json_string[*i+1] == ']')) {
         strcat(error_text, "cerialize ERROR: '1' is not a valid boolean value.\n");
@@ -323,9 +327,9 @@ bool_t json_parse_boolean(const char* json_string, cereal_uint_t* i, bool_t* fai
     }
 }
 
-json_object parse_json_object(const char* json_string, cereal_size_t length, cereal_uint_t* i, char* error_text, bool_t* failure);
+static inline json_object parse_json_object(const char* json_string, cereal_size_t length, cereal_uint_t* i, char* error_text, bool_t* failure);
 
-json_list json_parse_list(const char* json_string, cereal_size_t length, cereal_uint_t* i, bool_t* failure, char* error_text) {
+static inline json_list json_parse_list(const char* json_string, cereal_size_t length, cereal_uint_t* i, bool_t* failure, char* error_text) {
     skip_whitespace(json_string, length, i);
 
     if (json_string[*i] != LEX_OPEN_SQUARE) {
@@ -401,7 +405,7 @@ json_list json_parse_list(const char* json_string, cereal_size_t length, cereal_
     return result;
 }
 
-json_object parse_json_object(const char* json_string, cereal_size_t length, cereal_uint_t* i, char* error_text, bool_t* failure) {
+static inline json_object parse_json_object(const char* json_string, cereal_size_t length, cereal_uint_t* i, char* error_text, bool_t* failure) {
     skip_whitespace(json_string, length, i);
 
     json_object obj;
@@ -544,7 +548,7 @@ json_object parse_json_object(const char* json_string, cereal_size_t length, cer
 }
 
 // parse json
-json deserialize_json(const char* json_string, cereal_size_t length) {
+static inline json deserialize_json(const char* json_string, cereal_size_t length) {
 
     bool_t failure = FALSE;
     char* error_text = malloc(JSON_MAX_ERROR_LENGTH);
@@ -572,7 +576,7 @@ json deserialize_json(const char* json_string, cereal_size_t length) {
 }
 
 
-char* serialize_string(const char* str) {
+static inline char* serialize_string(const char* str) {
     if (!str) return NULL;
     size_t len = strlen(str);
     char* result = (char*)malloc(len + 1);
@@ -581,21 +585,21 @@ char* serialize_string(const char* str) {
     return result;
 }
 
-char* serialize_null() {
+static inline char* serialize_null() {
     char* result = (char*)malloc(5);
     if (!result) return NULL;
     strcpy(result, "null");
     return result;
 }
 
-char* serialize_number(float number) { 
+static inline char* serialize_number(float number) { 
     char* result = malloc(32);
     if (!result) return NULL; // handle memory allocation failure
     snprintf(result, 32, "%f", number);
     return result;
 }
 
-char* serialize_bool(bool_t value) {
+static inline char* serialize_bool(bool_t value) {
     const char* src = value ? "true" : "false";
     char* result = (char*)malloc(strlen(src) + 1);
     if (!result) return NULL;
@@ -603,7 +607,7 @@ char* serialize_bool(bool_t value) {
     return result;
 }
 
-char* serialize_list(json_list list) { 
+static inline char* serialize_list(json_list list) { 
     char* result = malloc(JSON_MAX_STRING_LENGTH);
     if (!result) return NULL; // handle memory allocation failure
     strcpy(result, "[");
@@ -627,7 +631,7 @@ char* serialize_list(json_list list) {
     return result;
 }
 
-char* serialize_object(const json_object* obj) { 
+static inline char* serialize_object(const json_object* obj) { 
     char* result = malloc(JSON_MAX_STRING_LENGTH);
     if (!result) return NULL; // handle memory allocation failure
     // Defensive: handle empty or malformed objects
@@ -661,7 +665,7 @@ char* serialize_object(const json_object* obj) {
     return result;
 }
 
-char* serialize_json(const json* j) { 
+static inline char* serialize_json(const json* j) { 
     if (!j) return NULL;
 
     json_object root = j->root;
@@ -683,7 +687,7 @@ char* serialize_json(const json* j) {
     }
 }
 
-json_object json_get_property(json_object obj, const char* key) {
+static inline json_object json_get_property(json_object obj, const char* key) {
     for (cereal_size_t i = 0; i < obj.value.object.node_count; i++) {
         json_node node = obj.value.object.nodes[i];
         if (strcmp(node.key, key) == 0) {
@@ -691,6 +695,78 @@ json_object json_get_property(json_object obj, const char* key) {
         }
     }
     return (json_object){ .type = JSON_NULL };
+}
+
+// Memory management function implementations
+static inline void json_object_free(json_object* obj) {
+    if (!obj) return;
+    
+    switch (obj->type) {
+        case JSON_STRING:
+            if (obj->value.string) {
+                free(obj->value.string);
+                obj->value.string = NULL;
+            }
+            break;
+            
+        case JSON_LIST:
+            // Free each item in the list
+            for (cereal_size_t i = 0; i < obj->value.list.count; i++) {
+                json_object_free(&obj->value.list.items[i]);
+            }
+            // Free the items array
+            if (obj->value.list.items) {
+                free(obj->value.list.items);
+                obj->value.list.items = NULL;
+            }
+            obj->value.list.count = 0;
+            break;
+            
+        case JSON_OBJECT:
+            // Free each node
+            for (cereal_size_t i = 0; i < obj->value.object.node_count; i++) {
+                // Free the key
+                if (obj->value.object.nodes[i].key) {
+                    free(obj->value.object.nodes[i].key);
+                    obj->value.object.nodes[i].key = NULL;
+                }
+                // Recursively free the value
+                json_object_free(&obj->value.object.nodes[i].value);
+            }
+            // Free the nodes array
+            if (obj->value.object.nodes) {
+                free(obj->value.object.nodes);
+                obj->value.object.nodes = NULL;
+            }
+            obj->value.object.node_count = 0;
+            break;
+            
+        case JSON_NUMBER:
+        case JSON_BOOL:
+        case JSON_NULL:
+            // No dynamic memory to free
+            break;
+    }
+    
+    // Reset the object type
+    obj->type = JSON_NULL;
+}
+
+static inline void json_free(json* j) {
+    if (!j) return;
+    
+    // Free error text if allocated
+    if (j->error_text) {
+        free(j->error_text);
+        j->error_text = NULL;
+    }
+    
+    // Free the root object
+    json_object_free(&j->root);
+    
+    // Reset the structure
+    j->error_length = 0;
+    j->failure = FALSE;
 }
 
 #endif

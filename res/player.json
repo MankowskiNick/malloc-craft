@@ -1,0 +1,17 @@
+{
+    "cam": {
+        "position": [1.0, 184.0, 0.0],
+        "up": [0.0, 1.0, 0.0],
+        "front": [1.0, 0.0, 0.0],
+        "yaw": 0.0,
+        "pitch": 0.0
+    },
+    "hotbar": [
+        "grass",
+        "glass",
+        "dirt",
+        "stone",
+        "weezer",
+        "oak_log"
+    ]
+}

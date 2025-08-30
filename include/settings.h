@@ -144,3 +144,6 @@
 #define BIOME_COUNT 4
 #define TREE_COUNT 2
 #define BLOCK_COUNT 13
+
+#define BLOCK_FILE "res/blocks.json"
+#define PLAYER_FILE "res/player.json"

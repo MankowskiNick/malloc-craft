@@ -20,16 +20,7 @@ int main() {
 
     block_init();
 
-    player_instance player = {
-        .selected_block = 1,
-        .cam = {
-            .position = {1.0f, (float)WORLDGEN_BASE_TERRAIN_HEIGHT + 20.0f, 0.0f},
-            .up = {0.0f, 1.0f, 0.0f},
-            .front = {1.0f, 0.0f, 0.0f},
-            .yaw = 0.0f,
-            .pitch = 0.0f
-        }
-    };
+    player_instance player = player_init(PLAYER_FILE);
 
     game_data data = {
         .x = (int)player.cam.position[0],
