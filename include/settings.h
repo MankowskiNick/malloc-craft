@@ -29,7 +29,7 @@
 // GRAPHICS SETTINGS 
 
 // Render as wireframe? Useful for debugging
-// #define WIREFRAME
+#define WIREFRAME 0
 
 #define ATLAS_PATH "res/textures/atlas.png"
 #define BUMP_PATH "res/textures/bump.png"
@@ -43,7 +43,7 @@
 #define SHADOW_MAP_TEXTURE_INDEX 4
 
 // Vsync on?  Comment to disable
-#define VSYNC
+#define VSYNC 1
 // Radius of chunks to render
 #define CHUNK_RENDER_DISTANCE 16
 
@@ -74,7 +74,7 @@
 #define ATLAS_SIZE 32
 
 // Use mipmaps?  Comment to disable
-#define USE_MIPMAP
+#define USE_MIPMAP 1
 
 // Skybox settings
 #define SKYBOX_SLICES 15
