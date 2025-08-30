@@ -1,6 +1,6 @@
 {
     "cam": {
-        "position": [1.0, 184.0, 0.0],
+        "position": [1.0, 84.0, 0.0],
         "up": [0.0, 1.0, 0.0],
         "front": [1.0, 0.0, 0.0],
         "yaw": 0.0,
@@ -8,10 +8,14 @@
     },
     "hotbar": [
         "grass",
-        "glass",
         "dirt",
         "stone",
         "weezer",
-        "oak_log"
+        "oak_log",
+        "stone",
+        "oak_log",
+        "oak_planks",
+        "glass",
+        "cactus"
     ]
 }
