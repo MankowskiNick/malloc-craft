@@ -52,7 +52,7 @@ GLFWwindow* create_window(char* title, int width, int height) {
 
 
     if (VSYNC) {
-        glfwSwapInterval(1);
+        glfwSwapInterval(0);
     }
 
     return window;
