@@ -6,7 +6,10 @@
 typedef struct {
     short id;
     char* name;
-    short surface_type, subsurface_type, underground_type, underwater_type;
+    char* surface_type;
+    char* subsurface_type;
+    char* underground_type;
+    char* underwater_type;
     short tree_type;
     float tree_density;
 } biome;
@@ -18,8 +21,9 @@ enum {
     MOUNTAINS,
 };
 
+void read_biomes(char* filename);
 biome* get_biome(float x, float z);
 
-extern biome BIOMES[];
+extern biome* BIOMES;
 
 #endif

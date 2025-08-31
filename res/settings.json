@@ -1,0 +1,95 @@
+{
+  "display": {
+    "width": 1200,
+    "height": 900,
+    "title": "malloc-craft",
+    "vsync": true,
+    "fov": 60.0
+  },
+  "chunks": {
+    "chunk_load_per_frame": 1,
+    "chunk_cache_size": 1024,
+    "chunk_render_distance": 16
+  },
+  "graphics": {
+    "wireframe": false,
+    "render_distance": 500.0,
+    "atlas_size": 32,
+    "use_mipmap": true,
+    "tick_rate": 32
+  },
+  "textures": {
+    "atlas_path": "res/textures/atlas.png",
+    "bump_path": "res/textures/bump.png",
+    "skybox_path": "res/textures/skybox.png",
+    "caustic_path": "res/textures/caustic.png",
+    "atlas_texture_index": 0,
+    "bump_texture_index": 1,
+    "caustic_texture_index": 2,
+    "skybox_texture_index": 3,
+    "shadow_map_texture_index": 4
+  },
+  "shadows": {
+    "shadow_map_width": 10000,
+    "shadow_map_height": 10000,
+    "shadow_render_dist": 256.0,
+    "shadow_softness": 3.0,
+    "shadow_samples": 4,
+    "shadow_bias": 0.0025
+  },
+  "skybox": {
+    "skybox_slices": 15,
+    "skybox_stacks": 15,
+    "skybox_radius": 1.0
+  },
+  "sun": {
+    "sun_slices": 15,
+    "sun_stacks": 15,
+    "sun_radius": 0.1,
+    "sun_intensity": 1.0,
+    "sun_specular_strength": 10.0
+  },
+  "lighting": {
+    "ambient_r_intensity": 0.3,
+    "ambient_g_intensity": 0.3,
+    "ambient_b_intensity": 0.3
+  },
+  "water": {
+    "water_offset": 0.2,
+    "water_height": 1.0,
+    "water_distance": 50.0,
+    "water_shininess": 5000.0
+  },
+  "player": {
+    "delta_x": 0.1,
+    "delta_y": 0.1,
+    "delta_z": 0.1,
+    "sensitivity": 0.001,
+    "max_reach": 5.0,
+    "ray_step": 0.05
+  },
+  "world_generation": {
+    "seed": 42069,
+    "biome_generation": {
+      "frequency": 0.2,
+      "amplitude": 1.0,
+      "octaves": 2
+    },
+    "terrain": {
+      "blockheight_modifier": 40.0,
+      "base_terrain_height": 64,
+      "water_level": 64,
+      "blockheight_frequency": 0.25,
+      "blockheight_amplitude": 2.0,
+      "blockheight_octaves": 6
+    }
+  },
+  "game_data": {
+    "biome_count": 4,
+    "tree_count": 2,
+    "block_count": 13,
+    "block_file": "res/blocks.json",
+    "player_file": "res/player.json",
+    "time_scale": 0.005
+  }
+}

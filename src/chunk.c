@@ -2,6 +2,7 @@
 #include <noise.h>
 #include <biome.h>
 #include <tree.h>
+#include <block.h>
 #include <stdlib.h>
 
 uint chunk_hash(chunk_coord c) {
@@ -41,26 +42,26 @@ void generate_blocks(chunk* c, int x, int z) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (k > y) {
                     if (k > WORLDGEN_WATER_LEVEL) {
-                        c->blocks[i][k][j] = AIR;
+                        c->blocks[i][k][j] = get_block_id("air");
                     }
                     else {
-                        c->blocks[i][k][j] = WATER;
+                        c->blocks[i][k][j] = get_block_id("water");
                     }
                 }
                 else if (k == y) {
                     
                     if (k < WORLDGEN_WATER_LEVEL) {
-                        c->blocks[i][k][j] = b->underwater_type;
+                        c->blocks[i][k][j] = get_block_id(b->underwater_type);
                     }
                     else {
-                        c->blocks[i][k][j] = b->surface_type;
+                        c->blocks[i][k][j] = get_block_id(b->surface_type);
                     }
                 }
                 else if (k > y - 3) {
-                    c->blocks[i][k][j] = b->subsurface_type;
+                    c->blocks[i][k][j] = get_block_id(b->subsurface_type);
                 }
                 else {
-                    c->blocks[i][k][j] = b->underground_type;
+                    c->blocks[i][k][j] = get_block_id(b->underground_type);
                 }
             }
         }

@@ -1,4 +1,5 @@
 #include <tree.h>
+#include <block.h>
 #include <block_models.h>
 
 void get_oak_leaf_pattern(leaf_coord* pattern, int num_leaves) {
@@ -83,7 +84,7 @@ void generate_tree(int x, int y, int z, short id, chunk* c) {
         int lx = x + l.x;
         int ly = y + height + l.y;
         int lz = z + l.z;
-        if (c->blocks[lx][ly][lz] == AIR) {
+        if (c->blocks[lx][ly][lz] == get_block_id("air")) {
             c->blocks[x + l.x][y + height + l.y][z + l.z] = t->leaf_type;
         }
     }
@@ -93,8 +94,8 @@ tree TREES[] = {
     {
         .id = OAK_TREE,
         .name = "Oak Tree",
-        .trunk_type = OAK_LOG,
-        .leaf_type = OAK_LEAF,
+        .trunk_type = 5,
+        .leaf_type = 6,
         .base_height = 6,
         .height_variance = 5,
         .leaf_pattern = NULL,
@@ -104,8 +105,8 @@ tree TREES[] = {
     {
         .id = CACTUS_TREE,
         .name = "Cactus",
-        .trunk_type = CACTUS, // temporary, no cactus texture yet
-        .leaf_type = CACTUS_TOP,
+        .trunk_type = 10,
+        .leaf_type = 11,
         .base_height = 3,
         .height_variance = 5,
         .leaf_pattern = NULL,

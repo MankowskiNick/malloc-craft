@@ -10,9 +10,13 @@
 #include <chunk_mesh.h>
 #include <mesh.h>
 #include <world.h>
+#include <biome.h>
 #include <pthread.h>
 
 int main() {
+    read_settings("res/settings.json");
+    read_biomes("res/biomes.json");
+
     GLFWwindow* window = create_window(TITLE, WIDTH, HEIGHT);
     if (!window || !load_gl()) {
         return -1;

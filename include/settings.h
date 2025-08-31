@@ -1,119 +1,112 @@
+#ifndef SETTINGS_H
+#define SETTINGS_H
+
+
+void read_settings(const char* filename);
 
 // Screen width & height
-#define WIDTH 1200
-#define HEIGHT 900
-#define TITLE "malloc-craft"
+extern int WIDTH;
+extern int HEIGHT;
+extern char* TITLE;
 
-#define TIME_SCALE 0.005f
-
-
-
+extern float TIME_SCALE;
 
 // CHUNK SETTINGS
 
 // Chunk size
 #define CHUNK_SIZE 16
 #define CHUNK_HEIGHT 256
-
 // How many chunks can be loaded per frame.  
 // Higher values will load chunks faster, but may cause stuttering.
-#define CHUNK_LOAD_PER_FRAME 1
+extern int CHUNK_LOAD_PER_FRAME;
 
 // Chunks are cached in memory to reduce load times, how large should the cache be?
-#define CHUNK_CACHE_SIZE 1024
+extern int CHUNK_CACHE_SIZE;
 
 
 
 
 
-// GRAPHICS SETTINGS 
+ // GRAPHICS SETTINGS 
 
 // Render as wireframe? Useful for debugging
-// #define WIREFRAME
+extern int WIREFRAME;
 
-#define ATLAS_PATH "res/textures/atlas.png"
-#define BUMP_PATH "res/textures/bump.png"
-#define SKYBOX_PATH "res/textures/skybox.png"
-#define CAUSTIC_PATH "res/textures/caustic.png"
+extern char* ATLAS_PATH;
+extern char* BUMP_PATH;
+extern char* SKYBOX_PATH;
+extern char* CAUSTIC_PATH;
 
-#define ATLAS_TEXTURE_INDEX 0
-#define BUMP_TEXTURE_INDEX 1
-#define CAUSTIC_TEXTURE_INDEX 2
-#define SKYBOX_TEXTURE_INDEX 3
-#define SHADOW_MAP_TEXTURE_INDEX 4
+extern int ATLAS_TEXTURE_INDEX;
+extern int BUMP_TEXTURE_INDEX;
+extern int CAUSTIC_TEXTURE_INDEX;
+extern int SKYBOX_TEXTURE_INDEX;
+extern int SHADOW_MAP_TEXTURE_INDEX;
 
 // Vsync on?  Comment to disable
-#define VSYNC
+extern int VSYNC;
 // Radius of chunks to render
-#define CHUNK_RENDER_DISTANCE 16
+extern int CHUNK_RENDER_DISTANCE;
 
 // Shadow map settings
-#define SHADOW_MAP_WIDTH        10000
-#define SHADOW_MAP_HEIGHT       10000
-#define SHADOW_RENDER_DIST      (float) CHUNK_RENDER_DISTANCE * CHUNK_SIZE
-#define SHADOW_SOFTNESS         3.0f
-#define SHADOW_SAMPLES          4
-#define SHADOW_BIAS             0.0025f
+extern int SHADOW_MAP_WIDTH;
+extern int SHADOW_MAP_HEIGHT;
+extern float SHADOW_RENDER_DIST;
+extern float SHADOW_SOFTNESS;
+extern int SHADOW_SAMPLES;
+extern float SHADOW_BIAS;
 
 
-// How often to update the world mesh in seconds
-#define TICK_RATE 32 // 32ms is roughly 30 updates per second
+ // How often to update the world mesh in seconds
+extern int TICK_RATE; // 32ms is roughly 30 updates per second
 
 // FOV
-#define FOV 60.0f
+extern float FOV;
 
 // Render distance - also serves as the fog distance
-#define RENDER_DISTANCE 500.0f
-
-// Allow transparent leaves?  Transparent leaves can negatively impact performance.
-// Comment to disable
-#define TRANSPARENT_LEAVES
+extern float RENDER_DISTANCE;
 
 // Atlas size - the texture atlas is a spritemap that contains 
 // ATLAS_SIZE x ATLAS_SIZE textures.
-#define ATLAS_SIZE 32
+extern int ATLAS_SIZE;
 
 // Use mipmaps?  Comment to disable
-#define USE_MIPMAP
+extern int USE_MIPMAP;
 
-// Skybox settings
-#define SKYBOX_SLICES 15
-#define SKYBOX_STACKS 15
-#define SKYBOX_RADIUS 1.0f
+ // Skybox settings
+extern int SKYBOX_SLICES;
+extern int SKYBOX_STACKS;
+extern float SKYBOX_RADIUS;
 
 // Sun settings
-#define SUN_SLICES 15
-#define SUN_STACKS 15
-#define SUN_RADIUS 0.1f
-#define SUN_INTENSITY 1.0f
-#define SUN_SPECULAR_STRENGTH 10.0f
-#define WATER_SHININESS 5000.0f
+extern int SUN_SLICES;
+extern int SUN_STACKS;
+extern float SUN_RADIUS;
+extern float SUN_INTENSITY;
+extern float SUN_SPECULAR_STRENGTH;
+extern float WATER_SHININESS;
 
 // Ambient light
-#define AMBIENT_R_INTENSITY 0.3f
-#define AMBIENT_G_INTENSITY 0.3f
-#define AMBIENT_B_INTENSITY 0.3f
+extern float AMBIENT_R_INTENSITY;
+extern float AMBIENT_G_INTENSITY;
+extern float AMBIENT_B_INTENSITY;
 
 // Water settings
-#define WATER_OFFSET 0.2f
-#define WATER_HEIGHT 1.0f
-#define WATER_DISTANCE 50.0f
-
-
-
-
+extern float WATER_OFFSET;
+extern float WATER_HEIGHT;
+extern float WATER_DISTANCE;
 
 // PLAYER SETTINGS
 
-// Camera settings
-#define DELTA_X 0.1f
-#define DELTA_Y 0.1f
-#define DELTA_Z 0.1f
-#define SENSITIVITY 0.001f
+ // Camera settings
+extern float DELTA_X;
+extern float DELTA_Y;
+extern float DELTA_Z;
+extern float SENSITIVITY;
 
 // Player settings
-#define MAX_REACH 5.0f
-#define RAY_STEP 0.05f
+extern float MAX_REACH;
+extern float RAY_STEP;
 
 
 
@@ -122,28 +115,29 @@
 // WORLD GENERATION SETTINGS
 
 // World generation seed
-#define SEED 42069
+extern int SEED;
 
 // Perlin noise settings for biome generation
-#define WORLDGEN_BIOME_FREQUENCY 0.2f
-#define WORLDGEN_BIOME_AMPLITUDE 1.0f
-#define WORLDGEN_BIOME_OCTAVES 2
+extern float WORLDGEN_BIOME_FREQUENCY;
+extern float WORLDGEN_BIOME_AMPLITUDE;
+extern int WORLDGEN_BIOME_OCTAVES;
 
 // Perlin noise is generated and normalized to [-1, 1].  
 // This value is the modifier to scale the height
-#define WORLDGEN_BLOCKHEIGHT_MODIFIER 40.0f
-#define WORLDGEN_BASE_TERRAIN_HEIGHT 64 // The height of the base terrain
-#define WORLDGEN_WATER_LEVEL 64 // The height of the water level
+extern float WORLDGEN_BLOCKHEIGHT_MODIFIER;
+extern int WORLDGEN_BASE_TERRAIN_HEIGHT; // The height of the base terrain
+extern int WORLDGEN_WATER_LEVEL; // The height of the water level
 
 // Perlin noise settings for block height generation
-#define WORLDGEN_BLOCKHEIGHT_FREQUENCY 0.25f
-#define WORLDGEN_BLOCKHEIGHT_AMPLITUDE 2.0f
-#define WORLDGEN_BLOCKHEIGHT_OCTAVES 6
+extern float WORLDGEN_BLOCKHEIGHT_FREQUENCY;
+extern float WORLDGEN_BLOCKHEIGHT_AMPLITUDE;
+extern int WORLDGEN_BLOCKHEIGHT_OCTAVES;
 
 // Biome, tree, and block counts
-#define BIOME_COUNT 4
-#define TREE_COUNT 2
-#define BLOCK_COUNT 13
+extern int BIOME_COUNT; // TODO: remove some of these counts so they are automatically calculated
+extern int TREE_COUNT;
+extern int BLOCK_COUNT;
+extern char* BLOCK_FILE;
+extern char* PLAYER_FILE;
 
-#define BLOCK_FILE "res/blocks.json"
-#define PLAYER_FILE "res/player.json"
+#endif

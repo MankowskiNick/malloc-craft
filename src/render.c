@@ -18,9 +18,9 @@ renderer create_renderer(camera* camera) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    #ifdef WIREFRAME
+    if (WIREFRAME) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    #endif
+    }
 
     glViewport(0, 0, WIDTH, HEIGHT);
 

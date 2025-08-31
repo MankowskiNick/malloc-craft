@@ -1,0 +1,42 @@
+[
+  {
+    "id": 0,
+    "name": "plains",
+    "surface_type": "grass",
+    "subsurface_type": "dirt",
+    "underground_type": "stone",
+    "underwater_type": "dirt",
+    "tree_type": 0,
+    "tree_density": 0.005
+  },
+  {
+    "id": 1,
+    "name": "forest",
+    "surface_type": "grass",
+    "subsurface_type": "dirt",
+    "underground_type": "stone",
+    "underwater_type": "dirt",
+    "tree_type": 0,
+    "tree_density": 0.03
+  },
+  {
+    "id": 2,
+    "name": "desert",
+    "surface_type": "sand",
+    "subsurface_type": "sand",
+    "underground_type": "stone",
+    "underwater_type": "sand",
+    "tree_type": 1,
+    "tree_density": 0.02
+  },
+  {
+    "id": 3,
+    "name": "mountains",
+    "surface_type": "stone",
+    "subsurface_type": "stone",
+    "underground_type": "stone",
+    "underwater_type": "stone",
+    "tree_type": 0,
+    "tree_density": 0.005
+  }
+]

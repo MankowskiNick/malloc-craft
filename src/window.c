@@ -1,4 +1,5 @@
 #include <window.h>
+#include <settings.h>
 #include <stdio.h>
 
 typedef struct {
@@ -50,9 +51,9 @@ GLFWwindow* create_window(char* title, int width, int height) {
     glfwMakeContextCurrent(window);
 
 
-    #ifndef VSYNC
+    if (VSYNC) {
         glfwSwapInterval(0);
-    #endif
+    }
 
     return window;
 }

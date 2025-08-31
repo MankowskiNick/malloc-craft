@@ -88,7 +88,7 @@ short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) 
         default:
             break;
     }
-    return AIR;
+    return get_block_id("air");
 }
 
 void get_side_visible(
@@ -107,10 +107,10 @@ void get_side_visible(
 
     // calculate visibility 
     block_type* adjacent = get_block_type(adjacent_id);
-    uint visible = adjacent_id == AIR || get_block_type(adjacent_id)->transparent != current->transparent;
+    uint visible = adjacent_id == get_block_id("air") || get_block_type(adjacent_id)->transparent != current->transparent;
 
     // check if we are underwater
-    if (adjacent_id == WATER) {
+    if (adjacent_id == get_block_id("water")) {
         *underwater_out = 1;
     }
 
@@ -209,7 +209,7 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
-                if (c->blocks[i][k][j] == AIR) {
+                if (c->blocks[i][k][j] == get_block_id("air")) {
                     continue;
                 }
 
