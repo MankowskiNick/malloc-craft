@@ -54,13 +54,13 @@ void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides) {
     for (int i = 0; i < num_sides; i++) {
         int index = i * VBO_WIDTH;
         side_instance side = sides[i];
-        head[index + 0] = sides[i].x;
-        head[index + 1] = sides[i].y;
-        head[index + 2] = sides[i].z;
-        head[index + 3] = sides[i].atlas_x;
-        head[index + 4] = sides[i].atlas_y;
-        head[index + 5] = sides[i].side;
-        head[index + 6] = sides[i].underwater;
+        head[index + 0] = side.x;
+        head[index + 1] = side.y;
+        head[index + 2] = side.z;
+        head[index + 3] = side.atlas_x;
+        head[index + 4] = side.atlas_y;
+        head[index + 5] = side.side;
+        head[index + 6] = side.underwater;
     }
 }
 

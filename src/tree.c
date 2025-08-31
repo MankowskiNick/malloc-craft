@@ -105,7 +105,7 @@ tree TREES[] = {
     {
         .id = CACTUS_TREE,
         .name = "Cactus",
-        .trunk_type = 10, // temporary, no cactus texture yet
+        .trunk_type = 10,
         .leaf_type = 11,
         .base_height = 3,
         .height_variance = 5,
