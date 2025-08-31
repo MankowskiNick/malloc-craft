@@ -7,8 +7,6 @@
     "fov": 60.0
   },
   "chunks": {
-    "chunk_size": 16,
-    "chunk_height": 256,
     "chunk_load_per_frame": 1,
     "chunk_cache_size": 1024,
     "chunk_render_distance": 16

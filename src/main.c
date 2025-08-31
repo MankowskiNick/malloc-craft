@@ -13,6 +13,8 @@
 #include <pthread.h>
 
 int main() {
+    read_settings("res/settings.json");
+
     GLFWwindow* window = create_window(TITLE, WIDTH, HEIGHT);
     if (!window || !load_gl()) {
         return -1;

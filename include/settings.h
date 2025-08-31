@@ -1,5 +1,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
+
+
 void read_settings(const char* filename);
 
 // Screen width & height
@@ -8,9 +10,6 @@ extern int HEIGHT;
 extern char* TITLE;
 
 extern float TIME_SCALE;
-
-
-
 
 // CHUNK SETTINGS
 
