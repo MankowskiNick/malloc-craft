@@ -12,22 +12,6 @@
 #define BOTTOM 5.0f
 #define UNKNOWN_SIDE -1.0f
 
-enum {
-    AIR,
-    GRASS,
-    DIRT,
-    STONE,
-    WEEZER,
-    OAK_LOG,
-    OAK_LEAF,
-    WATER,
-    GLASS,
-    SAND,
-    CACTUS,
-    CACTUS_TOP,
-    OAK_PLANKS
-};
-
 typedef struct {
     uint id;
     char* name;

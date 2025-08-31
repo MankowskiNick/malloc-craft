@@ -19,6 +19,7 @@ void block_init();
 
 void break_block(player_instance player);
 void place_block(player_instance player);
+short get_block_id(char* name);
 
 void send_cube_vbo(VAO vao, VBO vbo);
 

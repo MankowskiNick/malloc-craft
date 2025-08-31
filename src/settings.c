@@ -65,9 +65,7 @@ int WORLDGEN_WATER_LEVEL = 64; // The height of the water level
 float WORLDGEN_BLOCKHEIGHT_FREQUENCY = 0.25f;
 float WORLDGEN_BLOCKHEIGHT_AMPLITUDE = 2.0f;
 int WORLDGEN_BLOCKHEIGHT_OCTAVES = 6;
-int BIOME_COUNT = 4;
 int TREE_COUNT = 2;
-int BLOCK_COUNT = 13;
 char* BLOCK_FILE = "res/blocks.json";
 char* PLAYER_FILE = "res/player.json";
 
@@ -455,19 +453,9 @@ void parse_game_data_settings(json_object gamedata_obj) {
         exit(EXIT_FAILURE);
     }
 
-    json_object biome_count = json_get_property(gamedata_obj, "biome_count");
-    if (biome_count.type == JSON_NUMBER) {
-        BIOME_COUNT = (int)biome_count.value.number;
-    }
-
     json_object tree_count = json_get_property(gamedata_obj, "tree_count");
     if (tree_count.type == JSON_NUMBER) {
         TREE_COUNT = (int)tree_count.value.number;
-    }
-
-    json_object block_count = json_get_property(gamedata_obj, "block_count");
-    if (block_count.type == JSON_NUMBER) {
-        BLOCK_COUNT = (int)block_count.value.number;
     }
 
     json_object block_file = json_get_property(gamedata_obj, "block_file");

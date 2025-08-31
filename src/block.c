@@ -9,6 +9,7 @@
 #include <cerialize/cerialize.h>
 
 block_type* TYPES;
+int BLOCK_COUNT = 0;
 
 void map_json_to_types(json block_types) {
 
@@ -75,7 +76,18 @@ void block_init() {
 
     // Deserialize the block types
     json block_types = deserialize_json(block_types_json, strlen(block_types_json));
-    free(block_types_json);
+    if (block_types.failure) {
+        fprintf(stderr, "Failed to deserialize block types: %s\n", block_types.error_text);
+        free(block_types_json);
+        exit(EXIT_FAILURE);
+    }
+
+    if (block_types.root.type != JSON_LIST) {
+        free(block_types_json);
+        exit(EXIT_FAILURE);
+    }
+
+    BLOCK_COUNT = block_types.root.value.list.count;
 
     // Initialize block types array
     TYPES = malloc(sizeof(block_type) * BLOCK_COUNT);
@@ -100,7 +112,7 @@ float get_empty_dist(camera cam) {
 
     while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT 
         && t <= MAX_REACH && 
-        c->blocks[chunk_x][chunk_y][chunk_z] == AIR || c->blocks[chunk_x][chunk_y][chunk_z] == WATER) {
+        c->blocks[chunk_x][chunk_y][chunk_z] == get_block_id("air") || c->blocks[chunk_x][chunk_y][chunk_z] == get_block_id("water")) {
         t += 0.005f;
 
         vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
@@ -137,7 +149,7 @@ void break_block(player_instance player) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = AIR;
+    c->blocks[chunk_x][chunk_y][chunk_z] = get_block_id("air");
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
     queue_chunk_for_sorting(new_mesh);
