@@ -1,5 +1,5 @@
-#ifndef json_h
-#define json_h
+#ifndef CERIALIZE_H
+#define CERIALIZE_H
 
 #include <stdlib.h>
 #include <stdio.h>
