@@ -125,6 +125,10 @@ void get_side_visible(
         visible = 1;
     }
 
+    if (current->is_foliage) {
+        visible = 1; // foliage is always visible
+    }
+
     // dont render sides that we can't see
     switch(side) {
         case (int)TOP:
@@ -201,6 +205,7 @@ void pack_block(
 void pack_chunk(chunk* c, chunk* adj_chunks[4], 
     side_instance** opaque_side_data, int* num_opaque_sides,
     side_instance** transparent_side_data, int* num_transparent_sides,
+    side_instance** foliage_side_data, int* num_foliage_sides,
     side_instance** liquid_side_data, int* num_liquid_sides) {
     if (c == NULL) {
         return;
@@ -220,9 +225,13 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                     pack_block(i, k, j, c, adj_chunks, 
                         liquid_side_data, num_liquid_sides);
                 }
-                else if (block->transparent) {
+                else if (block->transparent && !block->is_foliage) {
                     pack_block(i, k, j, c, adj_chunks, 
                         transparent_side_data, num_transparent_sides);
+                }
+                else if (block->transparent && block->is_foliage) {
+                    pack_block(i, k, j, c, adj_chunks, 
+                        foliage_side_data, num_foliage_sides);
                 }
                 else {
                     pack_block(i, k, j, c, adj_chunks, 
@@ -248,19 +257,23 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
 
     // pack chunk data into packet
     int transparent_side_count = 0;
+    int foliage_side_count = 0;
     int opaque_side_count = 0;
     int liquid_side_count = 0;
 
     side_instance* opaque_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
     side_instance* transparent_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
     side_instance* liquid_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
+    side_instance* foliage_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
     assert(opaque_sides != NULL && "Failed to allocate memory for opaque packet sides");
     assert(transparent_sides != NULL && "Failed to allocate memory for transparent packet sides");
     assert(liquid_sides != NULL && "Failed to allocate memory for liquid packet sides");
+    assert(foliage_sides != NULL && "Failed to allocate memory for foliage packet sides");
 
     pack_chunk(c, adj_chunks, 
         &opaque_sides, &opaque_side_count,
         &transparent_sides, &transparent_side_count,
+        &foliage_sides, &foliage_side_count,
         &liquid_sides, &liquid_side_count);
 
     assert(packet != NULL && "Failed to allocate memory for packet");
@@ -270,10 +283,12 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     packet->num_opaque_sides = opaque_side_count;
     packet->num_transparent_sides = transparent_side_count;
     packet->num_liquid_sides = liquid_side_count;
+    packet->num_foliage_sides = foliage_side_count;
     
     packet->opaque_sides = opaque_sides;
     packet->transparent_sides = transparent_sides;
     packet->liquid_sides = liquid_sides;
+    packet->foliage_sides = foliage_sides;
 
     chunk_coord coord = {x, z};
     chunk_mesh_map_insert(&chunk_packets, coord, *packet);
@@ -293,6 +308,8 @@ chunk_mesh* update_chunk_mesh_at(int x, int z) {
     packet->opaque_sides = NULL;
     free(packet->transparent_sides);
     packet->transparent_sides = NULL;
+    free(packet->foliage_sides);
+    packet->foliage_sides = NULL;
 
     chunk_mesh_map_remove(&chunk_packets, coord);
 

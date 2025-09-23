@@ -19,19 +19,23 @@ typedef struct {
     side_instance* opaque_sides;
     side_instance* liquid_sides;
     side_instance* transparent_sides;
+    side_instance* foliage_sides;
     int num_opaque_sides;
     int num_transparent_sides;
     int num_liquid_sides;
+    int num_foliage_sides;
 } chunk_mesh;
 
 typedef struct {
     int num_opaque_sides;
     int num_transparent_sides;
     int num_liquid_sides;
+    int num_foliage_sides;
 
     int* transparent_data;
     int* opaque_data;
     int* liquid_data;
+    int* foliage_data;
 } world_mesh;
 
 typedef struct {

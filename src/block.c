@@ -38,10 +38,11 @@ void map_json_to_types(json block_types) {
         json_object transparent_obj = json_get_property(obj, "transparent");
         json_object liquid_obj = json_get_property(obj, "liquid");
         json_object face_atlas_coords_obj = json_get_property(obj, "face_atlas_coords");
+        json_object is_foliage_obj = json_get_property(obj, "is_foliage");
 
         if (id_obj.type != JSON_NUMBER && name_obj.type != JSON_STRING && 
             transparent_obj.type != JSON_BOOL && liquid_obj.type != JSON_BOOL && 
-            face_atlas_coords_obj.type != JSON_LIST) {
+            face_atlas_coords_obj.type != JSON_LIST && is_foliage_obj.type != JSON_BOOL) {
             fprintf(stderr, "Block type %d has invalid properties\n", i);
             continue;
         }
@@ -50,9 +51,9 @@ void map_json_to_types(json block_types) {
         TYPES[i].name = strdup(name_obj.value.string);
         TYPES[i].transparent = transparent_obj.value.boolean;
         TYPES[i].liquid = liquid_obj.value.boolean;
+        TYPES[i].is_foliage = is_foliage_obj.value.boolean;
         block_type* type = &TYPES[i];
-
-
+        
         for (int j = 0; j < 6; j++) {
             json_object face_coord_obj = face_atlas_coords_obj.value.list.items[j];
             if (face_coord_obj.type != JSON_LIST || face_coord_obj.value.list.count != 2) {

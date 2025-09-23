@@ -4,6 +4,7 @@
     "name": "air",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [-1, -1],
       [-1, -1],
@@ -18,6 +19,7 @@
     "name": "grass",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [1, 0],
       [1, 0],
@@ -32,6 +34,7 @@
     "name": "dirt",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [2, 0],
       [2, 0],
@@ -46,6 +49,7 @@
     "name": "stone",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [3, 0],
       [3, 0],
@@ -60,6 +64,7 @@
     "name": "weezer",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [4, 0],
       [4, 0],
@@ -74,6 +79,7 @@
     "name": "oak_log",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [7, 0],
       [7, 0],
@@ -88,6 +94,7 @@
     "name": "oak_leaves",
     "liquid": false,
     "transparent": true,
+    "is_foliage": false,
     "face_atlas_coords": [
       [9, 0],
       [9, 0],
@@ -102,6 +109,7 @@
     "name": "water",
     "liquid": true,
     "transparent": true,
+    "is_foliage": false,
     "face_atlas_coords": [
       [10, 0],
       [10, 0],
@@ -116,6 +124,7 @@
     "name": "glass",
     "liquid": false,
     "transparent": true,
+    "is_foliage": false,
     "face_atlas_coords": [
       [11, 0],
       [11, 0],
@@ -130,6 +139,7 @@
     "name": "sand",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [6, 0],
       [6, 0],
@@ -144,6 +154,7 @@
     "name": "cactus",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [12, 0],
       [12, 0],
@@ -158,6 +169,7 @@
     "name": "cactus_top",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [12, 0],
       [12, 0],
@@ -172,6 +184,7 @@
     "name": "oak_planks",
     "liquid": false,
     "transparent": false,
+    "is_foliage": false,
     "face_atlas_coords": [
       [16, 0],
       [16, 0],
@@ -179,6 +192,36 @@
       [16, 0],
       [16, 0],
       [16, 0]
+    ]
+  },
+  {
+    "id": 13,
+    "name": "long_grass",
+    "liquid": false,
+    "transparent": true,
+    "is_foliage": true,
+    "face_atlas_coords": [
+        [17,  0],
+        [17,  0],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1]
+    ]
+  },
+  {
+    "id": 14,
+    "name": "sunflower",
+    "liquid": false,
+    "transparent": true,
+    "is_foliage": true,
+    "face_atlas_coords": [
+        [18,  0],
+        [18,  0],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1]
     ]
   }
 ]

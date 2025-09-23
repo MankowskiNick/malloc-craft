@@ -9,8 +9,9 @@
 #include <shadow_map.h>
 
 typedef struct {
-    block_renderer wr;
-    block_renderer lr;
+    block_renderer wr; // world renderer
+    block_renderer fr; // foliage renderer
+    block_renderer lr; // liquid renderer
     skybox sky;
     sun s;
     shadow_map map;

@@ -2,6 +2,7 @@
 
 #include <block_renderer.h>
 #include <liquid_renderer.h>
+#include <foliage_renderer.h>
 #include <skybox.h>
 #include <glad/glad.h>
 #include <chunk_mesh.h>
@@ -38,6 +39,8 @@ renderer create_renderer(camera* camera) {
 
     block_renderer wr = create_block_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
+    block_renderer fr = create_foliage_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
+
     skybox sky = create_skybox(camera);
     sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
     shadow_map map = create_shadow_map(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
@@ -45,6 +48,7 @@ renderer create_renderer(camera* camera) {
     renderer r = {
         .wr = wr,
         .lr = lr,
+        .fr = fr,
         .sky = sky,
         .s = s,
         .cam_cache = {
@@ -88,5 +92,6 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
     
     render_solids(&(r->wr), &(r->s), &(r->map), packet);
     render_liquids(&(r->lr), &(r->s), &(r->map), packet);
+    render_foliage(&(r->fr), &(r->s), &(r->map), packet);
     render_transparent(&(r->wr), &(r->s), &(r->map), packet);
 }

@@ -7,8 +7,8 @@
         "pitch": 0.0
     },
     "hotbar": [
-        "grass",
-        "dirt",
+        "long_grass",
+        "sunflower",
         "stone",
         "weezer",
         "oak_log",

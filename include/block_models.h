@@ -17,6 +17,7 @@ typedef struct {
     char* name;
     int transparent;
     int liquid;
+    int is_foliage;
     short face_atlas_coords[6][2];
 } block_type;
 
