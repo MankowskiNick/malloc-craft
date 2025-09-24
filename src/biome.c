@@ -11,6 +11,31 @@
 biome* BIOMES = NULL;
 int BIOME_COUNT = 0;
 
+void copy_foliage_data(json_object obj, int biome_index) {
+    int size = obj.value.list.count;
+
+    for (size_t j = 0; j < size; j++) {
+        json_object foliage = obj.value.list.items[j];
+        if (foliage.type != JSON_OBJECT) {
+            fprintf(stderr, "Error: Foliage entry is not an object\n");
+            free(BIOMES[biome_index].foliage);
+            exit(EXIT_FAILURE);
+        }
+
+        json_object type_obj = json_get_property(foliage, "type");
+        json_object density_obj = json_get_property(foliage, "density");
+
+        if (type_obj.type != JSON_STRING || density_obj.type != JSON_NUMBER) {
+            fprintf(stderr, "Error: Invalid foliage data types\n");
+            free(BIOMES[biome_index].foliage);
+            exit(EXIT_FAILURE);
+        }
+
+        BIOMES[biome_index].foliage[j].type = strdup(type_obj.value.string);
+        BIOMES[biome_index].foliage[j].density = density_obj.value.number;
+    }
+}
+
 void copy_biome_data(json_object obj) {
     int size = obj.value.list.count;
     BIOMES = malloc(sizeof(biome) * size);
@@ -33,8 +58,7 @@ void copy_biome_data(json_object obj) {
         json_object subsurface_type_obj = json_get_property(biome, "subsurface_type");
         json_object underground_type_obj = json_get_property(biome, "underground_type");
         json_object underwater_type_obj = json_get_property(biome, "underwater_type");
-        json_object tree_type_obj = json_get_property(biome, "tree_type");
-        json_object tree_density_obj = json_get_property(biome, "tree_density");
+        json_object foliage_obj = json_get_property(biome, "foliage");
 
         if (id_obj.type != JSON_NUMBER 
             || name_obj.type != JSON_STRING 
@@ -42,8 +66,7 @@ void copy_biome_data(json_object obj) {
             || subsurface_type_obj.type != JSON_STRING
             || underground_type_obj.type != JSON_STRING 
             || underwater_type_obj.type != JSON_STRING
-            || tree_type_obj.type != JSON_STRING
-            || tree_density_obj.type != JSON_NUMBER) {
+            || foliage_obj.type != JSON_LIST) {
             fprintf(stderr, "Error: Invalid biome data types\n");
             free(BIOMES);
             exit(EXIT_FAILURE);
@@ -55,8 +78,15 @@ void copy_biome_data(json_object obj) {
         BIOMES[i].subsurface_type = subsurface_type_obj.value.string;
         BIOMES[i].underground_type = underground_type_obj.value.string;
         BIOMES[i].underwater_type = underwater_type_obj.value.string;
-        BIOMES[i].tree_type = strdup(tree_type_obj.value.string);
-        BIOMES[i].tree_density = tree_density_obj.value.number;
+        BIOMES[i].foliage_count = (int)foliage_obj.value.list.count;
+        BIOMES[i].foliage = malloc(sizeof(foliage) * BIOMES[i].foliage_count);
+        if (BIOMES[i].foliage == NULL) {
+            fprintf(stderr, "Error: Could not allocate memory for foliage\n");
+            free(BIOMES);
+            exit(EXIT_FAILURE);
+        }
+
+        copy_foliage_data(foliage_obj, i);
     }
 
     BIOME_COUNT = size;

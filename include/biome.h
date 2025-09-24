@@ -4,22 +4,20 @@
 #include <util.h>
 
 typedef struct {
+    char* type;
+    float density;
+} foliage;
+
+typedef struct {
     short id;
     char* name;
     char* surface_type;
     char* subsurface_type;
     char* underground_type;
     char* underwater_type;
-    char* tree_type;
-    float tree_density;
+    foliage* foliage;
+    int foliage_count;
 } biome;
-
-enum {
-    PLAINS,
-    DESERT,
-    FOREST,
-    MOUNTAINS,
-};
 
 void read_biomes(char* filename);
 biome* get_biome(float x, float z);

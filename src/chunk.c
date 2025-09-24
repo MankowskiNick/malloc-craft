@@ -67,7 +67,7 @@ void generate_blocks(chunk* c, int x, int z) {
         }
     }
 
-    // generate trees -- separate pass so it doesn't cut out terrain
+    // generate foliage
     for (int i = 2; i < CHUNK_SIZE - 2; i++) {
         for (int j = 2; j < CHUNK_SIZE - 2; j++) {
             float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
@@ -76,8 +76,17 @@ void generate_blocks(chunk* c, int x, int z) {
             biome* b = get_biome(x_, z_);
             int y = get_block_height(c, x_, z_, b);
 
-            if (rand() / (float)RAND_MAX < b->tree_density && y > WORLDGEN_WATER_LEVEL) {
-                generate_tree(i, y, j, b->tree_type, c);
+            if (y <= WORLDGEN_WATER_LEVEL) {
+                continue;
+            }
+
+            int placed = 0;
+            for (int f = 0; f < b->foliage_count; f++) {
+                if (rand() / (float)RAND_MAX < b->foliage[f].density && !placed) {
+                    placed = 1;
+
+                    generate_tree(i, y + 1, j, b->foliage[f].type, c);
+                }
             }
         }
     }

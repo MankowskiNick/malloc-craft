@@ -1,8 +1,7 @@
 [
     {
         "id": "oak_tree",
-        "trunk_type": 5,
-        "leaf_type": 6,
+        "trunk_type": "oak_log",
         "base_height": 6,
         "height_variance": 5,
         "leaf_pattern": [
@@ -40,8 +39,7 @@
     },
     {
         "id": "cactus_tree",
-        "trunk_type": 10,
-        "leaf_type": 11,
+        "trunk_type": "cactus",
         "base_height": 3,
         "height_variance": 5,
         "leaf_pattern": [
@@ -53,5 +51,37 @@
             }
         ],
         "leaf_density": 1.0
+    },
+    {
+        "id": "grass",
+        "trunk_type": "long_grass",
+        "base_height": 1,
+        "height_variance": 0,
+        "leaf_pattern": [],
+        "leaf_density": 0.0
+    },
+    {
+        "id": "sunflower",
+        "trunk_type": "sunflower",
+        "base_height": 1,
+        "height_variance": 0,
+        "leaf_pattern": [],
+        "leaf_density": 0.0
+    },
+    {
+        "id": "rose",
+        "trunk_type": "rose",
+        "base_height": 1,
+        "height_variance": 0,
+        "leaf_pattern": [],
+        "leaf_density": 0.0
+    },
+    {
+        "id": "california_poppy",
+        "trunk_type": "california_poppy",
+        "base_height": 1,
+        "height_variance": 0,
+        "leaf_pattern": [],
+        "leaf_density": 0.0
     }
 ]

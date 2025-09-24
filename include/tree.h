@@ -10,7 +10,7 @@ typedef struct {
 
 typedef struct {
     char* id;
-    short trunk_type;
+    char* trunk_type;
     short base_height;
     short height_variance;
 

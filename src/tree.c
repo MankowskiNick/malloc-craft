@@ -72,13 +72,12 @@ void map_json_to_trees(json tree_types) {
         
         json_object id_obj = json_get_property(obj, "id");
         json_object trunk_type_obj = json_get_property(obj, "trunk_type");
-        json_object leaf_type_obj = json_get_property(obj, "leaf_type");
         json_object base_height_obj = json_get_property(obj, "base_height");
         json_object height_variance_obj = json_get_property(obj, "height_variance");
         json_object leaf_pattern_obj = json_get_property(obj, "leaf_pattern");
         json_object leaf_density_obj = json_get_property(obj, "leaf_density");
 
-        if (id_obj.type != JSON_STRING || trunk_type_obj.type != JSON_NUMBER || 
+        if (id_obj.type != JSON_STRING || trunk_type_obj.type != JSON_STRING || 
             base_height_obj.type != JSON_NUMBER || height_variance_obj.type != JSON_NUMBER || 
             leaf_pattern_obj.type != JSON_LIST || leaf_density_obj.type != JSON_NUMBER) {
             fprintf(stderr, "Tree type %d has invalid properties\n", i);
@@ -86,7 +85,7 @@ void map_json_to_trees(json tree_types) {
         }
 
         TREES[i].id = strdup(id_obj.value.string);
-        TREES[i].trunk_type = (short)trunk_type_obj.value.number;
+        TREES[i].trunk_type = strdup(trunk_type_obj.value.string);
         TREES[i].base_height = (short)base_height_obj.value.number;
         TREES[i].height_variance = (short)height_variance_obj.value.number;
         TREES[i].leaf_density = leaf_density_obj.value.number;
@@ -171,7 +170,7 @@ void generate_tree(int x, int y, int z, char* id, chunk* c) {
     
     // trunk
     for (int i = 0; i < height; i++) {
-        c->blocks[x][y + i][z] = t->trunk_type;
+        c->blocks[x][y + i][z] = get_block_id(t->trunk_type);
     }
 
     // leaves
