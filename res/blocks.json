@@ -253,5 +253,50 @@
         [-1, -1],    
         [-1, -1]
     ]
+  },
+  {
+    "id": 17,
+    "name": "tumbleweed",
+    "liquid": false,
+    "transparent": true,
+    "is_foliage": true,
+    "face_atlas_coords": [
+        [21,  0],
+        [21,  0],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],    
+        [-1, -1]
+    ]
+  },
+  {
+    "id": 18,
+    "name": "sunflower_stem",
+    "liquid": false,
+    "transparent": true,
+    "is_foliage": true,
+    "face_atlas_coords": [
+        [22, 0],
+        [22, 0],
+        [-1, 0],
+        [-1, 0],
+        [-1, -1],
+        [-1, -1]
+    ]
+  },
+  {
+    "id": 19,
+    "name": "tall_sunflower_top",
+    "liquid": false,
+    "transparent": true,
+    "is_foliage": true,
+    "face_atlas_coords": [
+        [23, 0],
+        [23, 0],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1]
+    ]
   }
 ]

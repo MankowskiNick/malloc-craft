@@ -69,6 +69,21 @@
         "leaf_density": 0.0
     },
     {
+        "id": "tall_sunflower",
+        "trunk_type": "sunflower_stem",
+        "base_height": 1,
+        "height_variance": 2,
+        "leaf_pattern": [
+            {
+                "block": "tall_sunflower_top",
+                "coords": [
+                    [0, 0, 0]
+                ]
+            }
+        ],
+        "leaf_density": 1.0
+    },
+    {
         "id": "rose",
         "trunk_type": "rose",
         "base_height": 1,
@@ -79,6 +94,14 @@
     {
         "id": "california_poppy",
         "trunk_type": "california_poppy",
+        "base_height": 1,
+        "height_variance": 0,
+        "leaf_pattern": [],
+        "leaf_density": 0.0
+    },
+    {
+        "id": "tumbleweed",
+        "trunk_type": "tumbleweed",
         "base_height": 1,
         "height_variance": 0,
         "leaf_pattern": [],

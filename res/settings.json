@@ -1,7 +1,7 @@
 {
   "display": {
-    "width": 1200,
-    "height": 900,
+    "width": 1920,
+    "height": 1080,
     "title": "malloc-craft",
     "vsync": true,
     "fov": 60.0
@@ -34,7 +34,7 @@
     "shadow_map_height": 10000,
     "shadow_render_dist": 256.0,
     "shadow_softness": 3.0,
-    "shadow_samples": 4,
+    "shadow_samples": 8,
     "shadow_bias": 0.0025
   },
   "skybox": {
