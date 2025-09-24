@@ -10,7 +10,7 @@ typedef struct {
     char* subsurface_type;
     char* underground_type;
     char* underwater_type;
-    short tree_type;
+    char* tree_type;
     float tree_density;
 } biome;
 

@@ -84,6 +84,7 @@ void block_init() {
     }
 
     if (block_types.root.type != JSON_LIST) {
+        fprintf(stderr, "Block types JSON is not a list\n");
         free(block_types_json);
         exit(EXIT_FAILURE);
     }
@@ -98,6 +99,8 @@ void block_init() {
     }
 
     map_json_to_types(block_types);
+    json_free(&block_types);
+    free(block_types_json);
 }
 
 float get_empty_dist(camera cam) {

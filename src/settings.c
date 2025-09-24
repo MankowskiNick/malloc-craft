@@ -65,7 +65,6 @@ int WORLDGEN_WATER_LEVEL = 64; // The height of the water level
 float WORLDGEN_BLOCKHEIGHT_FREQUENCY = 0.25f;
 float WORLDGEN_BLOCKHEIGHT_AMPLITUDE = 2.0f;
 int WORLDGEN_BLOCKHEIGHT_OCTAVES = 6;
-int TREE_COUNT = 2;
 char* BLOCK_FILE = "res/blocks.json";
 char* PLAYER_FILE = "res/player.json";
 

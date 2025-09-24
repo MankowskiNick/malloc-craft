@@ -223,5 +223,20 @@
         [-1, -1],
         [-1, -1]
     ]
+  },
+  {
+    "id": 15,
+    "name": "rose",
+    "liquid": false,
+    "transparent": true,
+    "is_foliage": true,
+    "face_atlas_coords": [
+        [19,  0],
+        [19,  0],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1]
+    ]
   }
 ]

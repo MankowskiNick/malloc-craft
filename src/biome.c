@@ -42,7 +42,7 @@ void copy_biome_data(json_object obj) {
             || subsurface_type_obj.type != JSON_STRING
             || underground_type_obj.type != JSON_STRING 
             || underwater_type_obj.type != JSON_STRING
-            || tree_type_obj.type != JSON_NUMBER 
+            || tree_type_obj.type != JSON_STRING
             || tree_density_obj.type != JSON_NUMBER) {
             fprintf(stderr, "Error: Invalid biome data types\n");
             free(BIOMES);
@@ -55,7 +55,7 @@ void copy_biome_data(json_object obj) {
         BIOMES[i].subsurface_type = subsurface_type_obj.value.string;
         BIOMES[i].underground_type = underground_type_obj.value.string;
         BIOMES[i].underwater_type = underwater_type_obj.value.string;
-        BIOMES[i].tree_type = (short)tree_type_obj.value.number;
+        BIOMES[i].tree_type = strdup(tree_type_obj.value.string);
         BIOMES[i].tree_density = tree_density_obj.value.number;
     }
 

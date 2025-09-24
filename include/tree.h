@@ -2,33 +2,28 @@
 #define TREE_H
 #include <chunk.h>
 
-typedef struct { 
-    short x, y, z;
-} leaf_coord;
+typedef struct {
+    char* block;
+    short num_leaves;
+    short** coords;
+} leaf_layout;
 
 typedef struct {
-    short id;
-    char* name;
+    char* id;
     short trunk_type;
-    short leaf_type;
     short base_height;
     short height_variance;
 
-    const short num_leaves;
-    leaf_coord* leaf_pattern;
+    leaf_layout* leaf_pattern;
+    short leaf_pattern_count;
     float leaf_density;
 } tree;
 
-enum {
-    OAK_TREE,
-    CACTUS_TREE
-};
-
 void tree_init();
-tree* get_tree_type(short id);
+tree* get_tree_type(char* id);
 
-void generate_tree(int x, int y, int z, short id, chunk* c);
+void generate_tree(int x, int y, int z, char* id, chunk* c);
 
-extern tree TREES[];
+extern tree* TREES;
 
 #endif

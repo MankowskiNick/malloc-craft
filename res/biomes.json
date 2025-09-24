@@ -6,7 +6,7 @@
     "subsurface_type": "dirt",
     "underground_type": "stone",
     "underwater_type": "dirt",
-    "tree_type": 0,
+    "tree_type": "oak_tree",
     "tree_density": 0.005
   },
   {
@@ -16,7 +16,7 @@
     "subsurface_type": "dirt",
     "underground_type": "stone",
     "underwater_type": "dirt",
-    "tree_type": 0,
+    "tree_type": "oak_tree",
     "tree_density": 0.03
   },
   {
@@ -26,7 +26,7 @@
     "subsurface_type": "sand",
     "underground_type": "stone",
     "underwater_type": "sand",
-    "tree_type": 1,
+    "tree_type": "cactus_tree",
     "tree_density": 0.02
   },
   {
@@ -36,7 +36,7 @@
     "subsurface_type": "stone",
     "underground_type": "stone",
     "underwater_type": "stone",
-    "tree_type": 0,
+    "tree_type": "oak_tree",
     "tree_density": 0.005
   }
 ]
