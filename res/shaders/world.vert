@@ -63,8 +63,6 @@ void main() {
 
     // offset water level for waves
     y = worldPos.y;
-    // y -= sin(worldPos.x * 0.5 + time) * 0.075;
-    // y -= sin(worldPos.z * 0.5 + time) * 0.075;
 
     dist = length(gl_Position.xyz);
     underwater = float(aUnderwater);
