@@ -45,7 +45,7 @@ void main()
     y = worldPos.y;
     if (worldPos.y == waterLevel + 1.0) {
         worldPos.y -= waterOffset;
-        worldPos.y += 0.075 * sin(0.5 * (worldPos.x + worldPos.z) + time);
+    //     worldPos.y += 0.075 * sin(0.5 * (worldPos.x + worldPos.z) + time);
     }
     gl_Position = proj * view * vec4(worldPos, 1.0);
 
@@ -57,13 +57,13 @@ void main()
     // calculate normal vector
     vec3 dx = vec3(
         1.0,
-        0.075 * 0.5 * cos(0.5 * (worldPos.x + worldPos.z) + time),
+        0.075 * 0.5,// * cos(0.5 * (worldPos.x + worldPos.z) + time),
         0.0
     );
 
     vec3 dz = vec3(
         0.0,
-        0.075 * 0.5 * cos(0.5 * (worldPos.x + worldPos.z) + time),
+        0.075 * 0.5,// * cos(0.5 * (worldPos.x + worldPos.z) + time),
         1.0
     );
     
