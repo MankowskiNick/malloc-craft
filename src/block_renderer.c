@@ -145,7 +145,7 @@ void render_solids(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* pa
     send_sun_info(&(br->program), sun);
     send_ambient_light(&(br->program));
     send_sun_matrices(&(br->program), sun);
-    send_shadow_texture(&(br->program), shadow_map);
+    send_fbo_texture(&(br->program), shadow_map, SHADOW_MAP_TEXTURE_INDEX, "shadowMap");
     send_shadow_info(&(br->program));
 
     send_cube_vbo(br->vao, br->cube_vbo);
@@ -170,7 +170,7 @@ void render_transparent(block_renderer* br, sun* sun, FBO* shadow_map, world_mes
     send_time(br);
     send_sun_info(&(br->program), sun);
     send_sun_matrices(&(br->program), sun);
-    send_shadow_texture(&(br->program), shadow_map);
+    send_fbo_texture(&(br->program), shadow_map, SHADOW_MAP_TEXTURE_INDEX, "shadowMap");
     send_ambient_light(&(br->program));
     send_shadow_info(&(br->program));
 

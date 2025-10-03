@@ -1,5 +1,5 @@
-#ifndef SHADOWMAP_H
-#define SHADOWMAP_H
+#ifndef FBO_H
+#define FBO_H
 
 #include <util.h>
 #include <chunk_mesh.h>
@@ -20,13 +20,13 @@ typedef struct {
     VBO cube_vbo, instance_vbo;
 } FBO;
 
-FBO create_shadow_map(uint width, uint height);
 FBO create_reflection_map(uint width, uint height);
+
 void FBO_cleanup(FBO* map);
 
 void FBO_render(FBO* map, sun* s, world_mesh* packet);
 
 void send_sun_matrices(shader_program* program, sun* sun);
-void send_shadow_texture(shader_program* program, FBO* map);
+void send_fbo_texture(shader_program* program, FBO* map, uint texture_index, char* uniform_name);
 
 #endif

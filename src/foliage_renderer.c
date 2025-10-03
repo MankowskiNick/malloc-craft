@@ -78,7 +78,7 @@ void render_foliage(block_renderer* br, sun* sun, FBO* map, world_mesh* packet) 
     send_time(br);
     send_sun_info(&(br->program), sun);
     send_sun_matrices(&(br->program), sun);
-    send_shadow_texture(&(br->program), map);
+    send_fbo_texture(&(br->program), map, SHADOW_MAP_TEXTURE_INDEX, "shadowMap");
     send_ambient_light(&(br->program));
     send_shadow_info(&(br->program));
 

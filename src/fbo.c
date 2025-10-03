@@ -5,67 +5,6 @@
 #include <vbo.h>
 #include <block.h>
 
-FBO create_shadow_map(uint width, uint height) {
-
-    // create fbo
-    uint fbo;
-    glGenFramebuffers(1, &fbo);
-
-    // create program
-    shader vert_shader = create_shader("res/shaders/shadow.vert", GL_VERTEX_SHADER);
-    shader frag_shader = create_shader("res/shaders/shadow.frag", GL_FRAGMENT_SHADER);
-    shader_program program = create_program(vert_shader, frag_shader);
-    delete_shader(vert_shader);
-    delete_shader(frag_shader);
-
-    // create depth buffer
-    uint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-    // create vao
-    VAO vao = create_vao();
-    bind_vao(vao);
-
-    // create cube vbo
-    VBO cube_vbo = create_vbo(GL_STATIC_DRAW);
-    VBO instance_vbo = create_vbo(GL_STATIC_DRAW);
-
-    // bind framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture, 0);
-
-    // disable writes to color buffer
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-
-    // check framebuffer
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        printf("Error: Framebuffer is not complete\n");
-    }
-
-    // unbind framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    FBO map = {
-        .width = width,
-        .height = height,
-        .fbo = fbo,
-        .texture = texture,
-        .program = program,
-        .vao = vao,
-        .cube_vbo = cube_vbo,
-        .instance_vbo = instance_vbo
-    };
-
-    return map;
-}
-
 void FBO_cleanup(FBO* map) {
     glDeleteFramebuffers(1, &map->fbo);
     glDeleteTextures(1, &map->texture);
@@ -104,11 +43,11 @@ void send_sun_matrices(shader_program* program, sun* sun) {
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 }
 
-void send_shadow_texture(shader_program* program, FBO* map) {
-    glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
+void send_fbo_texture(shader_program* program, FBO* map, uint texture_index, char* uniform_name) {
+    glActiveTexture(GL_TEXTURE0 + texture_index);
     glBindTexture(GL_TEXTURE_2D, map->texture);
-    uint shadow_loc = glGetUniformLocation(program->id, "shadowMap");
-    glUniform1i(shadow_loc, SHADOW_MAP_TEXTURE_INDEX);
+    uint shadow_loc = glGetUniformLocation(program->id, uniform_name);
+    glUniform1i(shadow_loc, texture_index);
 }
 
 void render_depth(FBO* map, int* side_data, int num_sides) {

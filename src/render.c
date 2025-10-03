@@ -13,6 +13,7 @@
 #include <settings.h>
 #include <world_mesh.h>
 #include <fbo.h>
+#include <shadow_map.h>
 #include <assert.h>
 
 renderer create_renderer(camera* camera) {

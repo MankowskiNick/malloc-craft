@@ -52,7 +52,7 @@ void render_liquids(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* p
     send_water_info(br);
     send_time(br);
     send_sun_info(&(br->program), sun);
-    send_shadow_texture(&(br->program), shadow_map);
+    send_fbo_texture(&(br->program), shadow_map, SHADOW_MAP_TEXTURE_INDEX, "shadowMap");
     send_sun_matrices(&(br->program), sun);
     send_ambient_light(&(br->program));
     send_shadow_info(&(br->program));
