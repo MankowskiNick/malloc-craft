@@ -8,6 +8,11 @@ layout (location = 4) in int aUnderwater;
 
 uniform mat4 reflectionView;
 uniform mat4 reflectionProj;
+uniform float waterLevel;
+
+out float gl_ClipDistance[1];
+out vec2 TexCoord;
+out vec2 AtlasCoord;
 
 vec3 transformFace(vec3 pos, int face) {
     if(face == 0) { // front face (+Z)
@@ -29,6 +34,13 @@ vec3 transformFace(vec3 pos, int face) {
 void main() {
     vec3 instancePos = vec3(aInstancePos);
     vec3 worldPos = transformFace(aPos, aSide) + instancePos;
+
+    // Clip geometry below water level for realistic reflections
+    gl_ClipDistance[0] = worldPos.y - waterLevel;
+
+    // Pass texture coordinates to fragment shader
+    TexCoord = aPos.xy;
+    AtlasCoord = vec2(aAtlasCoord);
 
     gl_Position = reflectionProj * reflectionView * vec4(worldPos, 1.0);
 }

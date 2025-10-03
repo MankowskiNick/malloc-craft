@@ -80,6 +80,14 @@ void send_reflection_matrices(shader_program* program, camera* cam, float water_
     get_reflection_proj_matrix(&proj, cam);
     uint proj_loc = glGetUniformLocation(program->id, "reflectionProj");
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
+
+    // Send water level uniform for clipping
+    uint water_level_loc = glGetUniformLocation(program->id, "waterLevel");
+    glUniform1f(water_level_loc, water_level);
+
+    // Send atlas size uniform for proper texture sampling
+    uint atlas_size_loc = glGetUniformLocation(program->id, "atlasSize");
+    glUniform1f(atlas_size_loc, (float)ATLAS_SIZE);
 }
 
 void send_fbo_texture(shader_program* program, FBO* map, uint texture_index, char* uniform_name) {

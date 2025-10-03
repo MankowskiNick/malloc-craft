@@ -7,6 +7,7 @@ in float underwater; // 1 if the fragment is underwater, 0 otherwise
 in float y;
 in vec3 normal;
 in vec3 fragPos;
+in float dist; // distance from the camera
 
 out vec4 FragColor;
 
@@ -131,12 +132,10 @@ void main() {
         // Calculate fresnel effect (view-dependent reflection intensity)
         float fresnel = pow(1.0 - max(dot(viewDir, bumpedNormal), 0.0), 2.0);
         
-        // Base water color (blue-green tint)
-        vec3 waterColor = vec3(0.1, 0.3, 0.6);
         vec4 baseColor = texture(atlas, coord);
         
         // Blend reflection with base water color
-        vec3 finalColor = mix(waterColor * baseColor.rgb, reflectionColor, fresnel * 0.8);
+        vec3 finalColor = mix(baseColor.rgb, reflectionColor, fresnel * 0.4);
         
         // Apply lighting
         finalColor = finalColor * lightIntensity;
@@ -144,7 +143,12 @@ void main() {
         // Add specular highlights on top
         finalColor += shadowFactor * sunColor * spec;
         
-        FragColor = vec4(finalColor, baseColor.a);
+        // Apply fog effect - mix with white fog color based on distance
+        vec4 colorWithFog = mix(vec4(finalColor, baseColor.a), 
+            vec4(1.0, 1.0, 1.0, 1.0), 
+            clamp(dist / fogDistance, 0.0, 1.0));
+        
+        FragColor = colorWithFog;
     }
     else {
         FragColor = vec4(0.0, 0.0, 0.0, 0.0);

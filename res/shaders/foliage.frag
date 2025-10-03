@@ -62,8 +62,10 @@ vec4 getUnderwaterColor(vec2 coord) {
             clamp(dist / waterDistance, 0.3, 0.8));
 }
 
-vec4 getStandardColor(vec2 coord) {
-    return mix(texture(atlas, coord), 
+vec4 getStandardColor(vec2 coord, vec3 lightIntensity) {
+    vec4 textureColor = texture(atlas, coord);
+    vec4 baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
+    return mix(baseColor, 
         vec4(1.0, 1.0, 1.0, 1.0), 
         clamp(dist / fogDistance, 0.0, 1.0));
 }
@@ -122,6 +124,6 @@ void main() {
     vec3 shadowFactor = getShadowIntensity(texCoord);
     vec3 lightIntensity = ambientLight + (sunColor * intensity * shadowFactor);
     
-    vec4 baseColor = getStandardColor(coord);
-    FragColor = vec4(baseColor.rgb * lightIntensity, baseColor.a);
+    // Apply lighting and fog together
+    FragColor = getStandardColor(coord, lightIntensity);
 }

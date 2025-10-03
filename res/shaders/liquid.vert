@@ -12,6 +12,7 @@ out float underwater;
 out float y;
 out vec3 normal;
 out vec3 fragPos;
+out float dist;
 
 uniform mat4 view;
 uniform mat4 proj;
@@ -68,4 +69,6 @@ void main()
     
     normal = normalize(cross(dz, dx));
     fragPos = worldPos;
+    
+    dist = length(gl_Position.xyz);
 }

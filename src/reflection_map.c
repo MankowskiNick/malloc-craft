@@ -87,6 +87,9 @@ void render_reflection_map(FBO* map, camera* cam, float water_level, world_mesh*
     glViewport(0, 0, map->width, map->height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Enable clipping for water level
+    glEnable(GL_CLIP_DISTANCE0);
+
     use_program(map->program);
 
     send_reflection_matrices(&(map->program), cam, water_level);
@@ -98,6 +101,9 @@ void render_reflection_map(FBO* map, camera* cam, float water_level, world_mesh*
         render_depth(map, packet->opaque_data, packet->num_opaque_sides);
         render_depth(map, packet->transparent_data, packet->num_transparent_sides);
     }
+
+    // Disable clipping
+    glDisable(GL_CLIP_DISTANCE0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
