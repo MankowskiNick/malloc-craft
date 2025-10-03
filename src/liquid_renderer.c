@@ -41,7 +41,7 @@ block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* bump_
     return br;
 }
 
-void render_liquids(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* packet) {
+void render_liquids(block_renderer* br, sun* sun, FBO* shadow_map, FBO* reflection_map, world_mesh* packet) {
     use_program(br->program);
     bind_vao(br->vao);
 
@@ -53,6 +53,7 @@ void render_liquids(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* p
     send_time(br);
     send_sun_info(&(br->program), sun);
     send_fbo_texture(&(br->program), shadow_map, SHADOW_MAP_TEXTURE_INDEX, "shadowMap");
+    send_fbo_texture(&(br->program), reflection_map, REFLECTION_MAP_TEXTURE_INDEX, "reflectionMap");
     send_sun_matrices(&(br->program), sun);
     send_ambient_light(&(br->program));
     send_shadow_info(&(br->program));

@@ -27,6 +27,10 @@ void FBO_cleanup(FBO* map);
 void FBO_render(FBO* map, sun* s, world_mesh* packet);
 
 void send_sun_matrices(shader_program* program, sun* sun);
+void get_reflection_view_matrix(camera* cam, float water_level, mat4* view);
+void get_reflection_proj_matrix(mat4* proj, camera* cam);
+void send_reflection_matrices(shader_program* program, camera* cam, float water_level);
+void render_depth(FBO* map, int* side_data, int num_sides);
 void send_fbo_texture(shader_program* program, FBO* map, uint texture_index, char* uniform_name);
 
 #endif

@@ -15,6 +15,7 @@ uniform sampler2D atlas;
 uniform sampler2D bump;
 uniform float atlasSize;
 uniform sampler2D shadowMap;
+uniform sampler2D reflectionMap;
 
 // shadows
 uniform float shadowSoftness;
@@ -40,6 +41,8 @@ uniform float waterShininess;
 uniform vec3 ambientLight;
 
 uniform vec3 cameraPos;
+uniform mat4 view;
+uniform mat4 proj;
 
 float getDiffuse(vec3 normal, vec3 lightDir) {
     return max(dot(normal, lightDir), 0.0);
@@ -105,11 +108,43 @@ void main() {
 
     // light intensity
     vec3 shadowFactor = getShadowIntensity(texCoord);
-    vec3 lightIntensity = ambientLight + (shadowFactor * sunColor * diffuse) + (shadowFactor * sunColor * spec);
+    vec3 lightIntensity = ambientLight + (shadowFactor * sunColor * diffuse);
     
     if (y == waterLevel + 1.0) {
+        // Calculate reflection coordinates
+        vec4 reflectionCoord = proj * view * vec4(fragPos, 1.0);
+        vec2 reflectionUV = (reflectionCoord.xy / reflectionCoord.w) * 0.5 + 0.5;
+        
+        // Flip Y coordinate to make reflection appear upside down
+        reflectionUV.y = 1.0 - reflectionUV.y;
+        
+        // Add wave distortion to reflection coordinates
+        vec2 distortion = (texture(bump, coord).xy - 0.5) * 0.02;
+        reflectionUV += distortion;
+        
+        // Clamp reflection coordinates to valid range
+        reflectionUV = clamp(reflectionUV, 0.0, 1.0);
+        
+        // Sample reflection texture
+        vec3 reflectionColor = texture(reflectionMap, reflectionUV).rgb;
+        
+        // Calculate fresnel effect (view-dependent reflection intensity)
+        float fresnel = pow(1.0 - max(dot(viewDir, bumpedNormal), 0.0), 2.0);
+        
+        // Base water color (blue-green tint)
+        vec3 waterColor = vec3(0.1, 0.3, 0.6);
         vec4 baseColor = texture(atlas, coord);
-        FragColor = vec4(baseColor.rgb * lightIntensity, baseColor.a);
+        
+        // Blend reflection with base water color
+        vec3 finalColor = mix(waterColor * baseColor.rgb, reflectionColor, fresnel * 0.8);
+        
+        // Apply lighting
+        finalColor = finalColor * lightIntensity;
+        
+        // Add specular highlights on top
+        finalColor += shadowFactor * sunColor * spec;
+        
+        FragColor = vec4(finalColor, baseColor.a);
     }
     else {
         FragColor = vec4(0.0, 0.0, 0.0, 0.0);

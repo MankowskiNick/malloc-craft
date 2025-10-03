@@ -42,6 +42,7 @@ extern int BUMP_TEXTURE_INDEX;
 extern int CAUSTIC_TEXTURE_INDEX;
 extern int SKYBOX_TEXTURE_INDEX;
 extern int SHADOW_MAP_TEXTURE_INDEX;
+extern int REFLECTION_MAP_TEXTURE_INDEX;
 
 // Vsync on?  Comment to disable
 extern int VSYNC;
