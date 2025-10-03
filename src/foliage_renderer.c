@@ -67,7 +67,7 @@ void destroy_foliage_renderer(block_renderer br) {
     t_cleanup(&(br.atlas));
 }
 
-void render_foliage(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet) {
+void render_foliage(block_renderer* br, sun* sun, FBO* map, world_mesh* packet) {
     use_program(br->program);
     bind_vao(br->vao);
 

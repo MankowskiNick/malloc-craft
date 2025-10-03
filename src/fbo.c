@@ -1,11 +1,11 @@
-#include <shadow_map.h>
+#include <fbo.h>
 
 #include <glad/glad.h>
 #include <vao.h>
 #include <vbo.h>
 #include <block.h>
 
-shadow_map create_shadow_map(uint width, uint height) {
+FBO create_shadow_map(uint width, uint height) {
 
     // create fbo
     uint fbo;
@@ -52,7 +52,7 @@ shadow_map create_shadow_map(uint width, uint height) {
     // unbind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    shadow_map map = {
+    FBO map = {
         .width = width,
         .height = height,
         .fbo = fbo,
@@ -66,7 +66,7 @@ shadow_map create_shadow_map(uint width, uint height) {
     return map;
 }
 
-void shadow_map_cleanup(shadow_map* map) {
+void FBO_cleanup(FBO* map) {
     glDeleteFramebuffers(1, &map->fbo);
     glDeleteTextures(1, &map->texture);
 }
@@ -104,14 +104,14 @@ void send_sun_matrices(shader_program* program, sun* sun) {
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
 }
 
-void send_shadow_texture(shader_program* program, shadow_map* map) {
+void send_shadow_texture(shader_program* program, FBO* map) {
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
     glBindTexture(GL_TEXTURE_2D, map->texture);
     uint shadow_loc = glGetUniformLocation(program->id, "shadowMap");
     glUniform1i(shadow_loc, SHADOW_MAP_TEXTURE_INDEX);
 }
 
-void render_depth(shadow_map* map, int* side_data, int num_sides) {
+void render_depth(FBO* map, int* side_data, int num_sides) {
     use_program(map->program);
     bind_vao(map->vao);
     buffer_data(map->instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
@@ -130,7 +130,7 @@ void render_depth(shadow_map* map, int* side_data, int num_sides) {
 
 }
 
-void shadow_map_render(shadow_map* map, sun* s, world_mesh* packet) {
+void FBO_render(FBO* map, sun* s, world_mesh* packet) {
     // Save current viewport
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);

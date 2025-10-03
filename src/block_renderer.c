@@ -132,7 +132,7 @@ void render_sides(block_renderer* br, int* side_data, int num_sides) {
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_sides);
 }
 
-void render_solids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet) {
+void render_solids(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* packet) {
     use_program(br->program);
     bind_vao(br->vao);
 
@@ -145,7 +145,7 @@ void render_solids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* pa
     send_sun_info(&(br->program), sun);
     send_ambient_light(&(br->program));
     send_sun_matrices(&(br->program), sun);
-    send_shadow_texture(&(br->program), map);
+    send_shadow_texture(&(br->program), shadow_map);
     send_shadow_info(&(br->program));
 
     send_cube_vbo(br->vao, br->cube_vbo);
@@ -159,7 +159,7 @@ void render_solids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* pa
     stop_program();
 }
 
-void render_transparent(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet) {
+void render_transparent(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* packet) {
     use_program(br->program);
     bind_vao(br->vao);
 
@@ -170,7 +170,7 @@ void render_transparent(block_renderer* br, sun* sun, shadow_map* map, world_mes
     send_time(br);
     send_sun_info(&(br->program), sun);
     send_sun_matrices(&(br->program), sun);
-    send_shadow_texture(&(br->program), map);
+    send_shadow_texture(&(br->program), shadow_map);
     send_ambient_light(&(br->program));
     send_shadow_info(&(br->program));
 

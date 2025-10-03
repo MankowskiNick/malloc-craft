@@ -12,6 +12,7 @@
 #include <util.h>
 #include <settings.h>
 #include <world_mesh.h>
+#include <fbo.h>
 #include <assert.h>
 
 renderer create_renderer(camera* camera) {
@@ -43,7 +44,7 @@ renderer create_renderer(camera* camera) {
 
     skybox sky = create_skybox(camera);
     sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
-    shadow_map map = create_shadow_map(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
+    FBO shadow_map = create_shadow_map(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
 
     renderer r = {
         .wr = wr,
@@ -56,7 +57,7 @@ renderer create_renderer(camera* camera) {
             .z = camera->position[2],
         },
         .cam = camera,
-        .map = map,
+        .shadow_map = shadow_map,
     };
 
     return r;
@@ -76,9 +77,9 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
         return; // No packets to render
     }
 
-    shadow_map_render(&(r->map), &(r->s), packet);
+    FBO_render(&(r->shadow_map), &(r->s), packet);
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
-    glBindTexture(GL_TEXTURE_2D, r->map.texture);
+    glBindTexture(GL_TEXTURE_2D, r->shadow_map.texture);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -90,8 +91,8 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
 
     glClear(GL_DEPTH_BUFFER_BIT);
     
-    render_solids(&(r->wr), &(r->s), &(r->map), packet);
-    render_liquids(&(r->lr), &(r->s), &(r->map), packet);
-    render_foliage(&(r->fr), &(r->s), &(r->map), packet);
-    render_transparent(&(r->wr), &(r->s), &(r->map), packet);
+    render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
+    render_liquids(&(r->lr), &(r->s), &(r->shadow_map), packet);
+    render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
+    render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
 }

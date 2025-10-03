@@ -56,6 +56,10 @@ extern float SHADOW_SOFTNESS;
 extern int SHADOW_SAMPLES;
 extern float SHADOW_BIAS;
 
+// Reflection Settings
+extern int REFLECTION_FBO_WIDTH;
+extern int REFRACTION_FBO_HEIGHT;
+
 
  // How often to update the world mesh in seconds
 extern int TICK_RATE; // 32ms is roughly 30 updates per second

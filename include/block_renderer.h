@@ -8,7 +8,7 @@
 #include <texture.h>
 #include <chunk_mesh.h>
 #include <sun.h>
-#include <shadow_map.h>
+#include <fbo.h>
 #include <world_mesh.h>
 
 typedef struct {
@@ -35,7 +35,7 @@ void send_shadow_info(shader_program* p);
 
 void render_sides(block_renderer* br, int* side_data, int num_sides);
 
-void render_solids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet);
-void render_transparent(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet);
+void render_solids(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* packet);
+void render_transparent(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* packet);
 
 #endif

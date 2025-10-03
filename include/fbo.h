@@ -18,14 +18,15 @@ typedef struct {
     shader_program program;
     VAO vao;
     VBO cube_vbo, instance_vbo;
-} shadow_map;
+} FBO;
 
-shadow_map create_shadow_map(uint width, uint height);
-void shadow_map_cleanup(shadow_map* map);
+FBO create_shadow_map(uint width, uint height);
+FBO create_reflection_map(uint width, uint height);
+void FBO_cleanup(FBO* map);
 
-void shadow_map_render(shadow_map* map, sun* s, world_mesh* packet);
+void FBO_render(FBO* map, sun* s, world_mesh* packet);
 
 void send_sun_matrices(shader_program* program, sun* sun);
-void send_shadow_texture(shader_program* program, shadow_map* map);
+void send_shadow_texture(shader_program* program, FBO* map);
 
 #endif
