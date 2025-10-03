@@ -6,7 +6,8 @@
 #include <block_renderer.h>
 #include <skybox.h>
 #include <sun.h>
-#include <shadow_map.h>
+#include <fbo.h>
+#include <reflection_map.h>
 
 typedef struct {
     block_renderer wr; // world renderer
@@ -14,7 +15,8 @@ typedef struct {
     block_renderer lr; // liquid renderer
     skybox sky;
     sun s;
-    shadow_map map;
+    FBO shadow_map;
+    FBO reflection_map;
 
     camera_cache cam_cache;
     camera* cam;

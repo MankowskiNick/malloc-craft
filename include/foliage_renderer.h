@@ -17,5 +17,5 @@
 block_renderer create_foliage_renderer(camera* cam, char* atlas_path, char* bump_path, char* caustic_path);
 void destroy_foliage_renderer(block_renderer br);
 
-void render_foliage(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet);
+void render_foliage(block_renderer* br, sun* sun, FBO* map, world_mesh* packet);
 #endif

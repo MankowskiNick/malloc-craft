@@ -6,6 +6,6 @@
 
 block_renderer create_liquid_renderer(camera* cam, char* atlas, char* bump, char* caustic);
 
-void render_liquids(block_renderer* br, sun* sun, shadow_map* map, world_mesh* packet);
+void render_liquids(block_renderer* br, sun* sun, FBO* shadow_map, FBO* reflection_map, world_mesh* packet);
 
 #endif

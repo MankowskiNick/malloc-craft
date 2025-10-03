@@ -12,6 +12,7 @@ out float underwater;
 out float y;
 out vec3 normal;
 out vec3 fragPos;
+out float dist;
 
 uniform mat4 view;
 uniform mat4 proj;
@@ -45,7 +46,6 @@ void main()
     y = worldPos.y;
     if (worldPos.y == waterLevel + 1.0) {
         worldPos.y -= waterOffset;
-        worldPos.y += 0.075 * sin(0.5 * (worldPos.x + worldPos.z) + time);
     }
     gl_Position = proj * view * vec4(worldPos, 1.0);
 
@@ -57,16 +57,18 @@ void main()
     // calculate normal vector
     vec3 dx = vec3(
         1.0,
-        0.075 * 0.5 * cos(0.5 * (worldPos.x + worldPos.z) + time),
+        0.075 * 0.5,
         0.0
     );
 
     vec3 dz = vec3(
         0.0,
-        0.075 * 0.5 * cos(0.5 * (worldPos.x + worldPos.z) + time),
+        0.075 * 0.5,
         1.0
     );
     
     normal = normalize(cross(dz, dx));
     fragPos = worldPos;
+    
+    dist = length(gl_Position.xyz);
 }

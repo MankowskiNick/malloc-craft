@@ -21,6 +21,7 @@ int BUMP_TEXTURE_INDEX = 1;
 int CAUSTIC_TEXTURE_INDEX = 2;
 int SKYBOX_TEXTURE_INDEX = 3;
 int SHADOW_MAP_TEXTURE_INDEX = 4;
+int REFLECTION_MAP_TEXTURE_INDEX = 5;
 int VSYNC = 1;
 int CHUNK_RENDER_DISTANCE = 16;
 int SHADOW_MAP_WIDTH = 10000;
@@ -29,6 +30,8 @@ float SHADOW_RENDER_DIST = 16.0f * 16.0f;
 float SHADOW_SOFTNESS = 3.0f;
 int SHADOW_SAMPLES = 4;
 float SHADOW_BIAS = 0.0025f;
+int REFLECTION_FBO_WIDTH = 512;
+int REFRACTION_FBO_HEIGHT = 512;
 int TICK_RATE = 32;
 float FOV = 60.0f;
 float RENDER_DISTANCE = 500.0f;
@@ -240,6 +243,23 @@ void parse_shadows_settings(json_object shadows_obj) {
     json_object shadow_bias = json_get_property(shadows_obj, "shadow_bias");
     if (shadow_bias.type == JSON_NUMBER) {
         SHADOW_BIAS = shadow_bias.value.number;
+    }
+}
+
+void parse_reflections_settings(json_object reflections_obj) {
+    if (reflections_obj.type != JSON_OBJECT) {
+        fprintf(stderr, "Error: reflections section is not an object in settings.json\n");
+        exit(EXIT_FAILURE);
+    }
+
+    json_object reflection_fbo_width = json_get_property(reflections_obj, "reflection_fbo_width");
+    if (reflection_fbo_width.type == JSON_NUMBER) {
+        REFLECTION_FBO_WIDTH = (int)reflection_fbo_width.value.number;
+    }
+
+    json_object refraction_fbo_height = json_get_property(reflections_obj, "refraction_fbo_height");
+    if (refraction_fbo_height.type == JSON_NUMBER) {
+        REFRACTION_FBO_HEIGHT = (int)refraction_fbo_height.value.number;
     }
 }
 

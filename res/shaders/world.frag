@@ -56,16 +56,20 @@ vec4 getCausticColor(vec2 coord) {
     return calculateChromaticAberration(causticCoord);
 }
 
-vec4 getUnderwaterColor(vec2 coord) {
+vec4 getUnderwaterColor(vec2 coord, vec3 lightIntensity) {
     vec4 causticColor = getCausticColor(texCoord);
+    vec4 textureColor = texture(atlas, coord);
+    vec4 baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
     return mix(
             causticColor + texture(atlas, coord), 
             vec4(0.0, 0.0, 1.0, 1.0), 
             clamp(dist / waterDistance, 0.3, 0.8));
 }
 
-vec4 getStandardColor(vec2 coord) {
-    return mix(texture(atlas, coord), 
+vec4 getStandardColor(vec2 coord, vec3 lightIntensity) {
+    vec4 textureColor = texture(atlas, coord);
+    vec4 baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
+    return mix(baseColor, 
         vec4(1.0, 1.0, 1.0, 1.0), 
         clamp(dist / fogDistance, 0.0, 1.0));
 }
@@ -120,14 +124,11 @@ void main() {
     // underwater blocks are handled differently than standard blocks
     // underwater blocks are colored by the caustic texture and are bluer
     if (underwater == 1.0 && y <= waterLevel + 1.0 - waterOffset) {
-        vec4 baseColor = getUnderwaterColor(coord); 
-
-        FragColor = vec4(baseColor.rgb * lightIntensity, baseColor.a);
+        FragColor = getUnderwaterColor(coord, lightIntensity);
     }
 
     // standard blocks 
     else {
-        vec4 baseColor = getStandardColor(coord);
-        FragColor = vec4(baseColor.rgb * lightIntensity, baseColor.a);
+        FragColor = getStandardColor(coord, lightIntensity);
     }
 }

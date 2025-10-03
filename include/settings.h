@@ -42,6 +42,7 @@ extern int BUMP_TEXTURE_INDEX;
 extern int CAUSTIC_TEXTURE_INDEX;
 extern int SKYBOX_TEXTURE_INDEX;
 extern int SHADOW_MAP_TEXTURE_INDEX;
+extern int REFLECTION_MAP_TEXTURE_INDEX;
 
 // Vsync on?  Comment to disable
 extern int VSYNC;
@@ -55,6 +56,10 @@ extern float SHADOW_RENDER_DIST;
 extern float SHADOW_SOFTNESS;
 extern int SHADOW_SAMPLES;
 extern float SHADOW_BIAS;
+
+// Reflection Settings
+extern int REFLECTION_FBO_WIDTH;
+extern int REFRACTION_FBO_HEIGHT;
 
 
  // How often to update the world mesh in seconds

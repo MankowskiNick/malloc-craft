@@ -37,6 +37,10 @@
     "shadow_samples": 8,
     "shadow_bias": 0.0025
   },
+  "reflections": {
+    "reflection_fbo_width": 512,
+    "refraction_fbo_height": 512
+  },
   "skybox": {
     "skybox_slices": 15,
     "skybox_stacks": 15,
