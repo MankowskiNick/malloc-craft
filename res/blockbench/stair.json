@@ -1,0 +1,35 @@
+{
+	"format_version": "1.21.6",
+	"credit": "Made with Blockbench",
+	"textures": {
+		"0": "res:caustic",
+		"1": "res:atlas",
+		"particle": "res:caustic"
+	},
+	"elements": [
+		{
+			"from": [0, 0, 0],
+			"to": [16, 6, 8],
+			"faces": {
+				"north": {"uv": [1.5, 15.5, 1.96875, 16], "texture": "#1"},
+				"east": {"uv": [1.5, 15.5, 1.96875, 16], "texture": "#1"},
+				"south": {"uv": [1.5, 15.5, 1.96875, 16], "texture": "#1"},
+				"west": {"uv": [1.5, 15.5, 1.96875, 16], "texture": "#1"},
+				"up": {"uv": [0, 15.53125, 0.4375, 16], "texture": "#1"},
+				"down": {"uv": [0, 0, 16, 8], "texture": "#0"}
+			}
+		},
+		{
+			"from": [0, 0, 8],
+			"to": [16, 3, 16],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 3], "texture": "#missing"},
+				"east": {"uv": [0, 0, 8, 3], "texture": "#0"},
+				"south": {"uv": [0, 0, 16, 3], "texture": "#0"},
+				"west": {"uv": [0, 0, 8, 3], "texture": "#0"},
+				"up": {"uv": [0, 0, 16, 8], "texture": "#0"},
+				"down": {"uv": [0, 0, 16, 8], "texture": "#0"}
+			}
+		}
+	]
+}
