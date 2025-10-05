@@ -354,9 +354,13 @@ void generate_element_vertices(blockbench_element* elem, int texture_size[2],
 
 // Load and process Blockbench model from file
 blockbench_model* load_blockbench_model_from_file(const char* filepath) {
-    char* json_string = read_file_to_string(filepath);
+    // Construct full path relative to res/ folder
+    char full_path[512];
+    snprintf(full_path, sizeof(full_path), "res/%s", filepath);
+    
+    char* json_string = read_file_to_string(full_path);
     if (!json_string) {
-        fprintf(stderr, "Failed to read Blockbench file: %s\n", filepath);
+        fprintf(stderr, "Failed to read Blockbench file: %s\n", full_path);
         return NULL;
     }
     

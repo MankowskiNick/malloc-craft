@@ -325,7 +325,7 @@
     "liquid": false,
     "transparent": false,
     "is_foliage": false,
-    "model": "forge.json",
+    "model": "blockbench/forge.json",
     "face_atlas_coords": []
   }
 ]

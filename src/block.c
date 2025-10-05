@@ -7,6 +7,7 @@
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 #include <cerialize/cerialize.h>
+#include <blockbench_loader.h>
 
 block_type* TYPES;
 int BLOCK_COUNT = 0;
@@ -39,6 +40,7 @@ void map_json_to_types(json block_types) {
         json_object liquid_obj = json_get_property(obj, "liquid");
         json_object face_atlas_coords_obj = json_get_property(obj, "face_atlas_coords");
         json_object is_foliage_obj = json_get_property(obj, "is_foliage");
+        json_object model_obj = json_get_property(obj, "model");
 
         if (id_obj.type != JSON_NUMBER && name_obj.type != JSON_STRING && 
             transparent_obj.type != JSON_BOOL && liquid_obj.type != JSON_BOOL && 
@@ -47,21 +49,35 @@ void map_json_to_types(json block_types) {
             continue;
         }
 
+        if (model_obj.type != JSON_STRING && face_atlas_coords_obj.value.list.count != 6) {
+            fprintf(stderr, "Block type %d has invalid model or face_atlas_coords\n", i);
+            continue;
+        }
+
         TYPES[i].id = (uint)id_obj.value.number;
         TYPES[i].name = strdup(name_obj.value.string);
         TYPES[i].transparent = transparent_obj.value.boolean;
         TYPES[i].liquid = liquid_obj.value.boolean;
         TYPES[i].is_foliage = is_foliage_obj.value.boolean;
-        block_type* type = &TYPES[i];
+        TYPES[i].model = model_obj.type == JSON_STRING ? strdup(model_obj.value.string) : NULL;
         
-        for (int j = 0; j < 6; j++) {
-            json_object face_coord_obj = face_atlas_coords_obj.value.list.items[j];
-            if (face_coord_obj.type != JSON_LIST || face_coord_obj.value.list.count != 2) {
-                fprintf(stderr, "Block type %d has invalid face_atlas_coords\n", i);
-                continue;
+        if (TYPES[i].model) {
+            // Load Blockbench model
+            blockbench_model* model = get_blockbench_model(TYPES[i].model);
+            if (!model) {
+                fprintf(stderr, "Failed to load Blockbench model for block type %d: %s\n", i, TYPES[i].model);
             }
-            TYPES[i].face_atlas_coords[j][0] = (uint)face_coord_obj.value.list.items[0].value.number;
-            TYPES[i].face_atlas_coords[j][1] = (uint)face_coord_obj.value.list.items[1].value.number;
+        }
+        else {
+            for (int j = 0; j < 6; j++) {
+                json_object face_coord_obj = face_atlas_coords_obj.value.list.items[j];
+                if (face_coord_obj.type != JSON_LIST || face_coord_obj.value.list.count != 2) {
+                    fprintf(stderr, "Block type %d has invalid face_atlas_coords\n", i);
+                    continue;
+                }
+                TYPES[i].face_atlas_coords[j][0] = (uint)face_coord_obj.value.list.items[0].value.number;
+                TYPES[i].face_atlas_coords[j][1] = (uint)face_coord_obj.value.list.items[1].value.number;
+            }
         }
     }
 }
