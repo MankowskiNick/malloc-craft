@@ -346,12 +346,12 @@ void generate_element_vertices(blockbench_element* elem, int texture_size[2],
     for (int f = 0; f < 6; f++) {
         if (!elem->has_face[f]) continue;
         
-        // Get UV coordinates for this face
-        float u1 = elem->face_uvs[f][0];// / texture_size[0];
-        float v1 = elem->face_uvs[f][1];// / texture_size[1];
-        float u2 = elem->face_uvs[f][2];// / texture_size[0];
-        float v2 = elem->face_uvs[f][3];// / texture_size[1];
-        
+        // Get UV coordinates for this face (normalized [0,1] based on model texture size)
+        float u1 = elem->face_uvs[f][0] / PIXELS_PER_BLOCK;//f / texture_size[0];
+        float v1 = 1.0f - elem->face_uvs[f][1] / PIXELS_PER_BLOCK;// / texture_size[1];
+        float u2 = elem->face_uvs[f][2] / PIXELS_PER_BLOCK;// / texture_size[0];
+        float v2 = 1.0f - elem->face_uvs[f][3] / PIXELS_PER_BLOCK;// / texture_size[1];
+
         // Create 4 vertices for this face
         for (int v = 0; v < 4; v++) {
             int corner_idx = face_corners[f][v];

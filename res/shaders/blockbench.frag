@@ -2,7 +2,6 @@
 
 in vec3 fragPos;
 in vec2 texCoord;
-in vec2 atlasCoord;
 in float dist;
 in vec3 normal;
 
@@ -65,11 +64,8 @@ vec3 getShadowIntensity() {
 }
 
 void main() {
-    // Use direct UV coordinates for blockbench models
-    vec2 coord = (atlasCoord + texCoord) / atlasSize;
-
-    // get bumped normal
-    vec3 bumpedNormal = normalize(normal + texture(bump, coord).xyz);
+    // get bumped normal (sample bump using same atlas coords)
+    vec3 bumpedNormal = normalize(normal + texture(bump, texCoord).xyz);
 
     // normalize sun position (also direction, since this is global)
     vec3 sun = normalize(sunPos);
@@ -80,7 +76,7 @@ void main() {
     vec3 lightIntensity = ambientLight + (sunColor * intensity * shadowFactor);
     
     // Sample texture and apply lighting
-    vec4 textureColor = texture(atlas, coord);
+    vec4 textureColor = texture(atlas, texCoord);
     vec4 baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
     
     // Apply fog
