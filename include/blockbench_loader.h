@@ -22,9 +22,8 @@ typedef struct {
     int vertex_count;
     int index_count;
     
-    // Texture information
-    char* texture_path;  // path to texture file
-    int texture_size[2]; // for validation
+    // Texture information (atlas only)
+    int texture_size[2]; // texture atlas size for UV mapping
     
     // Bounding box (useful for culling/collision)
     float bounds_min[3];

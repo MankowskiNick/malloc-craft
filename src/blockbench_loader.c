@@ -3,6 +3,7 @@
 #include <cerialize/cerialize.h>
 #include <asset.h>
 #include <cglm/cglm.h>
+#include <settings.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -45,7 +46,6 @@ typedef struct {
 
 typedef struct {
     int texture_size[2];
-    char* texture_path;
     blockbench_element* elements;
     int element_count;
 } parsed_blockbench;
@@ -136,6 +136,16 @@ void parse_face_uv(json_object face_obj, float uv[4]) {
     }
 }
 
+// Validate that face texture reference is valid (points to atlas)
+bool validate_face_texture(json_object face_obj, const char* atlas_texture_key) {
+    json_object texture_obj = json_get_property(face_obj, "texture");
+    if (texture_obj.type == JSON_STRING) {
+        // Check if texture reference matches expected atlas key (e.g., "#3")
+        return strcmp(texture_obj.value.string, atlas_texture_key) == 0;
+    }
+    return false;
+}
+
 // Parse Blockbench JSON into internal structure
 parsed_blockbench* parse_blockbench_json(const char* json_string) {
     json parsed = deserialize_json(json_string, strlen(json_string));
@@ -166,15 +176,38 @@ parsed_blockbench* parse_blockbench_json(const char* json_string) {
         result->texture_size[1] = 16;
     }
     
-    // Parse textures to get texture path
+    // Parse textures and validate against atlas
     json_object textures_obj = json_get_property(parsed.root, "textures");
-    result->texture_path = NULL;
+    
     if (textures_obj.type == JSON_OBJECT) {
-        // Look for first texture entry
+        // Check if texture references match the atlas
         for (int i = 0; i < textures_obj.value.object.node_count; i++) {
             json_node* node = &textures_obj.value.object.nodes[i];
             if (node->value.type == JSON_STRING) {
-                result->texture_path = strdup(node->value.value.string);
+                // Validate texture matches atlas - extract filename from atlas path
+                const char* atlas_filename = strrchr(ATLAS_PATH, '/');
+                if (atlas_filename) {
+                    atlas_filename++; // Skip the '/'
+                } else {
+                    atlas_filename = ATLAS_PATH;
+                }
+                
+                // Remove extension from atlas filename for comparison
+                char atlas_name[256];
+                strncpy(atlas_name, atlas_filename, sizeof(atlas_name) - 1);
+                atlas_name[sizeof(atlas_name) - 1] = '\0';
+                char* dot = strrchr(atlas_name, '.');
+                if (dot) *dot = '\0';
+                
+                // Check if Blockbench texture matches atlas
+                if (strcmp(node->value.value.string, atlas_name) != 0) {
+                    fprintf(stderr, "ERROR: Blockbench model texture '%s' does not match atlas texture '%s'\n", 
+                            node->value.value.string, atlas_name);
+                    fprintf(stderr, "       Blockbench models must use the atlas texture only\n");
+                    free(result);
+                    json_free(&parsed);
+                    return NULL;
+                }
                 break;
             }
         }
@@ -184,7 +217,6 @@ parsed_blockbench* parse_blockbench_json(const char* json_string) {
     json_object elements_obj = json_get_property(parsed.root, "elements");
     if (elements_obj.type != JSON_LIST) {
         fprintf(stderr, "No elements array found in Blockbench JSON\n");
-        free(result->texture_path);
         free(result);
         json_free(&parsed);
         return NULL;
@@ -380,7 +412,6 @@ blockbench_model* load_blockbench_model_from_file(const char* filepath) {
     // Copy basic info
     model->filepath = strdup(filepath);
     model->name = strdup(filepath); // Use filepath as name for now
-    model->texture_path = parsed->texture_path ? strdup(parsed->texture_path) : NULL;
     model->texture_size[0] = parsed->texture_size[0];
     model->texture_size[1] = parsed->texture_size[1];
     
@@ -434,7 +465,6 @@ blockbench_model* load_blockbench_model_from_file(const char* filepath) {
     }
     
     // Cleanup parsed data
-    free(parsed->texture_path);
     free(parsed->elements);
     free(parsed);
     

@@ -64,6 +64,12 @@ void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides) {
     }
 }
 
+void custom_vert_to_buffer(float* head, float* custom_verts, int num_custom_verts) {
+    for (int i = 0; i < num_custom_verts * FLOATS_PER_MODEL_VERT; i++) {
+        head[i] = custom_verts[i];
+    }
+}
+
 void sort_transparent_sides(chunk_mesh* packet) {
     quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_instance), distance_to_camera);
 }

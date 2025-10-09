@@ -321,11 +321,11 @@
   },
   {
     "id": 20,
-    "name": "forge",
+    "name": "sigma",
     "liquid": false,
     "transparent": false,
     "is_foliage": false,
-    "model": "blockbench/forge.json",
+    "model": "blockbench/sigma.json",
     "face_atlas_coords": []
   }
 ]

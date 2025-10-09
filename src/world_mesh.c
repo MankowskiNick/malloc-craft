@@ -28,12 +28,14 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     int total_foliage_sides = 0;
     int total_opaque_sides = 0;
     int total_liquid_sides = 0;
+    int total_custom_verts = 0;
     for (int i = 0; i < count; i++) {
         chunk_mesh* mesh = packet[i];
         total_transparent_sides += mesh->num_transparent_sides;
         total_opaque_sides += mesh->num_opaque_sides;
         total_liquid_sides += mesh->num_liquid_sides;
         total_foliage_sides += mesh->num_foliage_sides;
+        total_custom_verts += mesh->num_custom_verts;
     }
 
     // Allocate all memory at once
@@ -41,13 +43,15 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     int* opaque_data = malloc(total_opaque_sides * VBO_WIDTH * sizeof(int));
     int* liquid_data = malloc(total_liquid_sides * VBO_WIDTH * sizeof(int));
     int* foliage_data = malloc(total_foliage_sides * VBO_WIDTH * sizeof(int));
+    float* custom_model_data = malloc(total_custom_verts * sizeof(float) * FLOATS_PER_MODEL_VERT);
 
     // Check for allocation failure
-    if (!transparent_data || !opaque_data || !liquid_data || !foliage_data) {
+    if (!transparent_data || !opaque_data || !liquid_data || !foliage_data || !custom_model_data) {
         free(transparent_data);
         free(opaque_data);
         free(liquid_data);
         free(foliage_data);
+        free(custom_model_data);
         assert(false && "Failed to allocate memory for world mesh data\n");
     }
 
@@ -56,8 +60,17 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     int opaque_offset = 0;
     int liquid_offset = 0;
     int foliage_offset = 0;
+    int custom_model_offset = 0;
     for (int i = 0; i < count; i++) {
         chunk_mesh* mesh = packet[i];
+
+        if (mesh == NULL // this is a temp fix for a what the fuck bug
+            || mesh->opaque_sides == NULL 
+            || mesh->transparent_sides == NULL 
+            || mesh->liquid_sides == NULL 
+            || mesh->foliage_sides == NULL) {
+            continue;
+        }
 
         chunk_mesh_to_buffer(transparent_data + transparent_offset, 
             mesh->transparent_sides, 
@@ -78,6 +91,11 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
             mesh->foliage_sides,
             mesh->num_foliage_sides);
         foliage_offset += mesh->num_foliage_sides * VBO_WIDTH;
+
+        custom_vert_to_buffer(custom_model_data + (i * FLOATS_PER_MODEL_VERT), 
+            mesh->custom_model_data, 
+            mesh->num_custom_verts);
+        custom_model_offset += mesh->num_custom_verts * FLOATS_PER_MODEL_VERT;
     }
 
     // Create the world mesh structure
@@ -87,6 +105,7 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
         free(opaque_data);
         free(liquid_data);
         free(foliage_data);
+        free(custom_model_data);
         assert(false && "Failed to allocate memory for world mesh structure\n");
     }
 
@@ -99,6 +118,8 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     world->num_opaque_sides = opaque_offset / VBO_WIDTH;
     world->num_liquid_sides = liquid_offset / VBO_WIDTH;
     world->num_foliage_sides = foliage_offset / VBO_WIDTH;
+    world->custom_model_data = custom_model_data;
+    world->num_custom_verts = custom_model_offset / FLOATS_PER_MODEL_VERT;
 
     return world;
 }

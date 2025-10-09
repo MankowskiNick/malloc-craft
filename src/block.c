@@ -60,6 +60,7 @@ void map_json_to_types(json block_types) {
         TYPES[i].liquid = liquid_obj.value.boolean;
         TYPES[i].is_foliage = is_foliage_obj.value.boolean;
         TYPES[i].model = model_obj.type == JSON_STRING ? strdup(model_obj.value.string) : NULL;
+        TYPES[i].is_custom_model = TYPES[i].model != NULL ? 1 : 0;
         
         if (TYPES[i].model) {
             // Load Blockbench model
@@ -217,6 +218,7 @@ void place_block(player_instance player) {
         return;
     }
 
+    
     c->blocks[chunk_x][chunk_y][chunk_z] = get_selected_block(player);
 
     // update chunk and adjacent chunks

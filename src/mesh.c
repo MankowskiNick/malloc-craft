@@ -7,6 +7,7 @@
 #include <queue.h>
 #include <pthread.h>
 #include <assert.h>
+#include <blockbench_loader.h>
 
 DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals);
 typedef chunk_mesh_map_hashmap chunk_mesh_map;
@@ -91,7 +92,8 @@ short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) 
     return get_block_id("air");
 }
 
-void get_side_visible(
+// TODO: this function is messy, clean it up
+void get_side_visible( 
     int x, int y, int z,
     short side, 
     chunk* c,
@@ -116,6 +118,10 @@ void get_side_visible(
 
     // make sure transparent neighbors are visible
     if (adjacent != NULL && adjacent->transparent != current->transparent) {
+        visible = 1;
+    }
+
+    if (adjacent->is_custom_model) {
         visible = 1;
     }
 
@@ -202,11 +208,58 @@ void pack_block(
     }
 }
 
+void pack_model(
+    int x, int y, int z,
+    chunk* c,
+    float** custom_model_data,
+    int* num_custom_verts
+) {
+    short block_id = c->blocks[x][y][z];
+    block_type* block = get_block_type(block_id);
+    if (block == NULL || !block->is_custom_model) {
+        return;
+    }
+
+    // reference blockbench model data hashmap based on model name
+    blockbench_model* model = get_blockbench_model(block->model);
+    if (model == NULL) {
+
+        return;
+    }
+
+    int new_vert_count = (*num_custom_verts) + model->vertex_count;
+    if (new_vert_count > MODEL_VERTICES_PER_CHUNK) {
+        float* tmp = realloc(*custom_model_data, new_vert_count * sizeof(float) * FLOATS_PER_MODEL_VERT);
+        assert(tmp != NULL && "Failed to allocate memory for custom model data");
+        *custom_model_data = tmp;
+    }
+
+    // copy model data into chunk mesh data
+    for (int i = 0; i < model->vertex_count; i++) {
+        int dest_idx = (*num_custom_verts + i) * FLOATS_PER_MODEL_VERT;
+
+        // position
+        (*custom_model_data)[dest_idx + 0] = (float)x + model->vertices[i].position[0];
+        (*custom_model_data)[dest_idx + 1] = (float)y + model->vertices[i].position[1];
+        (*custom_model_data)[dest_idx + 2] = (float)z + model->vertices[i].position[2];
+
+        // normal
+        (*custom_model_data)[dest_idx + 3] = model->vertices[i].normal[0];
+        (*custom_model_data)[dest_idx + 4] = model->vertices[i].normal[1];
+        (*custom_model_data)[dest_idx + 5] = model->vertices[i].normal[2];
+
+        // uv
+        (*custom_model_data)[dest_idx + 6] = model->vertices[i].uv[0];
+        (*custom_model_data)[dest_idx + 7] = model->vertices[i].uv[1];
+    }
+}
+
 void pack_chunk(chunk* c, chunk* adj_chunks[4], 
     side_instance** opaque_side_data, int* num_opaque_sides,
     side_instance** transparent_side_data, int* num_transparent_sides,
     side_instance** foliage_side_data, int* num_foliage_sides,
-    side_instance** liquid_side_data, int* num_liquid_sides) {
+    side_instance** liquid_side_data, int* num_liquid_sides,
+    float** custom_model_data, int* num_custom_verts) {
     if (c == NULL) {
         return;
     }
@@ -221,6 +274,10 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                 short block_id = c->blocks[i][k][j];
                 block_type* block = get_block_type(block_id);
 
+                if (block_id == 20) {
+                    int debug = 1;
+                }
+
                 if (block->liquid) {
                     pack_block(i, k, j, c, adj_chunks, 
                         liquid_side_data, num_liquid_sides);
@@ -232,6 +289,9 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                 else if (block->transparent && block->is_foliage) {
                     pack_block(i, k, j, c, adj_chunks, 
                         foliage_side_data, num_foliage_sides);
+                }
+                else if (block->is_custom_model) {
+                    pack_model(i, k, j, c, custom_model_data, num_custom_verts);
                 }
                 else {
                     pack_block(i, k, j, c, adj_chunks, 
@@ -260,21 +320,25 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     int foliage_side_count = 0;
     int opaque_side_count = 0;
     int liquid_side_count = 0;
+    int custom_model_vert_count = 0;
 
     side_instance* opaque_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
     side_instance* transparent_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
     side_instance* liquid_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
     side_instance* foliage_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
+    float* custom_model_data = malloc(MODEL_VERTICES_PER_CHUNK * sizeof(float) * FLOATS_PER_MODEL_VERT); // 16 floats per model
     assert(opaque_sides != NULL && "Failed to allocate memory for opaque packet sides");
     assert(transparent_sides != NULL && "Failed to allocate memory for transparent packet sides");
     assert(liquid_sides != NULL && "Failed to allocate memory for liquid packet sides");
     assert(foliage_sides != NULL && "Failed to allocate memory for foliage packet sides");
+    assert(custom_model_data != NULL && "Failed to allocate memory for custom model data");
 
     pack_chunk(c, adj_chunks, 
         &opaque_sides, &opaque_side_count,
         &transparent_sides, &transparent_side_count,
         &foliage_sides, &foliage_side_count,
-        &liquid_sides, &liquid_side_count);
+        &liquid_sides, &liquid_side_count,
+        &custom_model_data, &custom_model_vert_count);
 
     assert(packet != NULL && "Failed to allocate memory for packet");
 
@@ -284,11 +348,13 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     packet->num_transparent_sides = transparent_side_count;
     packet->num_liquid_sides = liquid_side_count;
     packet->num_foliage_sides = foliage_side_count;
+    packet->num_custom_verts = custom_model_vert_count;
     
     packet->opaque_sides = opaque_sides;
     packet->transparent_sides = transparent_sides;
     packet->liquid_sides = liquid_sides;
     packet->foliage_sides = foliage_sides;
+    packet->custom_model_data = custom_model_data;
 
     chunk_coord coord = {x, z};
     chunk_mesh_map_insert(&chunk_packets, coord, *packet);
@@ -310,6 +376,10 @@ chunk_mesh* update_chunk_mesh_at(int x, int z) {
     packet->transparent_sides = NULL;
     free(packet->foliage_sides);
     packet->foliage_sides = NULL;
+    free(packet->liquid_sides);
+    packet->liquid_sides = NULL;
+    free(packet->custom_model_data);
+    packet->custom_model_data = NULL;
 
     chunk_mesh_map_remove(&chunk_packets, coord);
 
