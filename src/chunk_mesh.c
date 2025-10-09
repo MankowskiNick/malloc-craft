@@ -65,8 +65,12 @@ void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides) {
 }
 
 void custom_vert_to_buffer(float* head, float* custom_verts, int num_custom_verts) {
-    for (int i = 0; i < num_custom_verts * FLOATS_PER_MODEL_VERT; i++) {
-        head[i] = custom_verts[i];
+    for (int i = 0; i < num_custom_verts; i++) {
+        int index = i * FLOATS_PER_MODEL_VERT;
+
+        for (int j = 0; j < FLOATS_PER_MODEL_VERT; j++) {
+            head[index + j] = custom_verts[index + j];
+        }
     }
 }
 

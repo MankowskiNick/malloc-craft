@@ -4,6 +4,7 @@
 #include <camera.h>
 #include <shader.h>
 #include <block_renderer.h>
+#include <blockbench_renderer.h>
 #include <skybox.h>
 #include <sun.h>
 #include <fbo.h>
@@ -13,6 +14,7 @@ typedef struct {
     block_renderer wr; // world renderer
     block_renderer fr; // foliage renderer
     block_renderer lr; // liquid renderer
+    blockbench_renderer br; // blockbench renderer
     skybox sky;
     sun s;
     FBO shadow_map;

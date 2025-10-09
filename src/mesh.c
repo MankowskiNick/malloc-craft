@@ -223,11 +223,10 @@ void pack_model(
     // reference blockbench model data hashmap based on model name
     blockbench_model* model = get_blockbench_model(block->model);
     if (model == NULL) {
-
         return;
     }
 
-    int new_vert_count = (*num_custom_verts) + model->vertex_count;
+    int new_vert_count = (*num_custom_verts) + model->index_count;
     if (new_vert_count > MODEL_VERTICES_PER_CHUNK) {
         float* tmp = realloc(*custom_model_data, new_vert_count * sizeof(float) * FLOATS_PER_MODEL_VERT);
         assert(tmp != NULL && "Failed to allocate memory for custom model data");
@@ -235,23 +234,30 @@ void pack_model(
     }
 
     // copy model data into chunk mesh data
-    for (int i = 0; i < model->vertex_count; i++) {
+    for (int i = 0; i < model->index_count; i++) {
         int dest_idx = (*num_custom_verts + i) * FLOATS_PER_MODEL_VERT;
 
+        float dest_x = (float)x + (float)(c->x * CHUNK_SIZE);
+        float dest_y = (float)y;
+        float dest_z = (float)z + (float)(c->z * CHUNK_SIZE);
+        blockbench_vertex vert = model->vertices[model->indices[i]];
+
         // position
-        (*custom_model_data)[dest_idx + 0] = (float)x + model->vertices[i].position[0];
-        (*custom_model_data)[dest_idx + 1] = (float)y + model->vertices[i].position[1];
-        (*custom_model_data)[dest_idx + 2] = (float)z + model->vertices[i].position[2];
+        (*custom_model_data)[dest_idx + 0] = dest_x + vert.position[0];
+        (*custom_model_data)[dest_idx + 1] = dest_y + vert.position[1];
+        (*custom_model_data)[dest_idx + 2] = dest_z + vert.position[2];
 
         // normal
-        (*custom_model_data)[dest_idx + 3] = model->vertices[i].normal[0];
-        (*custom_model_data)[dest_idx + 4] = model->vertices[i].normal[1];
-        (*custom_model_data)[dest_idx + 5] = model->vertices[i].normal[2];
+        (*custom_model_data)[dest_idx + 3] = vert.normal[0];
+        (*custom_model_data)[dest_idx + 4] = vert.normal[1];
+        (*custom_model_data)[dest_idx + 5] = vert.normal[2];
 
         // uv
-        (*custom_model_data)[dest_idx + 6] = model->vertices[i].uv[0];
-        (*custom_model_data)[dest_idx + 7] = model->vertices[i].uv[1];
+        (*custom_model_data)[dest_idx + 6] = vert.uv[0];
+        (*custom_model_data)[dest_idx + 7] = vert.uv[1];
     }
+
+    *num_custom_verts = new_vert_count;
 }
 
 void pack_chunk(chunk* c, chunk* adj_chunks[4], 

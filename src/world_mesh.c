@@ -68,7 +68,8 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
             || mesh->opaque_sides == NULL 
             || mesh->transparent_sides == NULL 
             || mesh->liquid_sides == NULL 
-            || mesh->foliage_sides == NULL) {
+            || mesh->foliage_sides == NULL
+            || mesh->custom_model_data == NULL) {
             continue;
         }
 
@@ -92,7 +93,7 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
             mesh->num_foliage_sides);
         foliage_offset += mesh->num_foliage_sides * VBO_WIDTH;
 
-        custom_vert_to_buffer(custom_model_data + (i * FLOATS_PER_MODEL_VERT), 
+        custom_vert_to_buffer(custom_model_data + custom_model_offset, 
             mesh->custom_model_data, 
             mesh->num_custom_verts);
         custom_model_offset += mesh->num_custom_verts * FLOATS_PER_MODEL_VERT;

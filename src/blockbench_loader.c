@@ -12,6 +12,9 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+// Blockbench uses pixels, but we need block units (1 block = 16 pixels in Minecraft standard)
+#define PIXELS_PER_BLOCK 16.0f
+
 // Hash function for string keys (file paths)
 size_t string_hash(char* str) {
     size_t hash = 5381;
@@ -50,25 +53,20 @@ typedef struct {
     int element_count;
 } parsed_blockbench;
 
-// Face indices for cube generation
-static const int face_indices[6][6] = {
-    // Each face as 2 triangles (6 vertices total)
-    {0, 1, 2, 0, 2, 3}, // north
-    {4, 5, 6, 4, 6, 7}, // east  
-    {5, 4, 3, 5, 3, 2}, // south
-    {1, 0, 7, 1, 7, 6}, // west
-    {0, 3, 4, 3, 7, 4}, // up
-    {1, 6, 2, 6, 5, 2}  // down
-};
+// Face indices for cube generation - creates two triangles per face
+// Triangle winding: counter-clockwise for outward-facing normals
+// Each face has 4 vertices (0,1,2,3) arranged in counter-clockwise order
+// First triangle: (0,1,2), Second triangle: (0,2,3)
+static const int face_indices[6] = {0, 1, 2, 0, 2, 3}; // Two triangles per face
 
-// Face normals
+// Face normals - pointing outward from the cube
 static const float face_normals[6][3] = {
-    {0, 0, -1}, // north
-    {1, 0, 0},  // east
-    {0, 0, 1},  // south  
-    {-1, 0, 0}, // west
-    {0, 1, 0},  // up
-    {0, -1, 0}  // down
+    {0, 0, -1}, // north (-Z)
+    {1, 0, 0},  // east (+X)
+    {0, 0, 1},  // south (+Z)  
+    {-1, 0, 0}, // west (-X)
+    {0, 1, 0},  // up (+Y)
+    {0, -1, 0}  // down (-Y)
 };
 
 // Parse rotation axis from string
@@ -234,15 +232,15 @@ parsed_blockbench* parse_blockbench_json(const char* json_string) {
         json_object to_obj = json_get_property(element, "to");
         
         if (from_obj.type == JSON_LIST && from_obj.value.list.count >= 3) {
-            elem->from[0] = from_obj.value.list.items[0].value.number;
-            elem->from[1] = from_obj.value.list.items[1].value.number;
-            elem->from[2] = from_obj.value.list.items[2].value.number;
+            elem->from[0] = from_obj.value.list.items[0].value.number / PIXELS_PER_BLOCK;
+            elem->from[1] = from_obj.value.list.items[1].value.number / PIXELS_PER_BLOCK;
+            elem->from[2] = from_obj.value.list.items[2].value.number / PIXELS_PER_BLOCK;
         }
         
         if (to_obj.type == JSON_LIST && to_obj.value.list.count >= 3) {
-            elem->to[0] = to_obj.value.list.items[0].value.number;
-            elem->to[1] = to_obj.value.list.items[1].value.number;
-            elem->to[2] = to_obj.value.list.items[2].value.number;
+            elem->to[0] = to_obj.value.list.items[0].value.number / PIXELS_PER_BLOCK;
+            elem->to[1] = to_obj.value.list.items[1].value.number / PIXELS_PER_BLOCK;
+            elem->to[2] = to_obj.value.list.items[2].value.number / PIXELS_PER_BLOCK;
         }
         
         // Parse rotation
@@ -265,9 +263,9 @@ parsed_blockbench* parse_blockbench_json(const char* json_string) {
             }
             
             if (origin_obj.type == JSON_LIST && origin_obj.value.list.count >= 3) {
-                elem->rotation_origin[0] = origin_obj.value.list.items[0].value.number;
-                elem->rotation_origin[1] = origin_obj.value.list.items[1].value.number;
-                elem->rotation_origin[2] = origin_obj.value.list.items[2].value.number;
+                elem->rotation_origin[0] = origin_obj.value.list.items[0].value.number / PIXELS_PER_BLOCK;
+                elem->rotation_origin[1] = origin_obj.value.list.items[1].value.number / PIXELS_PER_BLOCK;
+                elem->rotation_origin[2] = origin_obj.value.list.items[2].value.number / PIXELS_PER_BLOCK;
             }
         }
         
@@ -331,52 +329,53 @@ void generate_element_vertices(blockbench_element* elem, int texture_size[2],
     int vertex_offset = 0;
     int index_offset = 0;
     
-    // Face vertex mappings for each face
-    int face_vertex_map[6][4] = {
-        {0, 1, 2, 3}, // north (front)
-        {5, 4, 7, 6}, // east (right)  
-        {4, 5, 1, 0}, // south (back)
-        {3, 2, 6, 7}, // west (left)
-        {3, 7, 4, 0}, // up (top)
-        {1, 5, 6, 2}  // down (bottom)
+    // Standard cube face definitions (which corners belong to each face)
+    // Each face is defined with 4 vertices in counter-clockwise order when viewed from outside
+    // Corner indices reference the 8 cube corners defined above:
+    // 0: min,min,min  1: max,min,min  2: max,max,min  3: min,max,min
+    // 4: min,min,max  5: max,min,max  6: max,max,max  7: min,max,max
+    int face_corners[6][4] = {
+        {0, 3, 2, 1}, // north (-Z): front face, counter-clockwise from outside
+        {1, 2, 6, 5}, // east (+X): right face, counter-clockwise from outside
+        {5, 6, 7, 4}, // south (+Z): back face, counter-clockwise from outside
+        {4, 7, 3, 0}, // west (-X): left face, counter-clockwise from outside
+        {3, 7, 6, 2}, // up (+Y): top face, counter-clockwise from outside
+        {1, 5, 4, 0}  // down (-Y): bottom face, counter-clockwise from outside
     };
     
     for (int f = 0; f < 6; f++) {
         if (!elem->has_face[f]) continue;
         
-        // Generate 4 vertices for this face
+        // Get UV coordinates for this face
+        float u1 = elem->face_uvs[f][0];// / texture_size[0];
+        float v1 = elem->face_uvs[f][1];// / texture_size[1];
+        float u2 = elem->face_uvs[f][2];// / texture_size[0];
+        float v2 = elem->face_uvs[f][3];// / texture_size[1];
+        
+        // Create 4 vertices for this face
         for (int v = 0; v < 4; v++) {
-            int corner_idx = face_vertex_map[f][v];
+            int corner_idx = face_corners[f][v];
             blockbench_vertex* vert = &(*vertices)[vertex_offset + v];
             
-            // Position
+            // Position from corner
             vert->position[0] = corners[corner_idx][0];
             vert->position[1] = corners[corner_idx][1]; 
             vert->position[2] = corners[corner_idx][2];
             
-            // Normal
+            // Face normal
             vert->normal[0] = face_normals[f][0];
             vert->normal[1] = face_normals[f][1];
             vert->normal[2] = face_normals[f][2];
             
-            // UV coordinates - convert from pixel to normalized
-            float u1 = elem->face_uvs[f][0] / texture_size[0];
-            float v1 = elem->face_uvs[f][1] / texture_size[1];
-            float u2 = elem->face_uvs[f][2] / texture_size[0];
-            float v2 = elem->face_uvs[f][3] / texture_size[1];
-            
-            // Map vertex to UV coordinate
-            switch (v) {
-                case 0: vert->uv[0] = u1; vert->uv[1] = v1; break;
-                case 1: vert->uv[0] = u2; vert->uv[1] = v1; break; 
-                case 2: vert->uv[0] = u2; vert->uv[1] = v2; break;
-                case 3: vert->uv[0] = u1; vert->uv[1] = v2; break;
-            }
+            // UV mapping: vertex 0->u1,v1  vertex 1->u2,v1  vertex 2->u2,v2  vertex 3->u1,v2
+            float uv_coords[4][2] = {{u1,v1}, {u2,v1}, {u2,v2}, {u1,v2}};
+            vert->uv[0] = uv_coords[v][0];
+            vert->uv[1] = uv_coords[v][1];
         }
         
-        // Generate indices for 2 triangles
+        // Create 2 triangles for this face: (0,1,2) and (0,2,3)
         for (int i = 0; i < 6; i++) {
-            (*indices)[index_offset + i] = vertex_offset + face_indices[0][i];
+            (*indices)[index_offset + i] = vertex_offset + face_indices[i];
         }
         
         vertex_offset += 4;
