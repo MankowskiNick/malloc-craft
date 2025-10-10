@@ -4,12 +4,12 @@
 #include <settings.h>
 #include <util.h>
 
-#define RIGHT  0.0f
-#define LEFT   1.0f
-#define BACK   2.0f
-#define FRONT  3.0f
-#define TOP    4.0f
-#define BOTTOM 5.0f
+#define SOUTH   0.0f
+#define NORTH   1.0f
+#define WEST    2.0f
+#define EAST    3.0f
+#define UP      4.0f
+#define DOWN    5.0f
 #define UNKNOWN_SIDE -1.0f
 
 typedef struct {
@@ -19,7 +19,9 @@ typedef struct {
     int liquid;
     int is_foliage;
     int is_custom_model;
+    int orientations[6];
     char* model;
+    char* models[6];
     short face_atlas_coords[6][2];
 } block_type;
 

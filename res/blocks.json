@@ -336,17 +336,13 @@
         "north": "blockbench/torch_side.json",
         "south": "blockbench/torch_side.json",
         "east": "blockbench/torch_side.json",
-        "west": "blockbench/torch_side.json",
-        "up": "blockbench/torch.json",
-        "down": "blockbench/torch.json"
+        "west": "blockbench/torch_side.json"
     },
     "orientations": [
         "north",
         "south",
         "east",
-        "west",
-        "up",
-        "down"
+        "west"
     ],
     "face_atlas_coords": []
   }

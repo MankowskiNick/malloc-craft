@@ -44,17 +44,17 @@ void m_cleanup() {
 
 short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
     switch(side) {
-        case (int)TOP:
+        case (int)UP:
             if (y + 1 < CHUNK_HEIGHT) {
                 return c->blocks[x][y + 1][z];
             }
             break;
-        case (int)BOTTOM:
+        case (int)DOWN:
             if (y - 1 >= 0) {
                 return c->blocks[x][y - 1][z];
             }
             break;
-        case (int)FRONT:
+        case (int)EAST:
             if (x + 1 < CHUNK_SIZE) {
                 return c->blocks[x + 1][y][z];
             }
@@ -62,7 +62,7 @@ short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) 
                 return adj->blocks[0][y][z];
             }
             break;
-        case (int)BACK:
+        case (int)WEST:
             if (x - 1 >= 0) {
                 return c->blocks[x - 1][y][z];
             }
@@ -70,7 +70,7 @@ short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) 
                 return adj->blocks[CHUNK_SIZE - 1][y][z];
             }
             break;
-        case (int)LEFT:
+        case (int)NORTH:
             if (z - 1 >= 0) {
                 return c->blocks[x][y][z - 1];
             }
@@ -78,7 +78,7 @@ short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) 
                 return adj->blocks[x][y][CHUNK_SIZE - 1];
             }
             break;
-        case (int)RIGHT:
+        case (int)SOUTH:
             if (z + 1 < CHUNK_SIZE) {
                 return c->blocks[x][y][z + 1];
             }
@@ -137,10 +137,10 @@ void get_side_visible(
 
     // dont render sides that we can't see
     switch(side) {
-        case (int)TOP:
+        case (int)UP:
             visible = visible && y < CHUNK_HEIGHT;
             break;
-        case (int)BOTTOM:
+        case (int)DOWN:
             visible = visible && y > 0;
             break;
         default:

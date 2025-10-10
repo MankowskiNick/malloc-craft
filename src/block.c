@@ -12,6 +12,99 @@
 block_type* TYPES;
 int BLOCK_COUNT = 0;
 
+void cache_model(char* model) {
+    blockbench_model* m = get_blockbench_model(model);
+    if (!m) {
+        fprintf(stderr, "Failed to load Blockbench model: %s\n", model);
+    }
+}
+
+void parse_allowed_orientations(block_type* block, json_object orientations_obj) {
+    for (int j = 0; j < orientations_obj.value.list.count && j < 6; j++) {
+        json_object orientation_obj = orientations_obj.value.list.items[j];
+        if (orientation_obj.type != JSON_STRING) {
+            fprintf(stderr, "Block type %s has invalid orientation for model %d\n", block->name, j);
+            continue;
+        }
+
+        const char* orientation = orientation_obj.value.string;
+
+        switch(orientation[0]) {
+            case 's': // south
+                block->orientations[(int)SOUTH] = true;
+                break;
+            case 'n': // north
+                block->orientations[(int)NORTH] = true;
+                break;
+            case 'w': // west
+                block->orientations[(int)WEST] = true;
+                break;
+            case 'e': // east
+                block->orientations[(int)EAST] = true;
+                break;
+            case 'u': // up
+                block->orientations[(int)UP] = true;
+                break;
+            case 'd': // down
+                block->orientations[(int)DOWN] = true;
+                break;
+            default:
+                fprintf(stderr, "Block type %s has unknown orientation '%s' for model %d\n", block->name, orientation, j);
+                break;
+        }
+    }
+}
+
+void copy_orientation_model(block_type* block, int orientation, json_object obj) {
+    if (orientation < 0 || orientation >= 6) {
+        fprintf(stderr, "Invalid orientation index %d for block type %s\n", orientation, block->name);
+        return;
+    }
+
+    if (obj.type == JSON_NULL) {
+        return;
+    }
+
+    if (block->models[orientation]) {
+        free(block->models[orientation]);
+    }
+    block->models[orientation] = strdup(obj.value.string);
+    block->is_custom_model = true;
+    cache_model(block->models[orientation]);
+}
+
+void parse_model_orientations(block_type* block, json_object models_obj) {
+
+    if (models_obj.type != JSON_OBJECT) {
+        fprintf(stderr, "Block type %s has invalid models object\n", block->name);
+        return;
+    }
+
+    json_object north_obj = json_get_property(models_obj, "north");
+    json_object south_obj = json_get_property(models_obj, "south");
+    json_object east_obj = json_get_property(models_obj, "east");
+    json_object west_obj = json_get_property(models_obj, "west");
+    json_object up_obj = json_get_property(models_obj, "up");
+    json_object down_obj = json_get_property(models_obj, "down");
+
+    if ((north_obj.type != JSON_STRING && north_obj.type != JSON_NULL)
+            || (south_obj.type != JSON_STRING && south_obj.type != JSON_NULL)
+            || (east_obj.type != JSON_STRING && east_obj.type != JSON_NULL)
+            || (west_obj.type != JSON_STRING && west_obj.type != JSON_NULL)
+            || (up_obj.type != JSON_STRING && up_obj.type != JSON_NULL)
+            || (down_obj.type != JSON_STRING && down_obj.type != JSON_NULL)) {
+        fprintf(stderr, "Block type %s has invalid model or face_atlas_coords\n", block->name);
+        return;
+    }
+
+    copy_orientation_model(block, (int)NORTH, north_obj);
+    copy_orientation_model(block, (int)SOUTH, south_obj);
+    copy_orientation_model(block, (int)EAST, east_obj);
+    copy_orientation_model(block, (int)WEST, west_obj);
+    copy_orientation_model(block, (int)UP, up_obj);
+    copy_orientation_model(block, (int)DOWN, down_obj);
+}
+
 void map_json_to_types(json block_types) {
 
     if (block_types.failure || block_types.root.type != JSON_LIST) {
@@ -41,10 +134,18 @@ void map_json_to_types(json block_types) {
         json_object face_atlas_coords_obj = json_get_property(obj, "face_atlas_coords");
         json_object is_foliage_obj = json_get_property(obj, "is_foliage");
         json_object model_obj = json_get_property(obj, "model");
+        json_object models_obj = json_get_property(obj, "models");
+        json_object orientations_obj = json_get_property(obj, "orientations");
 
-        if (id_obj.type != JSON_NUMBER && name_obj.type != JSON_STRING && 
-            transparent_obj.type != JSON_BOOL && liquid_obj.type != JSON_BOOL && 
-            face_atlas_coords_obj.type != JSON_LIST && is_foliage_obj.type != JSON_BOOL) {
+        if (id_obj.type != JSON_NUMBER 
+            || name_obj.type != JSON_STRING 
+            || transparent_obj.type != JSON_BOOL 
+            || liquid_obj.type != JSON_BOOL 
+            || face_atlas_coords_obj.type != JSON_LIST 
+            || is_foliage_obj.type != JSON_BOOL 
+            || (model_obj.type != JSON_STRING && model_obj.type != JSON_NULL)
+            || (models_obj.type != JSON_OBJECT && models_obj.type != JSON_NULL)
+            || (orientations_obj.type != JSON_LIST && orientations_obj.type != JSON_NULL)) {
             fprintf(stderr, "Block type %d has invalid properties\n", i);
             continue;
         }
@@ -62,12 +163,19 @@ void map_json_to_types(json block_types) {
         block->is_foliage = is_foliage_obj.value.boolean;
         block->model = model_obj.type == JSON_STRING ? strdup(model_obj.value.string) : NULL;
         block->is_custom_model = block->model != NULL ? 1 : 0;
+
+        for (int j = 0; j < 6; j++) {
+            block->models[j] = NULL;
+            block->orientations[j] = false;
+        }
+
+        parse_allowed_orientations(block, orientations_obj);
+        
         
         if (block->model) {
-            // Load Blockbench model
-            blockbench_model* model = get_blockbench_model(block->model);
-            if (!model) {
-                fprintf(stderr, "Failed to load Blockbench model for block type %d: %s\n", i, block->model);
+            cache_model(block->model);
+            if (models_obj.type == JSON_OBJECT) {
+                parse_model_orientations(block, models_obj);
             }
         }
         else {
