@@ -86,6 +86,12 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "orientations": [
+        "north",
+        "south",
+        "east",
+        "west"
+    ],
     "face_atlas_coords": [
       [7, 0],
       [7, 0],
@@ -321,11 +327,27 @@
   },
   {
     "id": 20,
-    "name": "sigma",
+    "name": "torch",
     "liquid": false,
     "transparent": false,
     "is_foliage": false,
-    "model": "blockbench/forge.json",
+    "model": "blockbench/torch_side.json",
+    "models": {
+        "north": "blockbench/torch_side.json",
+        "south": "blockbench/torch_side.json",
+        "east": "blockbench/torch_side.json",
+        "west": "blockbench/torch_side.json",
+        "up": "blockbench/torch.json",
+        "down": "blockbench/torch.json"
+    },
+    "orientations": [
+        "north",
+        "south",
+        "east",
+        "west",
+        "up",
+        "down"
+    ],
     "face_atlas_coords": []
   }
 ]

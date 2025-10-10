@@ -54,19 +54,20 @@ void map_json_to_types(json block_types) {
             continue;
         }
 
-        TYPES[i].id = (uint)id_obj.value.number;
-        TYPES[i].name = strdup(name_obj.value.string);
-        TYPES[i].transparent = transparent_obj.value.boolean;
-        TYPES[i].liquid = liquid_obj.value.boolean;
-        TYPES[i].is_foliage = is_foliage_obj.value.boolean;
-        TYPES[i].model = model_obj.type == JSON_STRING ? strdup(model_obj.value.string) : NULL;
-        TYPES[i].is_custom_model = TYPES[i].model != NULL ? 1 : 0;
+        block_type* block = &TYPES[i];
+        block->id = (uint)id_obj.value.number;
+        block->name = strdup(name_obj.value.string);
+        block->transparent = transparent_obj.value.boolean;
+        block->liquid = liquid_obj.value.boolean;
+        block->is_foliage = is_foliage_obj.value.boolean;
+        block->model = model_obj.type == JSON_STRING ? strdup(model_obj.value.string) : NULL;
+        block->is_custom_model = block->model != NULL ? 1 : 0;
         
-        if (TYPES[i].model) {
+        if (block->model) {
             // Load Blockbench model
-            blockbench_model* model = get_blockbench_model(TYPES[i].model);
+            blockbench_model* model = get_blockbench_model(block->model);
             if (!model) {
-                fprintf(stderr, "Failed to load Blockbench model for block type %d: %s\n", i, TYPES[i].model);
+                fprintf(stderr, "Failed to load Blockbench model for block type %d: %s\n", i, block->model);
             }
         }
         else {

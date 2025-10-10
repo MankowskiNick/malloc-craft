@@ -1,0 +1,23 @@
+{
+	"format_version": "1.21.6",
+	"credit": "Made with Blockbench",
+	"textures": {
+		"0": "res:atlas",
+		"particle": "res:atlas"
+	},
+	"elements": [
+		{
+			"from": [16, 0, 6],
+			"to": [18, 14, 8],
+			"rotation": {"angle": 30, "axis": "z", "origin": [17, 0, 6]},
+			"faces": {
+				"north": {"uv": [12.71875, 15.625, 12.78125, 16], "texture": "#0"},
+				"east": {"uv": [12.71875, 15.625, 12.78125, 16], "texture": "#0"},
+				"south": {"uv": [12.71875, 15.625, 12.78125, 16], "texture": "#0"},
+				"west": {"uv": [12.71875, 15.625, 12.78125, 16], "texture": "#0"},
+				"up": {"uv": [12.71875, 15.625, 12.78125, 15.6875], "texture": "#0"},
+				"down": {"uv": [12.71875, 15.71875, 12.78125, 15.78125], "texture": "#0"}
+			}
+		}
+	]
+}

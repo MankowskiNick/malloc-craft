@@ -182,26 +182,34 @@ parsed_blockbench* parse_blockbench_json(const char* json_string) {
         for (int i = 0; i < textures_obj.value.object.node_count; i++) {
             json_node* node = &textures_obj.value.object.nodes[i];
             if (node->value.type == JSON_STRING) {
-                // Validate texture matches atlas - extract filename from atlas path
+                // Validate texture matches atlas - expect Blockbench to reference atlas using
+                // the namespace:name format (e.g. "res:atlas"). Construct expected value
+                // from ATLAS_PATH by extracting the namespace (first path component) and
+                // the atlas filename without extension.
                 const char* atlas_filename = strrchr(ATLAS_PATH, '/');
-                if (atlas_filename) {
-                    atlas_filename++; // Skip the '/'
-                } else {
-                    atlas_filename = ATLAS_PATH;
-                }
-                
-                // Remove extension from atlas filename for comparison
+                if (atlas_filename) atlas_filename++; else atlas_filename = ATLAS_PATH;
+
                 char atlas_name[256];
                 strncpy(atlas_name, atlas_filename, sizeof(atlas_name) - 1);
                 atlas_name[sizeof(atlas_name) - 1] = '\0';
                 char* dot = strrchr(atlas_name, '.');
                 if (dot) *dot = '\0';
-                
-                // Check if Blockbench texture matches atlas
-                if (strcmp(node->value.value.string, atlas_name) != 0) {
-                    fprintf(stderr, "ERROR: Blockbench model texture '%s' does not match atlas texture '%s'\n", 
-                            node->value.value.string, atlas_name);
-                    fprintf(stderr, "       Blockbench models must use the atlas texture only\n");
+
+                // Extract namespace (first component of the path), default to "res" if missing
+                char atlas_path_copy[512];
+                strncpy(atlas_path_copy, ATLAS_PATH, sizeof(atlas_path_copy) - 1);
+                atlas_path_copy[sizeof(atlas_path_copy) - 1] = '\0';
+                char* ns = strtok(atlas_path_copy, "/");
+                if (!ns) ns = "res";
+
+                char expected[512];
+                snprintf(expected, sizeof(expected), "%s:%s", ns, atlas_name);
+
+                // Check if Blockbench texture matches expected namespace:name reference
+                if (strcmp(node->value.value.string, expected) != 0) {
+                    fprintf(stderr, "ERROR: Blockbench model texture '%s' does not match atlas texture '%s'\n",
+                            node->value.value.string, expected);
+                    fprintf(stderr, "       Blockbench models must reference the atlas as '%s'\n", expected);
                     free(result);
                     json_free(&parsed);
                     return NULL;
@@ -335,10 +343,10 @@ void generate_element_vertices(blockbench_element* elem, int texture_size[2],
     // 0: min,min,min  1: max,min,min  2: max,max,min  3: min,max,min
     // 4: min,min,max  5: max,min,max  6: max,max,max  7: min,max,max
     int face_corners[6][4] = {
-        {0, 3, 2, 1}, // north (-Z): front face, counter-clockwise from outside
-        {1, 2, 6, 5}, // east (+X): right face, counter-clockwise from outside
-        {5, 6, 7, 4}, // south (+Z): back face, counter-clockwise from outside
-        {4, 7, 3, 0}, // west (-X): left face, counter-clockwise from outside
+        {3, 2, 1, 0}, // north (-Z): front face, counter-clockwise from outside
+        {2, 6, 5, 1}, // east (+X): right face, counter-clockwise from outside
+        {6, 7, 4, 5}, // south (+Z): back face, counter-clockwise from outside
+        {7, 3, 0, 4}, // west (-X): left face, counter-clockwise from outside
         {3, 7, 6, 2}, // up (+Y): top face, counter-clockwise from outside
         {1, 5, 4, 0}  // down (-Y): bottom face, counter-clockwise from outside
     };
