@@ -43,47 +43,58 @@ void m_cleanup() {
 }
 
 short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
+    short block_id = 0;
     switch(side) {
         case (int)UP:
             if (y + 1 < CHUNK_HEIGHT) {
-                return c->blocks[x][y + 1][z];
+                get_block_info(c->blocks[x][y + 1][z], &block_id, NULL);
+                return block_id;
             }
             break;
         case (int)DOWN:
             if (y - 1 >= 0) {
-                return c->blocks[x][y - 1][z];
+                get_block_info(c->blocks[x][y - 1][z], &block_id, NULL);
+                return block_id;
             }
             break;
         case (int)EAST:
             if (x + 1 < CHUNK_SIZE) {
-                return c->blocks[x + 1][y][z];
+                get_block_info(c->blocks[x + 1][y][z], &block_id, NULL);
+                return block_id;
             }
             else if (adj != NULL) {
-                return adj->blocks[0][y][z];
+                get_block_info(adj->blocks[0][y][z], &block_id, NULL);
+                return block_id;
             }
             break;
         case (int)WEST:
             if (x - 1 >= 0) {
-                return c->blocks[x - 1][y][z];
+                get_block_info(c->blocks[x - 1][y][z], &block_id, NULL);
+                return block_id;
             }
             else if (adj != NULL) {
-                return adj->blocks[CHUNK_SIZE - 1][y][z];
+                get_block_info(adj->blocks[CHUNK_SIZE - 1][y][z], &block_id, NULL);
+                return block_id;
             }
             break;
         case (int)NORTH:
             if (z - 1 >= 0) {
-                return c->blocks[x][y][z - 1];
+                get_block_info(c->blocks[x][y][z - 1], &block_id, NULL);
+                return block_id;
             }
             else if (adj != NULL) {
-                return adj->blocks[x][y][CHUNK_SIZE - 1];
+                get_block_info(adj->blocks[x][y][CHUNK_SIZE - 1], &block_id, NULL);
+                return block_id;
             }
             break;
         case (int)SOUTH:
             if (z + 1 < CHUNK_SIZE) {
-                return c->blocks[x][y][z + 1];
+                get_block_info(c->blocks[x][y][z + 1], &block_id, NULL);
+                return block_id;
             }
             else if (adj != NULL) {
-                return adj->blocks[x][y][0];
+                get_block_info(adj->blocks[x][y][0], &block_id, NULL);
+                return block_id;
             }
             break;
         default:
@@ -104,7 +115,8 @@ void get_side_visible(
     // calculate adjacent block
     short adjacent_id = get_adjacent_block(x, y, z, side, c, adj);
 
-    short current_id = c->blocks[x][y][z];
+    short current_id;
+    get_block_info(c->blocks[x][y][z], &current_id, NULL);
     block_type* current = get_block_type(current_id);
 
     // calculate visibility 
@@ -195,7 +207,8 @@ void pack_block(
             *chunk_side_data = tmp;
         }
 
-        short block_id = c->blocks[x][y][z];
+        short block_id = 0;
+        get_block_info(c->blocks[x][y][z], &block_id, NULL);
 
         pack_side(
             world_x, world_y, world_z, 
@@ -214,7 +227,8 @@ void pack_model(
     float** custom_model_data,
     int* num_custom_verts
 ) {
-    short block_id = c->blocks[x][y][z];
+    short block_id = 0;
+    get_block_info(c->blocks[x][y][z], &block_id, NULL);
     block_type* block = get_block_type(block_id);
     if (block == NULL || !block->is_custom_model) {
         return;
@@ -273,11 +287,12 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
-                if (c->blocks[i][k][j] == get_block_id("air")) {
+                short block_id = 0;
+                get_block_info(c->blocks[i][k][j], &block_id, NULL);
+                if (block_id == get_block_id("air")) {
                     continue;
                 }
 
-                short block_id = c->blocks[i][k][j];
                 block_type* block = get_block_type(block_id);
 
                 if (block_id == 20) {

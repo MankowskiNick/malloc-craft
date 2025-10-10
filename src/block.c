@@ -240,15 +240,20 @@ float get_empty_dist(camera cam) {
     chunk_y = (uint)position[1];
     chunk* c = get_chunk_at(position[0], position[2], &chunk_x, &chunk_z);
 
-    while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT 
-        && t <= MAX_REACH && 
-        c->blocks[chunk_x][chunk_y][chunk_z] == get_block_id("air") || c->blocks[chunk_x][chunk_y][chunk_z] == get_block_id("water")) {
+    short block_id, orientation;
+    get_block_info(c->blocks[chunk_x][chunk_y][chunk_z], &block_id, &orientation);
+
+    while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT
+        && t <= MAX_REACH &&
+        block_id == get_block_id("air") || block_id == get_block_id("water")) {
         t += 0.005f;
 
         vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
 
         c = get_chunk_at(pos[0], pos[2], &chunk_x, &chunk_z);
         chunk_y = (uint)pos[1];
+
+        get_block_info(c->blocks[chunk_x][chunk_y][chunk_z], &block_id, &orientation);
     }
 
     return t;
@@ -279,14 +284,13 @@ void break_block(player_instance player) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = get_block_id("air");
+    set_block_info(c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE);
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
     queue_chunk_for_sorting(new_mesh);
 }
 
 short get_block_id(char* block_type) {
-
     for (int i = 0; i < BLOCK_COUNT; i++) {
         if (strcmp(TYPES[i].name, block_type) == 0) {
             return TYPES[i].id;
@@ -328,7 +332,7 @@ void place_block(player_instance player) {
     }
 
     
-    c->blocks[chunk_x][chunk_y][chunk_z] = get_selected_block(player);
+    set_block_info(c, chunk_x, chunk_y, chunk_z, get_selected_block(player), (short)UNKNOWN_SIDE);
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);

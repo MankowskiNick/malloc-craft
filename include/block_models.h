@@ -10,7 +10,7 @@
 #define EAST    3.0f
 #define UP      4.0f
 #define DOWN    5.0f
-#define UNKNOWN_SIDE -1.0f
+#define UNKNOWN_SIDE 6.0f
 
 typedef struct {
     uint id;
