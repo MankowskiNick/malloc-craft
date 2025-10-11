@@ -367,7 +367,7 @@
     "liquid": false,
     "transparent": false,
     "is_foliage": false,
-    "oriented": true,
+    "oriented": false,
     "model": null,
     "face_atlas_coords": [
         [28,31],
