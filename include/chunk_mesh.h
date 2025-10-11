@@ -12,6 +12,7 @@ typedef struct {
     short side;
     short face;
     short underwater;
+    short orientation;
 } side_instance;
 
 typedef struct {

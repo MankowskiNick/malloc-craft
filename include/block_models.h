@@ -4,9 +4,9 @@
 #include <settings.h>
 #include <util.h>
 
-#define SOUTH   0.0f
-#define NORTH   1.0f
-#define WEST    2.0f
+#define NORTH   0.0f
+#define WEST    1.0f
+#define SOUTH   2.0f
 #define EAST    3.0f
 #define UP      4.0f
 #define DOWN    5.0f

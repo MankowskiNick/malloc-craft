@@ -15,17 +15,17 @@ out vec2 TexCoord;
 out vec2 AtlasCoord;
 
 vec3 transformFace(vec3 pos, int face) {
-    if(face == 0) { // front face (+Z)
-        return vec3(pos.x, pos.y, 1.0);
-    } else if(face == 1) { // back face (-Z)
-        return vec3(pos.x, pos.y, 0.0);
-    } else if(face == 2) { // left face (-X)
-        return vec3(0.0, pos.y, pos.x);
-    } else if(face == 3) { // right face (+X)
+    if(face == 1) { // west face (+X)
         return vec3(1.0, pos.y, pos.x);
-    } else if(face == 4) { // top face (+Y)
+    } else if(face == 3) { // east face (-X)
+        return vec3(0.0, pos.y, pos.x);
+    } else if(face == 0) { // north face (-Z)
+        return vec3(pos.x, pos.y, 0.0);
+    } else if(face == 2) { // south face (+Z)
+        return vec3(pos.x, pos.y, 1.0);
+    } else if(face == 4) { // up face (+Y)
         return vec3(pos.x, 1.0, pos.y);
-    } else if(face == 5) { // bottom face (-Y)
+    } else if(face == 5) { // down face (-Y)
         return vec3(pos.x, 0.0, pos.y);
     }
     return pos;

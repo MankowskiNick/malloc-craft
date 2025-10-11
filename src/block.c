@@ -229,39 +229,80 @@ void block_init() {
     free(block_types_json);
 }
 
-float get_empty_dist(camera cam) {
+void get_empty_dist(camera cam, float* out_dist, short* out_side) {
     vec3 position = {cam.position[0], cam.position[1], cam.position[2]};
     vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
     glm_normalize_to(dir, dir);
 
     float t = 0.0f;
 
-    uint chunk_x, chunk_y, chunk_z;
-    chunk_y = (uint)position[1];
+    int chunk_x, chunk_y, chunk_z;
+    chunk_y = (int)position[1];
     chunk* c = get_chunk_at(position[0], position[2], &chunk_x, &chunk_z);
 
-    short block_id, orientation;
-    get_block_info(c->blocks[chunk_x][chunk_y][chunk_z], &block_id, &orientation);
+    short hit = false;
+    short hit_side = (short)UNKNOWN_SIDE;
 
-    while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT
-        && t <= MAX_REACH &&
-        block_id == get_block_id("air") || block_id == get_block_id("water")) {
+    while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT && t <= MAX_REACH) {
         t += 0.005f;
+        short block_id = 0;
+        short orientation = 0;
+        short rot = 0;
+        get_block_info(c->blocks[chunk_x][chunk_y][chunk_z], &block_id, &orientation, &rot);
+
+        if (block_id != get_block_id("air") && block_id != get_block_id("water")) {
+            hit = true;
+
+            // determine which side was hit
+            float x = position[0] + t * dir[0];
+            float y = position[1] + t * dir[1];
+            float z = position[2] + t * dir[2];
+
+            float cx = (float)(chunk_x + (c->x * CHUNK_SIZE));
+            float cy = (float)chunk_y;
+            float cz = (float)(chunk_z + (c->z * CHUNK_SIZE));
+            
+            float x_diff = x - (float)(chunk_x + (c->x * CHUNK_SIZE));
+            float y_diff = y - (float)chunk_y;
+            float z_diff = z - (float)(chunk_z + (c->z * CHUNK_SIZE));
+
+            if (fabs(x_diff) < 0.01f) {
+                hit_side = (short)WEST;
+            }
+            else if (fabs(x_diff - 1.0f) < 0.01f) {
+                hit_side = (short)EAST;
+            }
+            else if (fabs(y_diff) < 0.01f) {
+                hit_side = (short)UP;
+            }
+            else if (fabs(y_diff - 1.0f) < 0.01f) {
+                hit_side = (short)DOWN;
+            }
+            else if (fabs(z_diff) < 0.01f) {
+                hit_side = (short)SOUTH;
+            }
+            else if (fabs(z_diff - 1.0f) < 0.01f) {
+                hit_side = (short)NORTH;
+            }
+
+            break;
+        }
 
         vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
 
         c = get_chunk_at(pos[0], pos[2], &chunk_x, &chunk_z);
         chunk_y = (uint)pos[1];
-
-        get_block_info(c->blocks[chunk_x][chunk_y][chunk_z], &block_id, &orientation);
     }
 
-    return t;
+    *out_dist = t;
+    *out_side = hit ? hit_side : (short)UNKNOWN_SIDE;
 }
 
 void break_block(player_instance player) {
     camera cam = player.cam;
-    float t = get_empty_dist(cam);
+    float t = 0.0f;
+    short hit_side = (short)UNKNOWN_SIDE;
+    get_empty_dist(cam, &t, &hit_side);
     t += RAY_STEP;
 
     if (t > MAX_REACH) {
@@ -274,17 +315,17 @@ void break_block(player_instance player) {
     float y = cam.position[1] + t * dir[1];
     float z = cam.position[2] + t * dir[2];
 
-    uint chunk_x = 0;
-    uint chunk_y = 0;
-    uint chunk_z = 0;
-    chunk_y = (uint)y;
+    int chunk_x = 0;
+    int chunk_y = 0;
+    int chunk_z = 0;
+    chunk_y = (int)y;
     chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
 
     if (chunk_x == -1 || chunk_y == -1 || chunk_z == -1 || c == NULL || chunk_y > CHUNK_HEIGHT - 1 || chunk_y < 0) {
         return;
     }
 
-    set_block_info(c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE);
+    set_block_info(c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0);
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
     queue_chunk_for_sorting(new_mesh);
@@ -308,7 +349,9 @@ short get_selected_block(player_instance player) {
 
 void place_block(player_instance player) {
     camera cam = player.cam;
-    float t = get_empty_dist(cam);
+    float t = 0.0f;
+    short hit_side = (short)UNKNOWN_SIDE;
+    get_empty_dist(cam, &t, &hit_side);
     t -= RAY_STEP;
 
     if (t >= MAX_REACH - RAY_STEP) {
@@ -321,9 +364,9 @@ void place_block(player_instance player) {
     float y = cam.position[1] + t * dir[1];
     float z = cam.position[2] + t * dir[2];
 
-    uint chunk_x = 0;
-    uint chunk_y = 0;
-    uint chunk_z = 0;
+    int chunk_x = 0;
+    int chunk_y = 0;
+    int chunk_z = 0;
     chunk_y = (uint)y;
     chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
 
@@ -331,8 +374,7 @@ void place_block(player_instance player) {
         return;
     }
 
-    
-    set_block_info(c, chunk_x, chunk_y, chunk_z, get_selected_block(player), (short)UNKNOWN_SIDE);
+    set_block_info(c, chunk_x, chunk_y, chunk_z, get_selected_block(player), hit_side, 0); // TODO: calculate rotation here
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);

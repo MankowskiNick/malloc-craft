@@ -30,23 +30,28 @@ int get_block_height(chunk* c, float x, float z, biome* b) {
     return (int)y_;
 }
 
-void set_block_info(chunk* c, int x, int y, int z, short id, short orientation) {
+void set_block_info(chunk* c, int x, int y, int z, short id, short orientation, short rot) {
     short data = 0;
     // first 10 bits are block id
     data = id & 0x3FF;
     // next 3 bits are orientation
     data |= (orientation & 0x7) << 10;
-    // 3 free bits
+
+    // next 2 bits are rotation
+    data |= (rot & 0x3) << 13;
 
     c->blocks[x][y][z] = data;
 }
 
-void get_block_info(short data, short* id, short* orientation) {
+void get_block_info(short data, short* id, short* orientation, short* rot) {
     if (id != NULL) {
         *id = data & 0x3FF;
     }
     if (orientation != NULL) {
         *orientation = (data >> 10) & 0x7;
+    }
+    if (rot != NULL) {
+        *rot = (data >> 13) & 0x3;
     }
 }
 
@@ -62,25 +67,25 @@ void generate_blocks(chunk* c, int x, int z) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 if (k > y) {
                     if (k > WORLDGEN_WATER_LEVEL) {
-                        set_block_info(c, i, k, j, get_block_id("air"), (short)UNKNOWN_SIDE);
+                        set_block_info(c, i, k, j, get_block_id("air"), (short)UNKNOWN_SIDE, 0);
                     }
                     else {
-                        set_block_info(c, i, k, j, get_block_id("water"), (short)UNKNOWN_SIDE);
+                        set_block_info(c, i, k, j, get_block_id("water"), (short)UP, 0);
                     }
                 }
                 else if (k == y) {
                     if (k < WORLDGEN_WATER_LEVEL) {
-                        set_block_info(c, i, k, j, get_block_id(b->underwater_type), (short)UNKNOWN_SIDE);
+                        set_block_info(c, i, k, j, get_block_id(b->underwater_type), (short)UP, 0);
                     }
                     else {
-                        set_block_info(c, i, k, j, get_block_id(b->surface_type), (short)UNKNOWN_SIDE);
+                        set_block_info(c, i, k, j, get_block_id(b->surface_type), (short)UP, 0);
                     }
                 }
                 else if (k > y - 3) {
-                    set_block_info(c, i, k, j, get_block_id(b->subsurface_type), (short)UNKNOWN_SIDE);
+                    set_block_info(c, i, k, j, get_block_id(b->subsurface_type), (short)UP, 0);
                 }
                 else {
-                    set_block_info(c, i, k, j, get_block_id(b->underground_type), (short)UNKNOWN_SIDE);
+                    set_block_info(c, i, k, j, get_block_id(b->underground_type), (short)UP, 0);
                 }
             }
         }
