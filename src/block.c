@@ -19,42 +19,6 @@ void cache_model(char* model) {
     }
 }
 
-void parse_allowed_orientations(block_type* block, json_object orientations_obj) {
-    for (int j = 0; j < orientations_obj.value.list.count && j < 6; j++) {
-        json_object orientation_obj = orientations_obj.value.list.items[j];
-        if (orientation_obj.type != JSON_STRING) {
-            fprintf(stderr, "Block type %s has invalid orientation for model %d\n", block->name, j);
-            continue;
-        }
-
-        const char* orientation = orientation_obj.value.string;
-
-        switch(orientation[0]) {
-            case 's': // south
-                block->orientations[(int)SOUTH] = true;
-                break;
-            case 'n': // north
-                block->orientations[(int)NORTH] = true;
-                break;
-            case 'w': // west
-                block->orientations[(int)WEST] = true;
-                break;
-            case 'e': // east
-                block->orientations[(int)EAST] = true;
-                break;
-            case 'u': // up
-                block->orientations[(int)UP] = true;
-                break;
-            case 'd': // down
-                block->orientations[(int)DOWN] = true;
-                break;
-            default:
-                fprintf(stderr, "Block type %s has unknown orientation '%s' for model %d\n", block->name, orientation, j);
-                break;
-        }
-    }
-}
-
 void copy_orientation_model(block_type* block, int orientation, json_object obj) {
     if (orientation < 0 || orientation >= 6) {
         fprintf(stderr, "Invalid orientation index %d for block type %s\n", orientation, block->name);
@@ -135,7 +99,7 @@ void map_json_to_types(json block_types) {
         json_object is_foliage_obj = json_get_property(obj, "is_foliage");
         json_object model_obj = json_get_property(obj, "model");
         json_object models_obj = json_get_property(obj, "models");
-        json_object orientations_obj = json_get_property(obj, "orientations");
+        json_object oriented_obj = json_get_property(obj, "oriented");
 
         if (id_obj.type != JSON_NUMBER 
             || name_obj.type != JSON_STRING 
@@ -145,7 +109,7 @@ void map_json_to_types(json block_types) {
             || is_foliage_obj.type != JSON_BOOL 
             || (model_obj.type != JSON_STRING && model_obj.type != JSON_NULL)
             || (models_obj.type != JSON_OBJECT && models_obj.type != JSON_NULL)
-            || (orientations_obj.type != JSON_LIST && orientations_obj.type != JSON_NULL)) {
+            || oriented_obj.type != JSON_BOOL) {
             fprintf(stderr, "Block type %d has invalid properties\n", i);
             continue;
         }
@@ -163,13 +127,11 @@ void map_json_to_types(json block_types) {
         block->is_foliage = is_foliage_obj.value.boolean;
         block->model = model_obj.type == JSON_STRING ? strdup(model_obj.value.string) : NULL;
         block->is_custom_model = block->model != NULL ? 1 : 0;
+        block->oriented = oriented_obj.value.boolean ? 1 : 0;
 
         for (int j = 0; j < 6; j++) {
             block->models[j] = NULL;
-            block->orientations[j] = false;
         }
-
-        parse_allowed_orientations(block, orientations_obj);
         
         
         if (block->model) {

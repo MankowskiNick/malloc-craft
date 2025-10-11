@@ -8,13 +8,13 @@
     },
     "hotbar": [
         "torch",
-        "sunflower",
+        "orientation_test",
         "rose",
         "weezer",
         "oak_log",
+        "grass",
+        "dirt",
         "stone",
-        "oak_log",
-        "oak_planks",
         "glass",
         "cactus"
     ]

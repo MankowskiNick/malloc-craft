@@ -70,7 +70,7 @@ void generate_blocks(chunk* c, int x, int z) {
                         set_block_info(c, i, k, j, get_block_id("air"), (short)UNKNOWN_SIDE, 0);
                     }
                     else {
-                        set_block_info(c, i, k, j, get_block_id("water"), (short)UP, 0);
+                        set_block_info(c, i, k, j, get_block_id("water"), (short)DOWN, 0);
                     }
                 }
                 else if (k == y) {

@@ -19,7 +19,7 @@ typedef struct {
     int liquid;
     int is_foliage;
     int is_custom_model;
-    int orientations[6];
+    int oriented;
     char* model;
     char* models[6];
     short face_atlas_coords[6][2];

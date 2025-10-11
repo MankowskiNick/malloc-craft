@@ -6,6 +6,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
       [-1, -1],
       [-1, -1],
@@ -22,6 +23,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
       [1, 0],
       [1, 0],
@@ -38,6 +40,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
       [2, 0],
       [2, 0],
@@ -54,6 +57,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
       [3, 0],
       [3, 0],
@@ -70,6 +74,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": true,
     "face_atlas_coords": [
       [4, 0],
       [4, 0],
@@ -86,6 +91,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": true,
     "orientations": [
         "north",
         "south",
@@ -108,6 +114,7 @@
     "transparent": true,
     "is_foliage": false,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
       [9, 0],
       [9, 0],
@@ -124,6 +131,7 @@
     "transparent": true,
     "is_foliage": false,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
       [10, 0],
       [10, 0],
@@ -140,6 +148,7 @@
     "transparent": true,
     "is_foliage": false,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
       [11, 0],
       [11, 0],
@@ -156,6 +165,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
       [6, 0],
       [6, 0],
@@ -172,6 +182,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": true,
     "face_atlas_coords": [
       [12, 0],
       [12, 0],
@@ -188,6 +199,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": true,
     "face_atlas_coords": [
       [12, 0],
       [12, 0],
@@ -204,6 +216,7 @@
     "transparent": false,
     "is_foliage": false,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
       [16, 0],
       [16, 0],
@@ -220,6 +233,7 @@
     "transparent": true,
     "is_foliage": true,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
         [17,  0],
         [17,  0],
@@ -236,6 +250,7 @@
     "transparent": true,
     "is_foliage": true,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
         [18,  0],
         [18,  0],
@@ -252,6 +267,7 @@
     "transparent": true,
     "is_foliage": true,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
         [19,  0],
         [19,  0],
@@ -268,6 +284,7 @@
     "transparent": true,
     "is_foliage": true,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
         [20,  0],
         [20,  0],
@@ -284,6 +301,7 @@
     "transparent": true,
     "is_foliage": true,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
         [21,  0],
         [21,  0],
@@ -300,6 +318,7 @@
     "transparent": true,
     "is_foliage": true,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
         [22, 0],
         [22, 0],
@@ -316,6 +335,7 @@
     "transparent": true,
     "is_foliage": true,
     "model": null,
+    "oriented": false,
     "face_atlas_coords": [
         [23, 0],
         [23, 0],
@@ -331,6 +351,7 @@
     "liquid": false,
     "transparent": false,
     "is_foliage": false,
+    "oriented": false,
     "model": "blockbench/torch_side.json",
     "models": {
         "north": "blockbench/torch_side.json",
@@ -338,12 +359,23 @@
         "east": "blockbench/torch_side.json",
         "west": "blockbench/torch_side.json"
     },
-    "orientations": [
-        "north",
-        "south",
-        "east",
-        "west"
-    ],
     "face_atlas_coords": []
+  },
+  {
+    "id": 21,
+    "name": "orientation_test",
+    "liquid": false,
+    "transparent": false,
+    "is_foliage": false,
+    "oriented": true,
+    "model": null,
+    "face_atlas_coords": [
+        [28,31],
+        [30,31],
+        [29,31],
+        [31,31],
+        [26,31],
+        [27,31]
+    ]
   }
 ]

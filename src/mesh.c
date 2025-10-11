@@ -278,23 +278,20 @@ void pack_side(int x_0, int y_0, int z_0, short side, short orientation, short r
     data->z = z_0;
     data->side = side;
     data->underwater = (short)underwater;
+
+    // block specific data
     block_type* block = get_block_type(type);
+    data->orientation = block->oriented ? orientation : (short)DOWN;
 
     short display_side = side;
-
-    if (block->is_custom_model || block->is_foliage) {
-        display_side = side; // dont rotate custom models
-    }
-    else {
+    if (!block->is_custom_model && !block->is_foliage && block->oriented) {
         display_side = get_converted_side(
             get_rotated_side(side, rot), 
             orientation
         );
     }
-
     data->atlas_x = block->face_atlas_coords[display_side][0];
     data->atlas_y = block->face_atlas_coords[display_side][1];
-    data->orientation = orientation;
 }
 
 void pack_block(
