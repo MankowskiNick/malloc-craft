@@ -75,17 +75,17 @@ void generate_blocks(chunk* c, int x, int z) {
                 }
                 else if (k == y) {
                     if (k < WORLDGEN_WATER_LEVEL) {
-                        set_block_info(c, i, k, j, get_block_id(b->underwater_type), (short)UP, 0);
+                        set_block_info(c, i, k, j, get_block_id(b->underwater_type), (short)DOWN, 0);
                     }
                     else {
-                        set_block_info(c, i, k, j, get_block_id(b->surface_type), (short)UP, 0);
+                        set_block_info(c, i, k, j, get_block_id(b->surface_type), (short)DOWN, 0);
                     }
                 }
                 else if (k > y - 3) {
-                    set_block_info(c, i, k, j, get_block_id(b->subsurface_type), (short)UP, 0);
+                    set_block_info(c, i, k, j, get_block_id(b->subsurface_type), (short)DOWN, 0);
                 }
                 else {
-                    set_block_info(c, i, k, j, get_block_id(b->underground_type), (short)UP, 0);
+                    set_block_info(c, i, k, j, get_block_id(b->underground_type), (short)DOWN, 0);
                 }
             }
         }

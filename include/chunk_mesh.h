@@ -4,7 +4,7 @@
 #include <camera.h>
 #include <player_instance.h>
 
-#define VBO_WIDTH 7
+#define VBO_WIDTH 8
 
 typedef struct {
     int x, y, z;

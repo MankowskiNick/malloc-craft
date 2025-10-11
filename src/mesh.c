@@ -187,9 +187,9 @@ short get_converted_side(int side, short orientation) {
 
     switch(orientation) {
 
-        // up is default
+        // down is default
 
-        case (short)DOWN:
+        case (short)UP:
             if (side == (short)UP) {
                 new_side = (short)DOWN;
             }

@@ -5,6 +5,7 @@ layout (location = 1) in ivec3 aInstancePos;
 layout (location = 2) in ivec2 aAtlasCoord;
 layout (location = 3) in int aSide;
 layout (location = 4) in int aUnderwater;
+layout (location = 5) in int aOrientation;
 
 out vec2 texCoord;
 out float y;
@@ -35,6 +36,37 @@ vec3 transformFace(vec3 pos, int face) {
     return pos;
 }
 
+vec2 transformUV(vec2 uv, int side, int orientation) {
+    switch(orientation) {
+        case 0:
+            if (side == 1 || side == 3) {
+                return vec2(uv.y, uv.x);
+            }
+            return uv;
+        case 1:
+            if (side == 0 || side == 2 || side == 4 || side == 5) {
+                return vec2(1.0 - uv.y, 1.0 - uv.x);
+            }
+            return uv;
+        case 2:
+            if (side == 1 || side == 3) {
+                return vec2(uv.y, 1.0 - uv.x);
+            }
+            return vec2(1.0 - uv.x, 1.0 - uv.y);
+        case 3:
+            if (side == 0 || side == 2 || side == 4 || side == 5) {
+                return vec2(uv.y, uv.x);
+            }
+            return uv;
+        case 4:
+            if (side < 4) {
+                return vec2(uv.x, 1.0 - uv.y);
+            }
+        default:
+            return uv;
+    }
+}
+
 vec3 getNormal(vec3 pos, int face) {
     if (face == 1) {
         return vec3(0.0, 0.0, 1.0);
@@ -58,7 +90,7 @@ void main() {
 
     gl_Position = proj * view * vec4(worldPos, 1.0);
 
-    texCoord = vec2(aPos.x, aPos.y);
+    texCoord = transformUV(aPos.xy, aSide, aOrientation);
     atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
 
     // offset water level for waves
