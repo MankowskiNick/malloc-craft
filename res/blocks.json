@@ -351,8 +351,8 @@
     "liquid": false,
     "transparent": false,
     "is_foliage": false,
-    "oriented": false,
-    "model": "blockbench/torch_side.json",
+    "oriented": true,
+    "model": "blockbench/torch.json",
     "models": {
         "north": "blockbench/torch_side.json",
         "south": "blockbench/torch_side.json",
@@ -360,22 +360,5 @@
         "west": "blockbench/torch_side.json"
     },
     "face_atlas_coords": []
-  },
-  {
-    "id": 21,
-    "name": "orientation_test",
-    "liquid": false,
-    "transparent": false,
-    "is_foliage": false,
-    "oriented": false,
-    "model": null,
-    "face_atlas_coords": [
-        [28,31],
-        [30,31],
-        [29,31],
-        [31,31],
-        [26,31],
-        [27,31]
-    ]
   }
 ]

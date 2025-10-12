@@ -33,7 +33,6 @@ void copy_orientation_model(block_type* block, int orientation, json_object obj)
         free(block->models[orientation]);
     }
     block->models[orientation] = strdup(obj.value.string);
-    block->is_custom_model = true;
     cache_model(block->models[orientation]);
 }
 
@@ -59,6 +58,13 @@ void parse_model_orientations(block_type* block, json_object models_obj) {
             || (down_obj.type != JSON_STRING && down_obj.type != JSON_NULL)) {
         fprintf(stderr, "Block type %s has invalid model or face_atlas_coords\n", block->name);
         return;
+    }
+
+    // Default to the main model if any orientation is missing
+    for (int i = 0; i < 6; i++) {
+        if (!block->models[i]) {
+            block->models[i] = strdup(block->model);
+        }
     }
 
     copy_orientation_model(block, (int)NORTH, north_obj);

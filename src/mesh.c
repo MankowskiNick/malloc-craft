@@ -272,6 +272,37 @@ short get_converted_side(int side, short orientation) {
     return new_side;
 }
 
+void get_model_transformation(mat4 transform, block_type* block, short orientation, short rot) {
+    // get orientation and rotation info
+    glm_mat4_identity(transform);
+    glm_translate(transform, (vec3){0.5f, 0.5f, 0.5f}); // translate to center of block for rotation
+    if (block->oriented) {
+        switch(orientation) {
+            case (short)UP:
+                glm_rotate(transform, (float)(M_PI), (vec3){1.0f, 0.0f, 0.0f});
+                break;
+            case (short)NORTH:
+                // glm_rotate(transform, (float)(-M_PI / 2.0), (vec3){1.0f, 0.0f, 0.0f});
+                break;
+            case (short)SOUTH:
+                glm_rotate(transform, (float)(M_PI), (vec3){0.0f, 1.0f, 0.0f});
+                break;
+            case (short)EAST:
+                glm_rotate(transform, (float)(M_PI / 2.0), (vec3){0.0f, 1.0f, 0.0f});
+                break;
+            case (short)WEST:
+                glm_rotate(transform, (float)(-M_PI / 2.0), (vec3){0.0f, 1.0f, 0.0f});
+                break;
+            default:
+                break;
+        }
+    }
+    else {
+        glm_rotate(transform, (float)(rot * (M_PI / 2.0)), (vec3){0.0f, 1.0f, 0.0f});
+    }
+    glm_translate(transform, (vec3){-0.5f, -0.5f, -0.5f}); // translate back
+}
+
 void pack_side(int x_0, int y_0, int z_0, short side, short orientation, short rot, short type, uint underwater, side_instance* data) {
     data->x = x_0;
     data->y = y_0;
@@ -349,14 +380,24 @@ void pack_model(
     int* num_custom_verts
 ) {
     short block_id = 0;
-    get_block_info(c->blocks[x][y][z], &block_id, NULL, NULL);
+    short orientation = 0;
+    short rot = 0;
+    get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot);
     block_type* block = get_block_type(block_id);
-    if (block == NULL || !block->is_custom_model) {
+    if (block == NULL || !block->is_custom_model || block->model == NULL) {
         return;
     }
 
     // reference blockbench model data hashmap based on model name
-    blockbench_model* model = get_blockbench_model(block->model);
+    blockbench_model* model = NULL;
+
+    if (block->oriented) {
+        model = get_blockbench_model(block->models[orientation]);
+    }
+    else {
+        model = get_blockbench_model(block->model);
+    }
+
     if (model == NULL) {
         return;
     }
@@ -368,6 +409,9 @@ void pack_model(
         *custom_model_data = tmp;
     }
 
+    mat4 transformation;
+    get_model_transformation(transformation, block, orientation, rot);
+
     // copy model data into chunk mesh data
     for (int i = 0; i < model->index_count; i++) {
         int dest_idx = (*num_custom_verts + i) * FLOATS_PER_MODEL_VERT;
@@ -377,15 +421,23 @@ void pack_model(
         float dest_z = (float)z + (float)(c->z * CHUNK_SIZE);
         blockbench_vertex vert = model->vertices[model->indices[i]];
 
+        // apply transformation
+        vec4 pos = {vert.position[0], vert.position[1], vert.position[2], 1.0f};
+        vec4 normals = {vert.normal[0], vert.normal[1], vert.normal[2], 0.0f};
+        
+        vec4 transformed_vert, transformed_normals;
+        glm_mat4_mulv(transformation, pos, transformed_vert);
+        glm_mat4_mulv(transformation, normals, transformed_normals);
+
         // position
-        (*custom_model_data)[dest_idx + 0] = dest_x + vert.position[0];
-        (*custom_model_data)[dest_idx + 1] = dest_y + vert.position[1];
-        (*custom_model_data)[dest_idx + 2] = dest_z + vert.position[2];
+        (*custom_model_data)[dest_idx + 0] = dest_x + transformed_vert[0];
+        (*custom_model_data)[dest_idx + 1] = dest_y + transformed_vert[1];
+        (*custom_model_data)[dest_idx + 2] = dest_z + transformed_vert[2];
 
         // normal
-        (*custom_model_data)[dest_idx + 3] = vert.normal[0];
-        (*custom_model_data)[dest_idx + 4] = vert.normal[1];
-        (*custom_model_data)[dest_idx + 5] = vert.normal[2];
+        (*custom_model_data)[dest_idx + 3] = transformed_normals[0];
+        (*custom_model_data)[dest_idx + 4] = transformed_normals[1];
+        (*custom_model_data)[dest_idx + 5] = transformed_normals[2];
 
         // uv
         (*custom_model_data)[dest_idx + 6] = vert.uv[0];
