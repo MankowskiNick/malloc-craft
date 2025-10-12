@@ -7,14 +7,14 @@
         "pitch": 0.0
     },
     "hotbar": [
-        "long_grass",
-        "sunflower",
+        "torch",
+        "orientation_test",
         "rose",
         "weezer",
         "oak_log",
+        "grass",
+        "dirt",
         "stone",
-        "oak_log",
-        "oak_planks",
         "glass",
         "cactus"
     ]

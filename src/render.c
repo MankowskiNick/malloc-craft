@@ -1,6 +1,7 @@
 #include <render.h>
 
 #include <block_renderer.h>
+#include <blockbench_renderer.h>
 #include <liquid_renderer.h>
 #include <foliage_renderer.h>
 #include <skybox.h>
@@ -43,6 +44,7 @@ renderer create_renderer(camera* camera) {
     block_renderer wr = create_block_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     block_renderer fr = create_foliage_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
+    blockbench_renderer br = create_blockbench_renderer(camera, ATLAS_PATH, BUMP_PATH);
 
     skybox sky = create_skybox(camera);
     sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
@@ -53,6 +55,7 @@ renderer create_renderer(camera* camera) {
         .wr = wr,
         .lr = lr,
         .fr = fr,
+        .br = br,
         .sky = sky,
         .s = s,
         .cam_cache = {
@@ -70,6 +73,7 @@ renderer create_renderer(camera* camera) {
 void destroy_renderer(renderer* r) {
     destroy_block_renderer(r->wr);
     destroy_block_renderer(r->lr);
+    destroy_blockbench_renderer(r->br);
     skybox_cleanup(&(r->sky));
 }
 
@@ -104,4 +108,5 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
     render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
     render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
     render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
+    render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
 }

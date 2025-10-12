@@ -4,7 +4,7 @@
 #include <camera.h>
 #include <player_instance.h>
 
-#define VBO_WIDTH 7
+#define VBO_WIDTH 8
 
 typedef struct {
     int x, y, z;
@@ -12,6 +12,7 @@ typedef struct {
     short side;
     short face;
     short underwater;
+    short orientation;
 } side_instance;
 
 typedef struct {
@@ -20,10 +21,12 @@ typedef struct {
     side_instance* liquid_sides;
     side_instance* transparent_sides;
     side_instance* foliage_sides;
+    float* custom_model_data;
     int num_opaque_sides;
     int num_transparent_sides;
     int num_liquid_sides;
     int num_foliage_sides;
+    int num_custom_verts;
 } chunk_mesh;
 
 typedef struct {
@@ -31,11 +34,13 @@ typedef struct {
     int num_transparent_sides;
     int num_liquid_sides;
     int num_foliage_sides;
+    int num_custom_verts;
 
     int* transparent_data;
     int* opaque_data;
     int* liquid_data;
     int* foliage_data;
+    float* custom_model_data;
 } world_mesh;
 
 typedef struct {
@@ -52,6 +57,7 @@ typedef struct {
 void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);
 void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides);
+void custom_vert_to_buffer(float* head, float* custom_verts, int num_custom_verts);
 void sort_transparent_sides(chunk_mesh* packet);
 void get_chunk_meshes(game_data* args);
 void start_chunk_mesh_updater(game_data* args);

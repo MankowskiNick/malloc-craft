@@ -170,7 +170,7 @@ void generate_tree(int x, int y, int z, char* id, chunk* c) {
     
     // trunk
     for (int i = 0; i < height; i++) {
-        c->blocks[x][y + i][z] = get_block_id(t->trunk_type);
+        set_block_info(c, x, y + i, z, get_block_id(t->trunk_type), (short)DOWN, 0);
     }
 
     // leaves
@@ -186,8 +186,10 @@ void generate_tree(int x, int y, int z, char* id, chunk* c) {
             int lx = x + l.coords[j][0];
             int ly = y + height + l.coords[j][1];
             int lz = z + l.coords[j][2];
-            if (c->blocks[lx][ly][lz] == get_block_id("air")) {
-                c->blocks[x + l.coords[j][0]][y + height + l.coords[j][1]][z + l.coords[j][2]] = get_block_id(l.block);
+            short block_id;
+            get_block_info(c->blocks[lx][ly][lz], &block_id, NULL, NULL);
+            if (block_id == get_block_id("air")) {
+                set_block_info(c, lx, ly, lz, get_block_id(l.block), (short)DOWN, 0);
             }
         }
     }

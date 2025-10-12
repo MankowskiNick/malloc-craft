@@ -7,9 +7,73 @@
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 #include <cerialize/cerialize.h>
+#include <blockbench_loader.h>
 
 block_type* TYPES;
 int BLOCK_COUNT = 0;
+
+void cache_model(char* model) {
+    blockbench_model* m = get_blockbench_model(model);
+    if (!m) {
+        fprintf(stderr, "Failed to load Blockbench model: %s\n", model);
+    }
+}
+
+void copy_orientation_model(block_type* block, int orientation, json_object obj) {
+    if (orientation < 0 || orientation >= 6) {
+        fprintf(stderr, "Invalid orientation index %d for block type %s\n", orientation, block->name);
+        return;
+    }
+
+    if (obj.type == JSON_NULL) {
+        return;
+    }
+
+    if (block->models[orientation]) {
+        free(block->models[orientation]);
+    }
+    block->models[orientation] = strdup(obj.value.string);
+    cache_model(block->models[orientation]);
+}
+
+void parse_model_orientations(block_type* block, json_object models_obj) {
+
+    if (models_obj.type != JSON_OBJECT) {
+        fprintf(stderr, "Block type %s has invalid models object\n", block->name);
+        return;
+    }
+
+    json_object north_obj = json_get_property(models_obj, "north");
+    json_object south_obj = json_get_property(models_obj, "south");
+    json_object east_obj = json_get_property(models_obj, "east");
+    json_object west_obj = json_get_property(models_obj, "west");
+    json_object up_obj = json_get_property(models_obj, "up");
+    json_object down_obj = json_get_property(models_obj, "down");
+
+    if ((north_obj.type != JSON_STRING && north_obj.type != JSON_NULL)
+            || (south_obj.type != JSON_STRING && south_obj.type != JSON_NULL)
+            || (east_obj.type != JSON_STRING && east_obj.type != JSON_NULL)
+            || (west_obj.type != JSON_STRING && west_obj.type != JSON_NULL)
+            || (up_obj.type != JSON_STRING && up_obj.type != JSON_NULL)
+            || (down_obj.type != JSON_STRING && down_obj.type != JSON_NULL)) {
+        fprintf(stderr, "Block type %s has invalid model or face_atlas_coords\n", block->name);
+        return;
+    }
+
+    // Default to the main model if any orientation is missing
+    for (int i = 0; i < 6; i++) {
+        if (!block->models[i]) {
+            block->models[i] = strdup(block->model);
+        }
+    }
+
+    copy_orientation_model(block, (int)NORTH, north_obj);
+    copy_orientation_model(block, (int)SOUTH, south_obj);
+    copy_orientation_model(block, (int)EAST, east_obj);
+    copy_orientation_model(block, (int)WEST, west_obj);
+    copy_orientation_model(block, (int)UP, up_obj);
+    copy_orientation_model(block, (int)DOWN, down_obj);
+}
 
 void map_json_to_types(json block_types) {
 
@@ -39,29 +103,59 @@ void map_json_to_types(json block_types) {
         json_object liquid_obj = json_get_property(obj, "liquid");
         json_object face_atlas_coords_obj = json_get_property(obj, "face_atlas_coords");
         json_object is_foliage_obj = json_get_property(obj, "is_foliage");
+        json_object model_obj = json_get_property(obj, "model");
+        json_object models_obj = json_get_property(obj, "models");
+        json_object oriented_obj = json_get_property(obj, "oriented");
 
-        if (id_obj.type != JSON_NUMBER && name_obj.type != JSON_STRING && 
-            transparent_obj.type != JSON_BOOL && liquid_obj.type != JSON_BOOL && 
-            face_atlas_coords_obj.type != JSON_LIST && is_foliage_obj.type != JSON_BOOL) {
+        if (id_obj.type != JSON_NUMBER 
+            || name_obj.type != JSON_STRING 
+            || transparent_obj.type != JSON_BOOL 
+            || liquid_obj.type != JSON_BOOL 
+            || face_atlas_coords_obj.type != JSON_LIST 
+            || is_foliage_obj.type != JSON_BOOL 
+            || (model_obj.type != JSON_STRING && model_obj.type != JSON_NULL)
+            || (models_obj.type != JSON_OBJECT && models_obj.type != JSON_NULL)
+            || oriented_obj.type != JSON_BOOL) {
             fprintf(stderr, "Block type %d has invalid properties\n", i);
             continue;
         }
 
-        TYPES[i].id = (uint)id_obj.value.number;
-        TYPES[i].name = strdup(name_obj.value.string);
-        TYPES[i].transparent = transparent_obj.value.boolean;
-        TYPES[i].liquid = liquid_obj.value.boolean;
-        TYPES[i].is_foliage = is_foliage_obj.value.boolean;
-        block_type* type = &TYPES[i];
-        
+        if (model_obj.type != JSON_STRING && face_atlas_coords_obj.value.list.count != 6) {
+            fprintf(stderr, "Block type %d has invalid model or face_atlas_coords\n", i);
+            continue;
+        }
+
+        block_type* block = &TYPES[i];
+        block->id = (uint)id_obj.value.number;
+        block->name = strdup(name_obj.value.string);
+        block->transparent = transparent_obj.value.boolean;
+        block->liquid = liquid_obj.value.boolean;
+        block->is_foliage = is_foliage_obj.value.boolean;
+        block->model = model_obj.type == JSON_STRING ? strdup(model_obj.value.string) : NULL;
+        block->is_custom_model = block->model != NULL ? 1 : 0;
+        block->oriented = oriented_obj.value.boolean ? 1 : 0;
+
         for (int j = 0; j < 6; j++) {
-            json_object face_coord_obj = face_atlas_coords_obj.value.list.items[j];
-            if (face_coord_obj.type != JSON_LIST || face_coord_obj.value.list.count != 2) {
-                fprintf(stderr, "Block type %d has invalid face_atlas_coords\n", i);
-                continue;
+            block->models[j] = NULL;
+        }
+        
+        
+        if (block->model) {
+            cache_model(block->model);
+            if (models_obj.type == JSON_OBJECT) {
+                parse_model_orientations(block, models_obj);
             }
-            TYPES[i].face_atlas_coords[j][0] = (uint)face_coord_obj.value.list.items[0].value.number;
-            TYPES[i].face_atlas_coords[j][1] = (uint)face_coord_obj.value.list.items[1].value.number;
+        }
+        else {
+            for (int j = 0; j < 6; j++) {
+                json_object face_coord_obj = face_atlas_coords_obj.value.list.items[j];
+                if (face_coord_obj.type != JSON_LIST || face_coord_obj.value.list.count != 2) {
+                    fprintf(stderr, "Block type %d has invalid face_atlas_coords\n", i);
+                    continue;
+                }
+                TYPES[i].face_atlas_coords[j][0] = (uint)face_coord_obj.value.list.items[0].value.number;
+                TYPES[i].face_atlas_coords[j][1] = (uint)face_coord_obj.value.list.items[1].value.number;
+            }
         }
     }
 }
@@ -103,34 +197,111 @@ void block_init() {
     free(block_types_json);
 }
 
-float get_empty_dist(camera cam) {
+short calculate_hit_side(vec3 position, vec3 dir, float t, int chunk_x, int chunk_y, int chunk_z, chunk* c) {
+    // determine which side was hit
+    float x = position[0] + t * dir[0];
+    float y = position[1] + t * dir[1];
+    float z = position[2] + t * dir[2];
+    
+    float cx = (float)(chunk_x + (c->x * CHUNK_SIZE));
+    float cy = (float)chunk_y;
+    float cz = (float)(chunk_z + (c->z * CHUNK_SIZE));
+    
+    float x_diff = x - (float)(chunk_x + (c->x * CHUNK_SIZE));
+    float y_diff = y - (float)chunk_y;
+    float z_diff = z - (float)(chunk_z + (c->z * CHUNK_SIZE));
+    
+    if (fabs(x_diff) < 0.01f) {
+        return (short)WEST;
+    }
+    else if (fabs(x_diff - 1.0f) < 0.01f) {
+        return (short)EAST;
+    }
+    else if (fabs(y_diff) < 0.01f) {
+        return (short)UP;
+    }
+    else if (fabs(y_diff - 1.0f) < 0.01f) {
+        return (short)DOWN;
+    }
+    else if (fabs(z_diff) < 0.01f) {
+        return (short)SOUTH;
+    }
+    else if (fabs(z_diff - 1.0f) < 0.01f) {
+        return (short)NORTH;
+    }
+    return (short)UNKNOWN_SIDE;
+};
+
+short calculate_rot(float dx, float dz) {
+    if (dz >= dx) {
+        if (dx >= -dz) {
+            return (short)EAST;
+        }
+        else {
+            return (short)NORTH;
+        }
+    }
+    else {
+        if (dx >= -dz) {
+            return (short)SOUTH;
+        }
+        else {
+            return (short)WEST;
+        }
+    }
+    return (short)UNKNOWN_SIDE;
+}
+
+void get_empty_dist(camera cam, float* out_dist, short* out_side, short* out_rot) {
     vec3 position = {cam.position[0], cam.position[1], cam.position[2]};
     vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
     glm_normalize_to(dir, dir);
 
     float t = 0.0f;
+    int chunk_x = 0;
+    int chunk_y = (int)position[1];
+    int chunk_z = 0;
 
-    uint chunk_x, chunk_y, chunk_z;
-    chunk_y = (uint)position[1];
     chunk* c = get_chunk_at(position[0], position[2], &chunk_x, &chunk_z);
 
-    while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT 
-        && t <= MAX_REACH && 
-        c->blocks[chunk_x][chunk_y][chunk_z] == get_block_id("air") || c->blocks[chunk_x][chunk_y][chunk_z] == get_block_id("water")) {
+    short hit = false;
+    short hit_side = (short)UNKNOWN_SIDE;
+    short rot = 0;
+
+    while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT && t <= MAX_REACH && !hit) {
+        short block_id = 0;
+        short orientation = 0;
+        get_block_info(c->blocks[chunk_x][chunk_y][chunk_z], &block_id, &orientation, &rot);
+
+        if (block_id != get_block_id("air") && block_id != get_block_id("water")) {
+            hit = true;
+            hit_side = calculate_hit_side(position, dir, t, chunk_x, chunk_y, chunk_z, c);
+            rot = calculate_rot(-dir[2], -dir[0]);
+        }
+
         t += 0.005f;
-
         vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
-
         c = get_chunk_at(pos[0], pos[2], &chunk_x, &chunk_z);
         chunk_y = (uint)pos[1];
     }
 
-    return t;
+    if (out_dist) {
+        *out_dist = t;
+    }
+    if (out_side) {
+        *out_side = hit ? hit_side : (short)UNKNOWN_SIDE;
+    }
+    if (out_rot) {
+        *out_rot = rot;
+    }
 }
 
 void break_block(player_instance player) {
     camera cam = player.cam;
-    float t = get_empty_dist(cam);
+    float t = 0.0f;
+    short hit_side = (short)UNKNOWN_SIDE;
+    short rot = 0;
+    get_empty_dist(cam, &t, &hit_side, &rot);
     t += RAY_STEP;
 
     if (t > MAX_REACH) {
@@ -143,24 +314,23 @@ void break_block(player_instance player) {
     float y = cam.position[1] + t * dir[1];
     float z = cam.position[2] + t * dir[2];
 
-    uint chunk_x = 0;
-    uint chunk_y = 0;
-    uint chunk_z = 0;
-    chunk_y = (uint)y;
+    int chunk_x = 0;
+    int chunk_y = 0;
+    int chunk_z = 0;
+    chunk_y = (int)y;
     chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
 
     if (chunk_x == -1 || chunk_y == -1 || chunk_z == -1 || c == NULL || chunk_y > CHUNK_HEIGHT - 1 || chunk_y < 0) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = get_block_id("air");
+    set_block_info(c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0);
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
     queue_chunk_for_sorting(new_mesh);
 }
 
 short get_block_id(char* block_type) {
-
     for (int i = 0; i < BLOCK_COUNT; i++) {
         if (strcmp(TYPES[i].name, block_type) == 0) {
             return TYPES[i].id;
@@ -178,7 +348,10 @@ short get_selected_block(player_instance player) {
 
 void place_block(player_instance player) {
     camera cam = player.cam;
-    float t = get_empty_dist(cam);
+    float t = 0.0f;
+    short hit_side = (short)UNKNOWN_SIDE;
+    short rot = 0;
+    get_empty_dist(cam, &t, &hit_side, &rot);
     t -= RAY_STEP;
 
     if (t >= MAX_REACH - RAY_STEP) {
@@ -191,9 +364,9 @@ void place_block(player_instance player) {
     float y = cam.position[1] + t * dir[1];
     float z = cam.position[2] + t * dir[2];
 
-    uint chunk_x = 0;
-    uint chunk_y = 0;
-    uint chunk_z = 0;
+    int chunk_x = 0;
+    int chunk_y = 0;
+    int chunk_z = 0;
     chunk_y = (uint)y;
     chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
 
@@ -201,7 +374,7 @@ void place_block(player_instance player) {
         return;
     }
 
-    c->blocks[chunk_x][chunk_y][chunk_z] = get_selected_block(player);
+    set_block_info(c, chunk_x, chunk_y, chunk_z, get_selected_block(player), hit_side, rot);
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);

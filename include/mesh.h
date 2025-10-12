@@ -6,6 +6,8 @@
 #include <chunk_mesh.h>
 
 #define SIDES_PER_CHUNK 1000
+#define MODEL_VERTICES_PER_CHUNK 1000
+#define FLOATS_PER_MODEL_VERT 8
 
 void m_init(camera* camera);
 void m_cleanup();

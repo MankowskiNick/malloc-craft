@@ -122,12 +122,14 @@ void render_sides(block_renderer* br, int* side_data, int num_sides) {
     i_add_attrib(&(br->instance_vbo), 2, 2, 3 * sizeof(int), VBO_WIDTH * sizeof(int)); // atlas coords
     i_add_attrib(&(br->instance_vbo), 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
     i_add_attrib(&(br->instance_vbo), 4, 1, 6 * sizeof(int), VBO_WIDTH * sizeof(int)); // underwater
+    i_add_attrib(&(br->instance_vbo), 5, 1, 7 * sizeof(int), VBO_WIDTH * sizeof(int)); // orientation
     use_vbo(br->instance_vbo);
 
     glVertexAttribDivisor(1, 1);
     glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
     glVertexAttribDivisor(4, 1);
+    glVertexAttribDivisor(5, 1);
         
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_sides);
 }

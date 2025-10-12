@@ -34,7 +34,7 @@ chunk* get_chunk(int x, int z) {
     return c;
 }
 
-chunk* get_chunk_at(float x, float z, uint* chunk_x, uint* chunk_z) {
+chunk* get_chunk_at(float x, float z, int* chunk_x, int* chunk_z) {
     
     // adjust for negative coordinates
     if (x < 0) {

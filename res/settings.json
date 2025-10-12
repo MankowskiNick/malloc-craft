@@ -65,9 +65,9 @@
     "water_shininess": 5000.0
   },
   "player": {
-    "delta_x": 0.1,
-    "delta_y": 0.1,
-    "delta_z": 0.1,
+    "delta_x": 0.2,
+    "delta_y": 0.2,
+    "delta_z": 0.2,
     "sensitivity": 0.001,
     "max_reach": 5.0,
     "ray_step": 0.05
