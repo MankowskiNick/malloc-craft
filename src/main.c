@@ -47,6 +47,18 @@ int main() {
     start_chunk_mesh_updater(&data);
     start_world_mesh_updater(&data);
 
+    // For invisible window on Linux, keep it visible but minimized/iconified
+    glfwMakeContextCurrent(window);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    
+    // Show window to capture input, then iconify to keep it out of the way
+    glfwShowWindow(window);
+    glfwFocusWindow(window);
+    glfwPollEvents();
+    // Use iconify instead of hide - still captures input on Linux
+    glfwIconifyWindow(window);
+
     while (!glfwWindowShouldClose(window)) {
 
         data.x = player.cam.position[0];

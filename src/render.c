@@ -125,12 +125,14 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
 char* buffer_screen_to_char(renderer* r) {
     int width = r->main_framebuffer.width;
     int height = r->main_framebuffer.height;
-    
+
     if (width <= 0 || height <= 0) {
         return NULL;
     }
 
-    char* output_buffer = (char*)malloc(width * height * 3); // RGB
+    size_t pixel_count = (size_t)width * (size_t)height;
+    size_t output_size = pixel_count * 3; // RGB
+    unsigned char* output_buffer = (unsigned char*)malloc(output_size);
     if (!output_buffer) {
         printf("Failed to allocate memory for pixel buffer\n");
         return NULL;
@@ -141,39 +143,109 @@ char* buffer_screen_to_char(renderer* r) {
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, output_buffer);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    char* terminal_buffer = (char*)malloc(width * height * 20); // Allocate enough space
+
+    // Estimate worst-case terminal buffer size:
+    // Each half-block may emit up to ~64 chars (escape sequences + digits).
+    // Number of half-blocks = width * ceil(height / 2)
+    int rows = (height + 1) / 2;
+    size_t estimated = (size_t)width * (size_t)rows * 64 + (size_t)rows * 16 + 1;
+
+    char* terminal_buffer = (char*)malloc(estimated);
     if (!terminal_buffer) {
         printf("Failed to allocate memory for terminal buffer\n");
         free(output_buffer);
         return NULL;
     }
 
-    char* write_ptr = terminal_buffer; // Keep track of original buffer pointer
+    char* write_ptr = terminal_buffer;
+    size_t remaining = estimated;
 
     for (int y = height - 1; y >= 1; y -= 2) {
         for (int x = 0; x < width; x++) {
-
             int idx_top = (y * width + x) * 3;
-            int r_top = (unsigned char)output_buffer[idx_top + 0];
-            int g_top = (unsigned char)output_buffer[idx_top + 1];
-            int b_top = (unsigned char)output_buffer[idx_top + 2];
+            unsigned int r_top = output_buffer[idx_top + 0];
+            unsigned int g_top = output_buffer[idx_top + 1];
+            unsigned int b_top = output_buffer[idx_top + 2];
 
             int idx_bottom = ((y - 1) * width + x) * 3;
-            int r_bottom = (unsigned char)output_buffer[idx_bottom + 0];
-            int g_bottom = (unsigned char)output_buffer[idx_bottom + 1];
-            int b_bottom = (unsigned char)output_buffer[idx_bottom + 2];
+            unsigned int r_bottom = output_buffer[idx_bottom + 0];
+            unsigned int g_bottom = output_buffer[idx_bottom + 1];
+            unsigned int b_bottom = output_buffer[idx_bottom + 2];
 
-            // print half block: top pixel as foreground, bottom pixel as background
-            write_ptr += sprintf(write_ptr, "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀",
-                                 r_top, g_top, b_top,
-                                 r_bottom, g_bottom, b_bottom);
+            int written = snprintf(write_ptr, remaining,
+                                   "\033[38;2;%u;%u;%um\033[48;2;%u;%u;%um▀",
+                                   r_top, g_top, b_top,
+                                   r_bottom, g_bottom, b_bottom);
+            if (written < 0) {
+                // encoding error
+                free(output_buffer);
+                free(terminal_buffer);
+                return NULL;
+            }
+
+            if ((size_t)written >= remaining) {
+                // Need more space: reallocate (grow buffer)
+                size_t used = write_ptr - terminal_buffer;
+                estimated = estimated * 2 + (size_t)written;
+                char* newbuf = (char*)realloc(terminal_buffer, estimated);
+                if (!newbuf) {
+                    free(output_buffer);
+                    free(terminal_buffer);
+                    return NULL;
+                }
+                terminal_buffer = newbuf;
+                write_ptr = terminal_buffer + used;
+                remaining = estimated - used;
+
+                // write again
+                written = snprintf(write_ptr, remaining,
+                                   "\033[38;2;%u;%u;%um\033[48;2;%u;%u;%um▀",
+                                   r_top, g_top, b_top,
+                                   r_bottom, g_bottom, b_bottom);
+                if (written < 0 || (size_t)written >= remaining) {
+                    free(output_buffer);
+                    free(terminal_buffer);
+                    return NULL;
+                }
+            }
+
+            write_ptr += written;
+            remaining -= (size_t)written;
         }
-        write_ptr += sprintf(write_ptr, "\033[0m\n"); // Reset colors and newline
+
+        int w = snprintf(write_ptr, remaining, "\033[0m\n");
+        if (w < 0) {
+            free(output_buffer);
+            free(terminal_buffer);
+            return NULL;
+        }
+        if ((size_t)w >= remaining) {
+            size_t used = write_ptr - terminal_buffer;
+            estimated = estimated * 2 + (size_t)w;
+            char* newbuf = (char*)realloc(terminal_buffer, estimated);
+            if (!newbuf) {
+                free(output_buffer);
+                free(terminal_buffer);
+                return NULL;
+            }
+            terminal_buffer = newbuf;
+            write_ptr = terminal_buffer + used;
+            remaining = estimated - used;
+
+            w = snprintf(write_ptr, remaining, "\033[0m\n");
+            if (w < 0 || (size_t)w >= remaining) {
+                free(output_buffer);
+                free(terminal_buffer);
+                return NULL;
+            }
+        }
+
+        write_ptr += w;
+        remaining -= (size_t)w;
     }
 
     *write_ptr = '\0'; // Null-terminate the string
-    
+
     free(output_buffer);
-    return terminal_buffer; // Return the original buffer pointer, not the incremented one
+    return terminal_buffer;
 }
