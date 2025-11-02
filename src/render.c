@@ -16,7 +16,8 @@
 #include <fbo.h>
 #include <shadow_map.h>
 #include <reflection_map.h>
-#include <assert.h>
+#include <assert.h>'
+#include <GLFW/glfw3.h>
 
 renderer create_renderer(camera* camera) {
     glEnable(GL_DEPTH_TEST);
@@ -50,6 +51,7 @@ renderer create_renderer(camera* camera) {
     sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
     FBO shadow_map = create_shadow_map(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
     FBO reflection_map = create_reflection_map(WIDTH, HEIGHT);
+    FBO main_framebuffer = create_main_framebuffer(WIDTH, HEIGHT);
 
     renderer r = {
         .wr = wr,
@@ -65,6 +67,7 @@ renderer create_renderer(camera* camera) {
         .cam = camera,
         .shadow_map = shadow_map,
         .reflection_map = reflection_map,
+        .main_framebuffer = main_framebuffer,
     };
 
     return r;
@@ -88,6 +91,10 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
     render_shadow_map(&(r->shadow_map), &(r->s), packet);
     render_reflection_map(&(r->reflection_map), r->cam, (float)WORLDGEN_WATER_LEVEL, packet);
     
+    // Bind main framebuffer for scene rendering
+    glBindFramebuffer(GL_FRAMEBUFFER, r->main_framebuffer.fbo);
+    glViewport(0, 0, r->main_framebuffer.width, r->main_framebuffer.height);
+    
     glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
     glBindTexture(GL_TEXTURE_2D, r->shadow_map.texture);
     
@@ -109,4 +116,64 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
     render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
     render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
     render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
+
+    // Unbind framebuffer - render to screen
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, WIDTH, HEIGHT);
+}
+
+char* buffer_screen_to_char(renderer* r) {
+    int width = r->main_framebuffer.width;
+    int height = r->main_framebuffer.height;
+    
+    if (width <= 0 || height <= 0) {
+        return NULL;
+    }
+
+    char* output_buffer = (char*)malloc(width * height * 3); // RGB
+    if (!output_buffer) {
+        printf("Failed to allocate memory for pixel buffer\n");
+        return NULL;
+    }
+
+    // Bind the framebuffer and read from its texture
+    glBindFramebuffer(GL_FRAMEBUFFER, r->main_framebuffer.fbo);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, output_buffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    char* terminal_buffer = (char*)malloc(width * height * 20); // Allocate enough space
+    if (!terminal_buffer) {
+        printf("Failed to allocate memory for terminal buffer\n");
+        free(output_buffer);
+        return NULL;
+    }
+
+    char* write_ptr = terminal_buffer; // Keep track of original buffer pointer
+
+    for (int y = height - 1; y >= 1; y -= 2) {
+        for (int x = 0; x < width; x++) {
+
+            int idx_top = (y * width + x) * 3;
+            int r_top = (unsigned char)output_buffer[idx_top + 0];
+            int g_top = (unsigned char)output_buffer[idx_top + 1];
+            int b_top = (unsigned char)output_buffer[idx_top + 2];
+
+            int idx_bottom = ((y - 1) * width + x) * 3;
+            int r_bottom = (unsigned char)output_buffer[idx_bottom + 0];
+            int g_bottom = (unsigned char)output_buffer[idx_bottom + 1];
+            int b_bottom = (unsigned char)output_buffer[idx_bottom + 2];
+
+            // print half block: top pixel as foreground, bottom pixel as background
+            write_ptr += sprintf(write_ptr, "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀",
+                                 r_top, g_top, b_top,
+                                 r_bottom, g_bottom, b_bottom);
+        }
+        write_ptr += sprintf(write_ptr, "\033[0m\n"); // Reset colors and newline
+    }
+
+    *write_ptr = '\0'; // Null-terminate the string
+    
+    free(output_buffer);
+    return terminal_buffer; // Return the original buffer pointer, not the incremented one
 }

@@ -19,6 +19,7 @@ typedef struct {
     sun s;
     FBO shadow_map;
     FBO reflection_map;
+    FBO main_framebuffer;
 
     camera_cache cam_cache;
     camera* cam;
@@ -33,5 +34,6 @@ typedef struct {
 renderer create_renderer(camera* camera);
 void destroy_renderer(renderer* r);
 void render(renderer* r, world_mesh* packet, int num_packets);
+char* buffer_screen_to_char(renderer* r);
 
 #endif

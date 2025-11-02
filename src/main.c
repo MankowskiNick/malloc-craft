@@ -56,6 +56,13 @@ int main() {
 
         lock_mesh();
         render(&r, data.world_mesh, *(data.num_packets));
+        char* terminal_output = buffer_screen_to_char(&r);
+        if (terminal_output) {
+            // reset cursor to top-left
+            printf("\033[H");
+            printf("%s", terminal_output);
+            free(terminal_output);
+        }
         unlock_mesh();
 
         glfwSwapBuffers(window);

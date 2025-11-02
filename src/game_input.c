@@ -74,6 +74,11 @@ void update_position() {
 void update_camera() {
     update_position();
     update_orientation(&(g_data->player->cam));
+    // rotate very slowly for testing
+    // camera* cam = &(g_data->player->cam);
+    // cam->yaw += 0.1f;
+    // update_position();
+    // update_orientation(cam);
 }
 
 

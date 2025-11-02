@@ -4,6 +4,7 @@
 #include <vao.h>
 #include <vbo.h>
 #include <block.h>
+#include <stdio.h>
 
 void FBO_cleanup(FBO* map) {
     glDeleteFramebuffers(1, &map->fbo);
@@ -148,4 +149,47 @@ void FBO_render(FBO* map, sun* s, world_mesh* packet) {
     // Restore the viewport to what it was before
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
+}
+
+FBO create_main_framebuffer(uint width, uint height) {
+    // Create framebuffer
+    uint fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    // Create color texture
+    uint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+    // Create depth buffer
+    uint rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+    // Check framebuffer completeness
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        printf("Error: Main framebuffer is not complete\n");
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    FBO main_fb = {
+        .width = width,
+        .height = height,
+        .fbo = fbo,
+        .texture = texture,
+        .program = {0}, // No shader program needed for main framebuffer
+        .vao = {0},
+        .cube_vbo = {0},
+        .instance_vbo = {0}
+    };
+
+    return main_fb;
 }

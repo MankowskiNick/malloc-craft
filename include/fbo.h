@@ -20,7 +20,18 @@ typedef struct {
     VBO cube_vbo, instance_vbo;
 } FBO;
 
+typedef struct {
+    shader_program program;
+    VAO vao;
+    VBO vbo;
+} quad_renderer;
+
 FBO create_reflection_map(uint width, uint height);
+FBO create_main_framebuffer(uint width, uint height);
+
+quad_renderer create_quad_renderer();
+void destroy_quad_renderer(quad_renderer* qr);
+void render_quad(quad_renderer* qr, FBO* framebuffer);
 
 void FBO_cleanup(FBO* map);
 
