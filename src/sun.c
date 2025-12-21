@@ -112,15 +112,6 @@ void update_sun(sun* s, int t) {
     s->y = cos(time);
     s->x = sin(time * 0.5f);
     s->z = ellipticalFactor * sin(time);
-
-
-    // s->y = SKYBOX_RADIUS * cos(t * TIME_SCALE);
-    // s->z = SKYBOX_RADIUS * sin(t * TIME_SCALE);
-
-
-    // s->y = 0.5f;
-    // s->x = cos(t * TIME_SCALE);
-    // s->z = sin(t * TIME_SCALE);
 }
 
 void render_sun(sun* s, int tick) {
