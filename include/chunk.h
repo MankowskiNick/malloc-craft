@@ -18,7 +18,7 @@ int chunk_coord_equals(void* a, void* b);
 void c_init();
 void chunk_create(chunk* c, int x, int z);
 
-void set_block_info(chunk* c, int x, int y, int z, short id, short orientation, short rot);
+void set_block_info(chunk* c, int x, int y, int z, short id, short orientation, short rot, short water_level);
 void get_block_info(short data, short* id, short* orientation, short* rot);
 
 #endif

@@ -324,7 +324,7 @@ void break_block(player_instance player) {
         return;
     }
 
-    set_block_info(c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0);
+    set_block_info(c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0, 0);
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
     queue_chunk_for_sorting(new_mesh);
@@ -374,7 +374,7 @@ void place_block(player_instance player) {
         return;
     }
 
-    set_block_info(c, chunk_x, chunk_y, chunk_z, get_selected_block(player), hit_side, rot);
+    set_block_info(c, chunk_x, chunk_y, chunk_z, get_selected_block(player), hit_side, rot, 0);
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
