@@ -9,7 +9,7 @@
   "chunks": {
     "chunk_load_per_frame": 1,
     "chunk_cache_size": 1024,
-    "chunk_render_distance": 16
+    "chunk_render_distance": 20
   },
   "graphics": {
     "wireframe": false,
@@ -61,7 +61,7 @@
   "water": {
     "water_offset": 0.2,
     "water_height": 1.0,
-    "water_distance": 50.0,
+    "water_distance": 100.0,
     "water_shininess": 5000.0
   },
   "player": {

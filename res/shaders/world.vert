@@ -8,10 +8,10 @@ layout (location = 4) in int aUnderwater;
 layout (location = 5) in int aOrientation;
 
 out vec2 texCoord;
-out float y;
+flat out float y;
 out vec2 atlasCoord;
 out float dist;
-out float underwater;
+flat out float underwater;
 out vec3 normal;
 out vec3 fragPos;
 
@@ -87,18 +87,20 @@ vec3 getNormal(vec3 pos, int face) {
 void main() {
     vec3 instancePos = vec3(aInstancePos);
     vec3 worldPos = transformFace(aPos, aSide) + instancePos;
-
-    gl_Position = proj * view * vec4(worldPos, 1.0);
-
+    
+    vec4 viewPos = view * vec4(worldPos, 1.0);
+    gl_Position = proj * viewPos;
+    
     texCoord = transformUV(aPos.xy, aSide, aOrientation);
     atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
 
     // offset water level for waves
     y = worldPos.y;
-
-    dist = length(gl_Position.xyz);
+    
+    // Calculate distance in view space (correct!)
+    dist = length(viewPos.xyz);
+    
     underwater = float(aUnderwater);
     normal = getNormal(aPos, aSide);
-
     fragPos = worldPos;
 }

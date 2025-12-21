@@ -4,8 +4,8 @@ in vec3 fragPos; // position of the fragment
 in vec2 texCoord; // coordinate of the quad [0, 1]
 in vec2 atlasCoord; // coordinate of the texture in the atlas [0, 32]
 in float dist; // distance from the camera
-in float underwater;
-in float y;
+flat in float underwater;
+flat in float y;
 in vec3 normal;
 
 out vec4 FragColor;

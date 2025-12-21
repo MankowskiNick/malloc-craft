@@ -8,8 +8,8 @@ layout (location = 4) in int aUnderwater;
 
 out vec2 texCoord;
 out vec2 atlasCoord;
-out float underwater;
-out float y;
+flat out float underwater;
+flat out float y;
 out vec3 normal;
 out vec3 fragPos;
 out float dist;

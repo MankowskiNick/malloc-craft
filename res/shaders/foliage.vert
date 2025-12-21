@@ -7,10 +7,10 @@ layout (location = 3) in int aSide;
 layout (location = 4) in int aUnderwater;
 
 out vec2 texCoord;
-out float y;
+flat out float y;
 out vec2 atlasCoord;
 out float dist;
-out float underwater;
+flat out float underwater;
 out vec3 normal;
 out vec3 fragPos;
 
