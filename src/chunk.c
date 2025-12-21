@@ -32,26 +32,28 @@ int get_block_height(chunk* c, float x, float z, biome* b) {
 
 void set_block_info(chunk* c, int x, int y, int z, short id, short orientation, short rot) {
     short data = 0;
-    // first 10 bits are block id
-    data = id & 0x3FF;
+    // first 9 bits are block id
+    data = id & 0x1FF;
     // next 3 bits are orientation
-    data |= (orientation & 0x7) << 10;
+    data |= (orientation & 0x7) << 9;
 
     // next 2 bits are rotation
-    data |= (rot & 0x3) << 13;
+    data |= (rot & 0x3) << 12;
+
+    // last 2 bits are water level(not implemented yet)
 
     c->blocks[x][y][z] = data;
 }
 
 void get_block_info(short data, short* id, short* orientation, short* rot) {
     if (id != NULL) {
-        *id = data & 0x3FF;
+        *id = data & 0x1FF;
     }
     if (orientation != NULL) {
-        *orientation = (data >> 10) & 0x7;
+        *orientation = (data >> 9) & 0x7;
     }
     if (rot != NULL) {
-        *rot = (data >> 13) & 0x3;
+        *rot = (data >> 12) & 0x3;
     }
 }
 
