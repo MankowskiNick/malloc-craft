@@ -94,6 +94,6 @@
     "block_count": 13,
     "block_file": "res/blocks.json",
     "player_file": "res/player.json",
-    "time_scale": 0.005
+    "time_scale": 0.0001047
   }
 }

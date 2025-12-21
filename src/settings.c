@@ -8,7 +8,8 @@
 int WIDTH = 1200;
 int HEIGHT = 900;
 char* TITLE = "malloc-craft";
-float TIME_SCALE = 0.005f;
+// 0.0001047 represents 2π / (60000 ms), giving a full day cycle in ~60 seconds
+float TIME_SCALE = 0.0001047f;
 int CHUNK_LOAD_PER_FRAME = 1;
 int CHUNK_CACHE_SIZE = 1024;
 int WIREFRAME = 0;

@@ -102,9 +102,12 @@ void send_sun_info(shader_program* p, sun* s) {
     glUniform1f(glGetUniformLocation(p->id, "waterShininess"), WATER_SHININESS);
 }
 
-void update_sun(sun* s, float t) {
+void update_sun(sun* s, int t) {
     float ellipticalFactor = 3;  // Stretches the orbit horizontally
-    float time = t * TIME_SCALE;
+    // TIME_SCALE: 0.0001047 represents a full day cycle in ~60 seconds
+    // Derived from: 2π / (60000 ms) ≈ 0.0001047 rad/ms
+    // This gives the sun a complete orbit every ~60 seconds of real time
+    float time = (float)t * TIME_SCALE;
         
     s->y = cos(time);
     s->x = sin(time * 0.5f);
@@ -120,9 +123,9 @@ void update_sun(sun* s, float t) {
     // s->z = sin(t * TIME_SCALE);
 }
 
-void render_sun(sun* s) {
+void render_sun(sun* s, int tick) {
     
-    update_sun(s, (float)glfwGetTime());
+    update_sun(s, tick);
 
     use_program(s->program);
     bind_vao(s->vao);

@@ -52,6 +52,8 @@ typedef struct {
     player_instance* player;
     int is_running;
     int mesh_requires_update;
+
+    int tick;
 } game_data;
 
 void chunk_mesh_init(camera* camera);

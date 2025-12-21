@@ -24,7 +24,7 @@ void sun_cleanup(sun* s);
 
 void send_sun_info(shader_program* p, sun* s);
 
-void update_sun(sun* s, float t);
-void render_sun(sun* s);
+void update_sun(sun* s, int t);
+void render_sun(sun* s, int tick);
 
 #endif

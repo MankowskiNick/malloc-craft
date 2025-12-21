@@ -32,6 +32,6 @@ typedef struct {
 
 renderer create_renderer(camera* camera);
 void destroy_renderer(renderer* r);
-void render(renderer* r, world_mesh* packet, int num_packets);
+void render(game_data* args, renderer* r, world_mesh* packet, int num_packets);
 
 #endif
