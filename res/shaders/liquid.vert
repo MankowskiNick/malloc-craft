@@ -10,10 +10,6 @@ layout (location = 6) in int aWaterLevel;
 
 out vec2 texCoord;
 out vec2 atlasCoord;
-flat out float underwater;
-flat out float y;
-flat out int faceType;
-flat out float blockWaterLevel;
 out vec3 normal;
 out vec3 fragPos;
 out float dist;
@@ -24,20 +20,22 @@ uniform float waterLevel;
 uniform float time;
 
 vec3 transformFace(vec3 pos, int face) {
+    vec3 result = vec3(0.0);
     if(face == 1) { // west face (+X)
-        return vec3(1.0, pos.y, pos.x);
+        result = vec3(1.0, pos.y, pos.x);
     } else if(face == 3) { // east face (-X)
-        return vec3(0.0, pos.y, pos.x);
+        result = vec3(0.0, pos.y, pos.x);
     } else if(face == 0) { // north face (-Z)
-        return vec3(pos.x, pos.y, 0.0);
+        result = vec3(pos.x, pos.y, 0.0);
     } else if(face == 2) { // south face (+Z)
-        return vec3(pos.x, pos.y, 1.0);
+        result = vec3(pos.x, pos.y, 1.0);
     } else if(face == 4) { // up face (+Y)
-        return vec3(pos.x, 1.0, pos.y);
+        result = vec3(pos.x, 1.0, pos.y);
     } else if(face == 5) { // down face (-Y)
-        return vec3(pos.x, 0.0, pos.y);
+        result = vec3(pos.x, 0.0, pos.y);
     }
-    return pos;
+
+    return result;
 }
 
 // Get normal vector for each face type
@@ -56,18 +54,26 @@ void main()
     vec3 instancePos = vec3(aInstancePos);
     vec3 worldPos = transformFace(aPos, aSide) + instancePos;
 
-    // Pass face type to fragment shader
-    faceType = aSide;
-    blockWaterLevel = float(aWaterLevel);
+    // For top face, adjust Y position based on water level
+    if (aSide == 4) {
+        // Water level 0-3, where 3 is full block (1.0)
+        // Reduce Y by the inverse of water level
+        float waterHeightReduction = (3.0 - float(aWaterLevel)) / 3.0;
+        worldPos.y -= waterHeightReduction;
+    }
+    // For side faces (0-3), reduce the top edge Y position
+    else if (aSide >= 0 && aSide <= 3) {
+        // Only adjust the top vertices (where aPos.y == 1.0)
+        if (aPos.y > 0.5) {
+            float waterHeightReduction = (3.0 - float(aWaterLevel)) / 3.0;
+            worldPos.y -= waterHeightReduction;
+        }
+    }
 
-    // offset water level for waves - only on top faces at the surface
-    y = worldPos.y;
     gl_Position = proj * view * vec4(worldPos, 1.0);
 
     texCoord = vec2(aPos.x, aPos.y);
     atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
-
-    underwater = float(aUnderwater);
 
     // Get proper normal for this face
     normal = getFaceNormal(aSide);
