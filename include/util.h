@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define PI 3.141592653
 

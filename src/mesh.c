@@ -109,7 +109,8 @@ void get_side_visible(
     short side,
     chunk* c,
     chunk* adj,
-    int* visible_out
+    int* visible_out,
+    int* underwater_out
 ) {
     // calculate adjacent block
     short adjacent_id = get_adjacent_block(x, y, z, side, c, adj);
@@ -121,6 +122,11 @@ void get_side_visible(
     // calculate visibility
     block_type* adjacent = get_block_type(adjacent_id);
     uint visible = adjacent_id == get_block_id("air") || get_block_type(adjacent_id)->transparent != current->transparent;
+
+    // check if we are underwater
+    if (adjacent_id == get_block_id("water")) {
+        *underwater_out = 1;
+    }
 
     // make sure transparent neighbors are visible
     if (adjacent != NULL && adjacent->transparent != current->transparent) {
@@ -296,12 +302,20 @@ void get_model_transformation(mat4 transform, block_type* block, short orientati
     glm_translate(transform, (vec3){-0.5f, -0.5f, -0.5f}); // translate back
 }
 
-void pack_side(int x_0, int y_0, int z_0, short side, short orientation, short rot, short type, short water_level, side_instance* data) {
+void pack_side(int x_0, int y_0, int z_0, 
+        short side, 
+        short orientation, 
+        short rot, 
+        short type, 
+        short water_level, 
+        bool underwater, 
+        side_instance* data) {
     data->x = x_0;
     data->y = y_0;
     data->z = z_0;
     data->side = side;
     data->water_level = water_level;
+    data->underwater = underwater ? 1 : 0;
 
     // block specific data
     block_type* block = get_block_type(type);
@@ -340,7 +354,8 @@ void pack_block(
         }
 
         int visible = 0;
-        get_side_visible(x, y, z, side, c, adj, &visible);
+        int underwater = 0;
+        get_side_visible(x, y, z, side, c, adj, &visible, &underwater);
         if (!visible) {
             continue;
         }
@@ -360,6 +375,7 @@ void pack_block(
             orientation, rot,
             block_id,
             water_level,
+            underwater,
             &((*chunk_side_data)[*num_sides])
         );
         (*num_sides)++;

@@ -3,6 +3,7 @@
 
 #include <camera.h>
 #include <player_instance.h>
+#include <util.h>
 
 #define VBO_WIDTH 8
 
@@ -11,6 +12,7 @@ typedef struct {
     short atlas_x, atlas_y;
     short side;
     short face;
+    bool underwater;
     short water_level;  // 0 = dry, 1 = 1/3 water, 2 = 2/3 water, 3 = full water
     short orientation;
 } side_instance;

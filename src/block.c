@@ -1,5 +1,4 @@
 #include <block.h>
-// #include <render.h>
 #include <mesh.h>
 #include <world.h>
 #include <asset.h>
