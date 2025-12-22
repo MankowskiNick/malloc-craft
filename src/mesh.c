@@ -47,53 +47,53 @@ short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) 
     switch(side) {
         case (int)UP:
             if (y + 1 < CHUNK_HEIGHT) {
-                get_block_info(c->blocks[x][y + 1][z], &block_id, NULL, NULL);
+                get_block_info(c->blocks[x][y + 1][z], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             break;
         case (int)DOWN:
             if (y - 1 >= 0) {
-                get_block_info(c->blocks[x][y - 1][z], &block_id, NULL, NULL);
+                get_block_info(c->blocks[x][y - 1][z], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             break;
         case (int)WEST:
             if (x + 1 < CHUNK_SIZE) {
-                get_block_info(c->blocks[x + 1][y][z], &block_id, NULL, NULL);
+                get_block_info(c->blocks[x + 1][y][z], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[0][y][z], &block_id, NULL, NULL);
+                get_block_info(adj->blocks[0][y][z], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             break;
         case (int)EAST:
             if (x - 1 >= 0) {
-                get_block_info(c->blocks[x - 1][y][z], &block_id, NULL, NULL);
+                get_block_info(c->blocks[x - 1][y][z], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[CHUNK_SIZE - 1][y][z], &block_id, NULL, NULL);
+                get_block_info(adj->blocks[CHUNK_SIZE - 1][y][z], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             break;
         case (int)NORTH:
             if (z - 1 >= 0) {
-                get_block_info(c->blocks[x][y][z - 1], &block_id, NULL, NULL);
+                get_block_info(c->blocks[x][y][z - 1], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[x][y][CHUNK_SIZE - 1], &block_id, NULL, NULL);
+                get_block_info(adj->blocks[x][y][CHUNK_SIZE - 1], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             break;
         case (int)SOUTH:
             if (z + 1 < CHUNK_SIZE) {
-                get_block_info(c->blocks[x][y][z + 1], &block_id, NULL, NULL);
+                get_block_info(c->blocks[x][y][z + 1], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[x][y][0], &block_id, NULL, NULL);
+                get_block_info(adj->blocks[x][y][0], &block_id, NULL, NULL, NULL);
                 return block_id;
             }
             break;
@@ -104,29 +104,23 @@ short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) 
 }
 
 // TODO: this function is messy, clean it up
-void get_side_visible( 
+void get_side_visible(
     int x, int y, int z,
-    short side, 
+    short side,
     chunk* c,
     chunk* adj,
-    int* visible_out,
-    int* underwater_out
+    int* visible_out
 ) {
     // calculate adjacent block
     short adjacent_id = get_adjacent_block(x, y, z, side, c, adj);
 
     short current_id = 0;
-    get_block_info(c->blocks[x][y][z], &current_id, NULL, NULL);
+    get_block_info(c->blocks[x][y][z], &current_id, NULL, NULL, NULL);
     block_type* current = get_block_type(current_id);
 
-    // calculate visibility 
+    // calculate visibility
     block_type* adjacent = get_block_type(adjacent_id);
     uint visible = adjacent_id == get_block_id("air") || get_block_type(adjacent_id)->transparent != current->transparent;
-
-    // check if we are underwater
-    if (adjacent_id == get_block_id("water")) {
-        *underwater_out = 1;
-    }
 
     // make sure transparent neighbors are visible
     if (adjacent != NULL && adjacent->transparent != current->transparent) {
@@ -137,7 +131,7 @@ void get_side_visible(
         visible = 1;
     }
 
-    if (adjacent != NULL 
+    if (adjacent != NULL
         && (adjacent->transparent && current->transparent)
         && adjacent->id != current->id) {
         visible = 1;
@@ -160,7 +154,6 @@ void get_side_visible(
     }
 
     *visible_out = visible;
-    // *underwater_out = underwater;
 }
 
 short get_rotated_side(int side, short rot) {
@@ -303,12 +296,12 @@ void get_model_transformation(mat4 transform, block_type* block, short orientati
     glm_translate(transform, (vec3){-0.5f, -0.5f, -0.5f}); // translate back
 }
 
-void pack_side(int x_0, int y_0, int z_0, short side, short orientation, short rot, short type, uint underwater, side_instance* data) {
+void pack_side(int x_0, int y_0, int z_0, short side, short orientation, short rot, short type, short water_level, side_instance* data) {
     data->x = x_0;
     data->y = y_0;
     data->z = z_0;
     data->side = side;
-    data->underwater = (short)underwater;
+    data->water_level = water_level;
 
     // block specific data
     block_type* block = get_block_type(type);
@@ -326,12 +319,19 @@ void pack_block(
     int x, int y, int z,
     chunk* c,
     chunk* adj_chunks[4], // front, back, left, right
-    side_instance** chunk_side_data, 
+    side_instance** chunk_side_data,
     int* num_sides) {
-    
+
     int world_x = x + (CHUNK_SIZE * c->x);
     int world_y = y;
     int world_z = z + (CHUNK_SIZE * c->z);
+
+    short block_data = c->blocks[x][y][z];
+    short block_id = 0;
+    short orientation = 0;
+    short rot = 0;
+    short water_level = 0;
+    get_block_info(block_data, &block_id, &orientation, &rot, &water_level);
 
     for (int side = 0; side < 6; side++) {
         chunk* adj = NULL;
@@ -340,8 +340,7 @@ void pack_block(
         }
 
         int visible = 0;
-        int underwater = 0;
-        get_side_visible(x, y, z, side, c, adj, &visible, &underwater);
+        get_side_visible(x, y, z, side, c, adj, &visible);
         if (!visible) {
             continue;
         }
@@ -355,18 +354,12 @@ void pack_block(
             *chunk_side_data = tmp;
         }
 
-        short block_id = 0;
-        short orientation = 0;
-        short rot = 0;
-        short block = c->blocks[x][y][z];
-        get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot);
-
         pack_side(
-            world_x, world_y, world_z, 
-            side, 
+            world_x, world_y, world_z,
+            side,
             orientation, rot,
             block_id,
-            underwater,
+            water_level,
             &((*chunk_side_data)[*num_sides])
         );
         (*num_sides)++;
@@ -382,7 +375,8 @@ void pack_model(
     short block_id = 0;
     short orientation = 0;
     short rot = 0;
-    get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot);
+    short water_level = 0;
+    get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot, &water_level);
     block_type* block = get_block_type(block_id);
     if (block == NULL || !block->is_custom_model || block->model == NULL) {
         return;
@@ -461,7 +455,7 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 short block_id = 0;
-                get_block_info(c->blocks[i][k][j], &block_id, NULL, NULL);
+                get_block_info(c->blocks[i][k][j], &block_id, NULL, NULL, NULL);
                 if (block_id == get_block_id("air")) {
                     continue;
                 }

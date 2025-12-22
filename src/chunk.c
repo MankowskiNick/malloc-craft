@@ -41,12 +41,14 @@ void set_block_info(chunk* c, int x, int y, int z, short id, short orientation, 
     data |= (rot & 0x3) << 12;
 
     // last 2 bits are water level
+    water_level = water_level < 0 ? 0 : water_level;
+    water_level = water_level > 3 ? 3 : water_level;
     data |= (water_level & 0x3) << 14;
 
     c->blocks[x][y][z] = data;
 }
 
-void get_block_info(short data, short* id, short* orientation, short* rot) {
+void get_block_info(short data, short* id, short* orientation, short* rot, short* water_level) {
     if (id != NULL) {
         *id = data & 0x1FF;
     }
@@ -56,6 +58,21 @@ void get_block_info(short data, short* id, short* orientation, short* rot) {
     if (rot != NULL) {
         *rot = (data >> 12) & 0x3;
     }
+    if (water_level != NULL) {
+        *water_level = (data >> 14) & 0x3;
+    }
+}
+
+short calculate_water_level(int y) {
+   short water_level = 0;
+    if (y < WORLDGEN_WATER_LEVEL) {
+        water_level = 3; // full
+    }
+    else if (y == WORLDGEN_WATER_LEVEL) {
+        water_level = 2; // 2/3
+    }
+    
+    return water_level;
 }
 
 void generate_blocks(chunk* c, int x, int z) {
@@ -68,23 +85,19 @@ void generate_blocks(chunk* c, int x, int z) {
             float y = get_block_height(c, x_, z_, b);
             
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
+                short water_level = calculate_water_level(k);
+
                 if (k > y) {
                     if (k > WORLDGEN_WATER_LEVEL) {
                         set_block_info(c, i, k, j, get_block_id("air"), (short)UNKNOWN_SIDE, 0, 0);
                     }
-                    else if (k == WORLDGEN_WATER_LEVEL) {
-                        set_block_info(c, i, k, j, get_block_id("water"), (short)DOWN, 0, 2);
-                    }
                     else {
-                        set_block_info(c, i, k, j, get_block_id("water"), (short)DOWN, 0, 3);
+                        set_block_info(c, i, k, j, get_block_id("water"), (short)DOWN, 0, water_level);
                     }
                 }
                 else if (k == y) {
                     if (k < WORLDGEN_WATER_LEVEL) {
-                        set_block_info(c, i, k, j, get_block_id(b->underwater_type), (short)DOWN, 0, 3);
-                    }
-                    else if (k == WORLDGEN_WATER_LEVEL) {
-                        set_block_info(c, i, k, j, get_block_id(b->surface_type), (short)DOWN, 0, 2);
+                        set_block_info(c, i, k, j, get_block_id(b->underwater_type), (short)DOWN, 0, 0);
                     }
                     else {
                         set_block_info(c, i, k, j, get_block_id(b->surface_type), (short)DOWN, 0, 0);

@@ -187,7 +187,7 @@ void generate_tree(int x, int y, int z, char* id, chunk* c) {
             int ly = y + height + l.coords[j][1];
             int lz = z + l.coords[j][2];
             short block_id;
-            get_block_info(c->blocks[lx][ly][lz], &block_id, NULL, NULL);
+            get_block_info(c->blocks[lx][ly][lz], &block_id, NULL, NULL, NULL);
             if (block_id == get_block_id("air")) {
                 set_block_info(c, lx, ly, lz, get_block_id(l.block), (short)DOWN, 0, 0);
             }
