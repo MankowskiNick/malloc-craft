@@ -42,65 +42,61 @@ void m_cleanup() {
     pthread_mutex_destroy(&chunk_load_queue_mutex);
 }
 
-short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
-    short block_id = 0;
+short get_adjacent_block_data(int x, int y, int z, short side, chunk* c, chunk* adj) {
     switch(side) {
         case (int)UP:
             if (y + 1 < CHUNK_HEIGHT) {
-                get_block_info(c->blocks[x][y + 1][z], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return c->blocks[x][y + 1][z];
             }
             break;
         case (int)DOWN:
             if (y - 1 >= 0) {
-                get_block_info(c->blocks[x][y - 1][z], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return c->blocks[x][y - 1][z];
             }
             break;
         case (int)WEST:
             if (x + 1 < CHUNK_SIZE) {
-                get_block_info(c->blocks[x + 1][y][z], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return c->blocks[x + 1][y][z];
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[0][y][z], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return adj->blocks[0][y][z];
             }
             break;
         case (int)EAST:
             if (x - 1 >= 0) {
-                get_block_info(c->blocks[x - 1][y][z], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return c->blocks[x - 1][y][z];
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[CHUNK_SIZE - 1][y][z], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return adj->blocks[CHUNK_SIZE - 1][y][z];
             }
             break;
         case (int)NORTH:
             if (z - 1 >= 0) {
-                get_block_info(c->blocks[x][y][z - 1], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return c->blocks[x][y][z - 1];
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[x][y][CHUNK_SIZE - 1], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return adj->blocks[x][y][CHUNK_SIZE - 1];
             }
             break;
         case (int)SOUTH:
             if (z + 1 < CHUNK_SIZE) {
-                get_block_info(c->blocks[x][y][z + 1], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return c->blocks[x][y][z + 1];
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[x][y][0], &block_id, NULL, NULL, NULL);
-                return block_id;
+                return adj->blocks[x][y][0];
             }
             break;
         default:
             break;
     }
-    return get_block_id("air");
+    return 0; // air block data
+}
+
+short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
+    short block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+    short block_id = 0;
+    get_block_info(block_data, &block_id, NULL, NULL, NULL);
+    return block_id;
 }
 
 // TODO: this function is messy, clean it up
@@ -110,7 +106,8 @@ void get_side_visible(
     chunk* c,
     chunk* adj,
     int* visible_out,
-    int* underwater_out
+    int* underwater_out,
+    int* water_level_out
 ) {
     // calculate adjacent block
     short adjacent_id = get_adjacent_block(x, y, z, side, c, adj);
@@ -126,6 +123,16 @@ void get_side_visible(
     // check if we are underwater
     if (adjacent_id == get_block_id("water")) {
         *underwater_out = 1;
+    }
+
+    // get water level from adjacent block
+    if (adjacent_id == get_block_id("water")) {
+        short adj_water_level = 0;
+        short adj_block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+        get_block_info(adj_block_data, NULL, NULL, NULL, &adj_water_level);
+        *water_level_out = (int)adj_water_level;
+    } else {
+        *water_level_out = 0;
     }
 
     // make sure transparent neighbors are visible
@@ -344,8 +351,7 @@ void pack_block(
     short block_id = 0;
     short orientation = 0;
     short rot = 0;
-    short water_level = 0;
-    get_block_info(block_data, &block_id, &orientation, &rot, &water_level);
+    get_block_info(block_data, &block_id, &orientation, &rot, NULL);
 
     for (int side = 0; side < 6; side++) {
         chunk* adj = NULL;
@@ -355,7 +361,8 @@ void pack_block(
 
         int visible = 0;
         int underwater = 0;
-        get_side_visible(x, y, z, side, c, adj, &visible, &underwater);
+        int water_level = 0;
+        get_side_visible(x, y, z, side, c, adj, &visible, &underwater, &water_level);
         if (!visible) {
             continue;
         }

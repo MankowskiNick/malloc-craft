@@ -6,12 +6,14 @@ layout (location = 2) in ivec2 aAtlasCoord;
 layout (location = 3) in int aSide;
 layout (location = 4) in int aUnderwater;
 layout (location = 5) in int aOrientation;
+layout (location = 6) in int aWaterLevel;
 
 out vec2 texCoord;
-flat out float y;
+out float y;
 out vec2 atlasCoord;
 out float dist;
 flat out float underwater;
+flat out float waterLevelAttr;
 out vec3 normal;
 out vec3 fragPos;
 
@@ -101,6 +103,7 @@ void main() {
     dist = length(viewPos.xyz);
     
     underwater = float(aUnderwater);
+    waterLevelAttr = float(aWaterLevel);
     normal = getNormal(aPos, aSide);
     fragPos = worldPos;
 }

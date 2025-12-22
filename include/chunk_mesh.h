@@ -5,7 +5,7 @@
 #include <player_instance.h>
 #include <util.h>
 
-#define VBO_WIDTH 8
+#define VBO_WIDTH 9
 
 typedef struct {
     int x, y, z;

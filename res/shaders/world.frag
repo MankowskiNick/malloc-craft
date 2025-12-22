@@ -4,8 +4,9 @@ in vec3 fragPos; // position of the fragment
 in vec2 texCoord; // coordinate of the quad [0, 1]
 in vec2 atlasCoord; // coordinate of the texture in the atlas [0, 32]
 in float dist; // distance from the camera
-flat in float underwater;
-flat in float y;
+flat in float underwater; // is the block underwater?
+flat in float waterLevelAttr; // water level 0-3
+in float y;
 in vec3 normal;
 
 out vec4 FragColor;
@@ -121,12 +122,10 @@ void main() {
     vec3 shadowFactor = getShadowIntensity(texCoord);
     vec3 lightIntensity = ambientLight + (sunColor * intensity * shadowFactor);
     
-    // underwater blocks are handled differently than standard blocks
-    // underwater blocks are colored by the caustic texture and are bluer
-    if (underwater == 1.0 && y <= waterLevel + 1.0 - waterOffset) {
+    // underwater blocks
+    if (y - float(int(y)) <= waterLevelAttr / 3.0 && underwater == 1.0) {
         FragColor = getUnderwaterColor(coord, lightIntensity);
     }
-
     // standard blocks 
     else {
         FragColor = getStandardColor(coord, lightIntensity);
