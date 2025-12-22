@@ -5,12 +5,14 @@ in vec2 atlasCoord;
 in vec3 normal;
 in vec3 fragPos;
 in float dist;
+flat in int faceType;
 
 out vec4 FragColor;
 
 uniform sampler2D atlas;
 uniform sampler2D bump;
 uniform sampler2D shadowMap;
+uniform sampler2D caustic;
 
 uniform float atlasSize;
 uniform float time;
@@ -71,6 +73,20 @@ vec3 getShadowIntensity(vec2 coord) {
     return vec3(shadow);
 }
 
+vec4 calculateChromaticAberration(vec2 coord) {
+    vec4 causticColor = texture(caustic, coord);
+    causticColor.r = texture(caustic, vec2(coord.x + 0.01, coord.y)).r;
+    causticColor.b = texture(caustic, vec2(coord.x - 0.01, coord.y)).b;
+    causticColor.g = texture(caustic, vec2(coord.x, coord.y + 0.01)).g;
+    return causticColor;
+}
+
+vec4 getCausticColor(vec2 coord) {
+    vec2 causticCoord = vec2(coord.x + sin(time * 0.08), coord.y + cos(time * 0.08));
+
+    return calculateChromaticAberration(causticCoord);
+}
+
 void main() {
     vec2 coord = (atlasCoord + texCoord) / atlasSize;
     
@@ -87,10 +103,21 @@ void main() {
     vec3 shadowFactor = getShadowIntensity(texCoord);
     vec3 lightIntensity = ambientLight + (shadowFactor * sunColor * diffuse);
     
-    vec4 baseColor = texture(atlas, coord);
+    vec4 baseColor;
+    
+    // Apply chromatic aberration and caustics to side (0-3) and bottom (5) faces
+    if (faceType != 4) {  // NOT the top face
+        vec4 causticColor = getCausticColor(texCoord);
+        vec4 textureColor = texture(atlas, coord);
+        baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
+        // Blend caustic color with the base texture
+        baseColor.rgb = mix(baseColor.rgb, causticColor.rgb + textureColor.rgb, 0.3);
+    } else {
+        baseColor = texture(atlas, coord);
+        baseColor.rgb *= lightIntensity;
+    }
     
     vec3 finalColor = baseColor.rgb;
-    finalColor = finalColor * lightIntensity;
     finalColor += shadowFactor * sunColor * spec;
     
     vec4 colorWithFog = mix(vec4(finalColor, baseColor.a),

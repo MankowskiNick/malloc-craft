@@ -13,6 +13,7 @@ out vec2 atlasCoord;
 out vec3 normal;
 out vec3 fragPos;
 out float dist;
+flat out int faceType;
 
 uniform mat4 view;
 uniform mat4 proj;
@@ -69,6 +70,8 @@ void main()
             worldPos.y -= waterHeightReduction;
         }
     }
+
+    faceType = aSide;
 
     gl_Position = proj * view * vec4(worldPos, 1.0);
 
