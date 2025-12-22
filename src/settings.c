@@ -50,7 +50,6 @@ float WATER_SHININESS = 5000.0f;
 float AMBIENT_R_INTENSITY = 0.3f;
 float AMBIENT_G_INTENSITY = 0.3f;
 float AMBIENT_B_INTENSITY = 0.3f;
-float WATER_OFFSET = 0.2f;
 float WATER_HEIGHT = 1.0f;
 float WATER_DISTANCE = 50.0f;
 float DELTA_X = 0.1f;
@@ -344,11 +343,6 @@ void parse_water_settings(json_object water_obj) {
     if (water_obj.type != JSON_OBJECT) {
         fprintf(stderr, "Error: water section is not an object in settings.json\n");
         exit(EXIT_FAILURE);
-    }
-
-    json_object water_offset = json_get_property(water_obj, "water_offset");
-    if (water_offset.type == JSON_NUMBER) {
-        WATER_OFFSET = water_offset.value.number;
     }
 
     json_object water_height = json_get_property(water_obj, "water_height");

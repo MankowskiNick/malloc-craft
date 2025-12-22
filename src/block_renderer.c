@@ -82,16 +82,14 @@ void send_atlas(block_renderer* br) {
 
 
 void send_water_info(block_renderer* br) {
-    glUniform1f(glGetUniformLocation(br->program.id, "waterOffset"), WATER_OFFSET);
     glUniform1f(glGetUniformLocation(br->program.id, "waterLevel"), (float)WORLDGEN_WATER_LEVEL);
+}
 
+void send_caustic_texture(block_renderer* br) {
     glActiveTexture(GL_TEXTURE0 + br->caustic.tex_index);
     glBindTexture(GL_TEXTURE_2D, br->caustic.id);
     uint caustic_loc = glGetUniformLocation(br->program.id, "caustic");
     glUniform1i(caustic_loc, br->caustic.tex_index);
-
-    uint water_dist_loc = glGetUniformLocation(br->program.id, "waterDistance");
-    glUniform1f(water_dist_loc, WATER_DISTANCE);
 }
 
 void send_fog(block_renderer* br) {
@@ -143,9 +141,7 @@ void render_solids(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* pa
     send_view_matrix(br);
     send_proj_matrix(br);
     send_atlas(br);
-    send_water_info(br);
     send_fog(br);
-    send_time(br);
     send_sun_info(&(br->program), sun);
     send_ambient_light(&(br->program));
     send_sun_matrices(&(br->program), sun);

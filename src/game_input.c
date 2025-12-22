@@ -19,34 +19,34 @@ typedef struct key_entry {
 key_entry* key_stack;
 game_data* g_data;
 
-void update_pos(int key, vec3 front, vec3 right) {
+void update_pos(int key, vec3 front, vec3 right, float delta_ms) {
     float dx = 0.0f, dy = 0.0f, dz = 0.0f;
     switch(key) {
         case GLFW_KEY_W:
-            dx = DELTA_X * front[0];
-            dy = DELTA_Y * front[1];
-            dz = DELTA_Z * front[2];
+            dx = DELTA_X * front[0] * delta_ms;
+            dy = DELTA_Y * front[1] * delta_ms;
+            dz = DELTA_Z * front[2] * delta_ms;
             break;
         case GLFW_KEY_S:
-            dx = -DELTA_X * front[0];
-            dy = -DELTA_Y * front[1];
-            dz = -DELTA_Z * front[2];
+            dx = -DELTA_X * front[0] * delta_ms;
+            dy = -DELTA_Y * front[1] * delta_ms;
+            dz = -DELTA_Z * front[2] * delta_ms;
             break;
         case GLFW_KEY_A:
-            dx = -DELTA_X * right[0];
-            dy = -DELTA_Y * right[1];
-            dz = -DELTA_Z * right[2];
+            dx = -DELTA_X * right[0] * delta_ms;
+            dy = -DELTA_Y * right[1] * delta_ms;
+            dz = -DELTA_Z * right[2] * delta_ms;
             break;
         case GLFW_KEY_D:
-            dx = DELTA_X * right[0];
-            dy = DELTA_Y * right[1];
-            dz = DELTA_Z * right[2];
+            dx = DELTA_X * right[0] * delta_ms;
+            dy = DELTA_Y * right[1] * delta_ms;
+            dz = DELTA_Z * right[2] * delta_ms;
             break;
         case GLFW_KEY_SPACE:
-            dy = DELTA_Y;
+            dy = DELTA_Y * delta_ms;
             break;
         case GLFW_KEY_LEFT_SHIFT:
-            dy = -DELTA_Y;
+            dy = -DELTA_Y * delta_ms;
             break;
         default:
             break;
@@ -56,7 +56,7 @@ void update_pos(int key, vec3 front, vec3 right) {
     update_camera_pos(cam, (float[3]){dx, dy, dz});
 }
 
-void update_position() {
+void update_position(float delta_ms) {
     key_entry* cur = key_stack;
     while(cur != NULL) {
         vec3 front, up, right;
@@ -66,13 +66,13 @@ void update_position() {
         glm_vec3_cross(front, up, right);
         glm_normalize_to(right, right);
 
-        update_pos(cur->key, front, right);
+        update_pos(cur->key, front, right, delta_ms);
         cur = cur->next;
     }
 }
 
-void update_camera() {
-    update_position();
+void update_camera(int delta_ms) {
+    update_position((float)delta_ms);
     update_orientation(&(g_data->player->cam));
 }
 

@@ -97,7 +97,6 @@ extern float AMBIENT_G_INTENSITY;
 extern float AMBIENT_B_INTENSITY;
 
 // Water settings
-extern float WATER_OFFSET;
 extern float WATER_HEIGHT;
 extern float WATER_DISTANCE;
 

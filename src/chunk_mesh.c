@@ -3,6 +3,7 @@
 #include <sort.h>
 #include <chunk.h>
 #include <mesh.h>
+#include <settings.h>
 #include <assert.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -41,11 +42,44 @@ int chunk_mesh_equals(void* a, void* b) {
 float distance_to_camera(const void* item) {
     side_instance* side = (side_instance*)item;
 
-    // multiply by -1 to sort in descending order
+    // multiply by -1 to sort in descending order (back-to-front)
     return -1.0f * sqrt(
         pow((float)(side->x) - cm_camera_cache.x, 2) +
         pow((float)(side->y) - cm_camera_cache.y, 2) +
         pow((float)(side->z) - cm_camera_cache.z, 2)
+    );
+}
+
+float liquid_distance_to_camera(const void* item) {
+    side_instance* side = (side_instance*)item;
+
+    float dist = sqrt(
+        pow((float)(side->x) - cm_camera_cache.x, 2) +
+        pow((float)(side->y) - cm_camera_cache.y, 2) +
+        pow((float)(side->z) - cm_camera_cache.z, 2)
+    );
+
+    // Above water: sort front-to-back (positive) so closer water renders first
+    // Below water: sort back-to-front (negative) so distant water renders first
+    if (cm_camera_cache.y > (float)(WORLDGEN_WATER_LEVEL + 1)) {
+        return dist;  // front-to-back
+    } else {
+        return -dist; // back-to-front
+    }
+}
+
+float chunk_distance_to_camera(const void* item) {
+    chunk_mesh** mesh_ptr = (chunk_mesh**)item;
+    chunk_mesh* mesh = *mesh_ptr;
+
+    // Calculate chunk center position
+    float chunk_center_x = (float)(mesh->x * CHUNK_SIZE) + (CHUNK_SIZE / 2.0f);
+    float chunk_center_z = (float)(mesh->z * CHUNK_SIZE) + (CHUNK_SIZE / 2.0f);
+
+    // multiply by -1 to sort in descending order (back-to-front)
+    return -1.0f * sqrt(
+        pow(chunk_center_x - cm_camera_cache.x, 2) +
+        pow(chunk_center_z - cm_camera_cache.z, 2)
     );
 }
 
@@ -80,6 +114,10 @@ void sort_transparent_sides(chunk_mesh* packet) {
     quicksort(packet->transparent_sides, packet->num_transparent_sides, sizeof(side_instance), distance_to_camera);
 }
 
+void sort_liquid_sides(chunk_mesh* packet) {
+    quicksort(packet->liquid_sides, packet->num_liquid_sides, sizeof(side_instance), liquid_distance_to_camera);
+}
+
 void get_chunk_meshes(game_data* args) {
 
     int x = args->x;
@@ -89,6 +127,11 @@ void get_chunk_meshes(game_data* args) {
     int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(z);
 
     int movedBlocks = ((int)x == (int)(cm_camera_cache.x) && (int)z == (int)(cm_camera_cache.z)) ? 0 : 1;
+
+    // Update camera cache for sorting
+    cm_camera_cache.x = args->x;
+    cm_camera_cache.y = args->player->cam.position[1];
+    cm_camera_cache.z = args->z;
 
     chunk_mesh** packet = NULL;
     int count = 0;
@@ -127,7 +170,7 @@ void get_chunk_meshes(game_data* args) {
     sort_chunk();
     load_chunk();
 
-    quicksort(packet, count, sizeof(chunk_mesh*), distance_to_camera);
+    quicksort(packet, count, sizeof(chunk_mesh*), chunk_distance_to_camera);
 
     lock_mesh();
     if (args->num_packets == NULL) {

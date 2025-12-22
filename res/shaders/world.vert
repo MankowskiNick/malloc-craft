@@ -9,11 +9,8 @@ layout (location = 5) in int aOrientation;
 layout (location = 6) in int aWaterLevel;
 
 out vec2 texCoord;
-out float y;
 out vec2 atlasCoord;
 out float dist;
-flat out float underwater;
-flat out float waterLevelAttr;
 out vec3 normal;
 out vec3 fragPos;
 
@@ -95,15 +92,8 @@ void main() {
     
     texCoord = transformUV(aPos.xy, aSide, aOrientation);
     atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
-
-    // offset water level for waves
-    y = worldPos.y;
     
-    // Calculate distance in view space (correct!)
     dist = length(viewPos.xyz);
-    
-    underwater = float(aUnderwater);
-    waterLevelAttr = float(aWaterLevel);
     normal = getNormal(aPos, aSide);
     fragPos = worldPos;
 }

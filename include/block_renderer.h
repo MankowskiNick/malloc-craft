@@ -30,6 +30,7 @@ void send_atlas(block_renderer* br);
 void send_fog(block_renderer* br);
 void send_time(block_renderer* br);
 void send_water_info(block_renderer* br);
+void send_caustic_texture(block_renderer* br);
 void send_ambient_light(shader_program* p);
 void send_shadow_info(shader_program* p);
 

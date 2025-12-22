@@ -5,18 +5,21 @@ layout (location = 1) in ivec3 aInstancePos;
 layout (location = 2) in ivec2 aAtlasCoord;
 layout (location = 3) in int aSide;
 layout (location = 4) in int aUnderwater;
+layout (location = 5) in int aOrientation;
+layout (location = 6) in int aWaterLevel;
 
 out vec2 texCoord;
 out vec2 atlasCoord;
 flat out float underwater;
 flat out float y;
+flat out int faceType;
+flat out float blockWaterLevel;
 out vec3 normal;
 out vec3 fragPos;
 out float dist;
 
 uniform mat4 view;
 uniform mat4 proj;
-uniform float waterOffset;
 uniform float waterLevel;
 uniform float time;
 
@@ -37,16 +40,28 @@ vec3 transformFace(vec3 pos, int face) {
     return pos;
 }
 
+// Get normal vector for each face type
+vec3 getFaceNormal(int face) {
+    if (face == 0) return vec3(0.0, 0.0, -1.0);  // north (-Z)
+    if (face == 1) return vec3(1.0, 0.0, 0.0);   // west (+X)
+    if (face == 2) return vec3(0.0, 0.0, 1.0);   // south (+Z)
+    if (face == 3) return vec3(-1.0, 0.0, 0.0);  // east (-X)
+    if (face == 4) return vec3(0.0, 1.0, 0.0);   // up (+Y)
+    if (face == 5) return vec3(0.0, -1.0, 0.0);  // down (-Y)
+    return vec3(0.0, 1.0, 0.0);
+}
+
 void main()
 {
     vec3 instancePos = vec3(aInstancePos);
     vec3 worldPos = transformFace(aPos, aSide) + instancePos;
 
-    // offset water level for waves
+    // Pass face type to fragment shader
+    faceType = aSide;
+    blockWaterLevel = float(aWaterLevel);
+
+    // offset water level for waves - only on top faces at the surface
     y = worldPos.y;
-    if (worldPos.y == waterLevel + 1.0) {
-        worldPos.y -= waterOffset;
-    }
     gl_Position = proj * view * vec4(worldPos, 1.0);
 
     texCoord = vec2(aPos.x, aPos.y);
@@ -54,21 +69,17 @@ void main()
 
     underwater = float(aUnderwater);
 
-    // calculate normal vector
-    vec3 dx = vec3(
-        1.0,
-        0.075 * 0.5,
-        0.0
-    );
+    // Get proper normal for this face
+    normal = getFaceNormal(aSide);
 
-    vec3 dz = vec3(
-        0.0,
-        0.075 * 0.5,
-        1.0
-    );
-    
-    normal = normalize(cross(dz, dx));
+    // For top face, add slight wave perturbation to normal
+    if (aSide == 4) {
+        vec3 dx = vec3(1.0, 0.075 * 0.5, 0.0);
+        vec3 dz = vec3(0.0, 0.075 * 0.5, 1.0);
+        normal = normalize(cross(dz, dx));
+    }
+
     fragPos = worldPos;
-    
+
     dist = length(gl_Position.xyz);
 }

@@ -4,76 +4,25 @@ in vec3 fragPos; // position of the fragment
 in vec2 texCoord; // coordinate of the quad [0, 1]
 in vec2 atlasCoord; // coordinate of the texture in the atlas [0, 32]
 in float dist; // distance from the camera
-flat in float underwater; // is the block underwater?
-flat in float waterLevelAttr; // water level 0-3
-in float y;
 in vec3 normal;
 
 out vec4 FragColor;
 
-// textures
 uniform float atlasSize;
 uniform sampler2D atlas;
 uniform sampler2D bump;
-uniform sampler2D caustic;
 uniform sampler2D shadowMap;
-
-// shadows
 uniform float shadowSoftness;
 uniform float shadowBias;
 uniform int shadowSamples;
-
-// fog
 uniform float fogDistance;
-
-// water values
-uniform float waterDistance;
-uniform float waterLevel;
-uniform float waterOffset;
-uniform float time;
-
-// sun
 uniform vec3 sunPos;
 uniform vec3 sunColor;
 uniform float sunIntensity;
 uniform mat4 sunView;
 uniform mat4 sunProj;
-
-// ambient lighting
 uniform vec3 ambientLight;
 
-
-vec4 calculateChromaticAberration(vec2 coord) {
-    vec4 causticColor = texture(caustic, coord);
-    causticColor.r = texture(caustic, vec2(coord.x + 0.01, coord.y)).r;
-    causticColor.b = texture(caustic, vec2(coord.x - 0.01, coord.y)).b;
-    causticColor.g = texture(caustic, vec2(coord.x, coord.y + 0.01)).g;
-    return causticColor;
-}
-
-vec4 getCausticColor(vec2 coord) {
-    vec2 causticCoord = vec2(coord.x + sin(time * 0.08), coord.y + cos(time * 0.08));
-
-    return calculateChromaticAberration(causticCoord);
-}
-
-vec4 getUnderwaterColor(vec2 coord, vec3 lightIntensity) {
-    vec4 causticColor = getCausticColor(texCoord);
-    vec4 textureColor = texture(atlas, coord);
-    vec4 baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
-    return mix(
-            causticColor + texture(atlas, coord), 
-            vec4(0.0, 0.0, 1.0, 1.0), 
-            clamp(dist / waterDistance, 0.3, 0.8));
-}
-
-vec4 getStandardColor(vec2 coord, vec3 lightIntensity) {
-    vec4 textureColor = texture(atlas, coord);
-    vec4 baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
-    return mix(baseColor, 
-        vec4(1.0, 1.0, 1.0, 1.0), 
-        clamp(dist / fogDistance, 0.0, 1.0));
-}
 
 vec3 getShadowIntensity(vec2 coord) {
     vec3 fragLightPos = vec3(sunProj * sunView * vec4(fragPos, 1.0));
@@ -110,24 +59,16 @@ vec3 getShadowIntensity(vec2 coord) {
 void main() {
     vec2 coord = (atlasCoord + texCoord) / atlasSize;
 
-    // get bumped normal
     vec3 bumpedNormal = normalize(normal + texture(bump, coord).xyz);
-    // vec3 bumpedNormal = normal;
-
-    // normalize sun position(also direction, since this is global)
     vec3 sun = normalize(sunPos);
 
-    // calculate ambient and diffuse lighting
     float intensity = max(dot(bumpedNormal, sun), 0.0) * sunIntensity;
     vec3 shadowFactor = getShadowIntensity(texCoord);
     vec3 lightIntensity = ambientLight + (sunColor * intensity * shadowFactor);
-    
-    // underwater blocks
-    if (y - float(int(y)) <= waterLevelAttr / 3.0 && underwater == 1.0) {
-        FragColor = getUnderwaterColor(coord, lightIntensity);
-    }
-    // standard blocks 
-    else {
-        FragColor = getStandardColor(coord, lightIntensity);
-    }
+
+    vec4 textureColor = texture(atlas, coord);
+    vec4 baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
+    FragColor = mix(baseColor, 
+        vec4(1.0, 1.0, 1.0, 1.0), 
+        clamp(dist / fogDistance, 0.0, 1.0));
 }

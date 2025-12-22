@@ -113,7 +113,9 @@ void get_side_visible(
     short adjacent_id = get_adjacent_block(x, y, z, side, c, adj);
 
     short current_id = 0;
-    get_block_info(c->blocks[x][y][z], &current_id, NULL, NULL, NULL);
+
+    short current_water_level = 0;
+    get_block_info(c->blocks[x][y][z], &current_id, NULL, NULL, &current_water_level);
     block_type* current = get_block_type(current_id);
 
     // calculate visibility
@@ -126,13 +128,26 @@ void get_side_visible(
     }
 
     // get water level from adjacent block
+    short adj_water_level = 0;
     if (adjacent_id == get_block_id("water")) {
-        short adj_water_level = 0;
         short adj_block_data = get_adjacent_block_data(x, y, z, side, c, adj);
         get_block_info(adj_block_data, NULL, NULL, NULL, &adj_water_level);
         *water_level_out = (int)adj_water_level;
     } else {
         *water_level_out = 0;
+    }
+
+    // For liquid blocks: show face at any boundary where we can see the water volume
+    // This includes: water-to-air, water-to-solid, but NOT water-to-water
+    if (current->liquid) {
+        // Hide face if adjacent is also liquid (same type)
+        if (adjacent != NULL && adjacent->liquid) {
+            visible = 0;
+        }
+        // Show face if adjacent is not water (air, solid blocks, etc.)
+        else if (adjacent_id != get_block_id("water")) {
+            visible = 1;
+        }
     }
 
     // make sure transparent neighbors are visible
@@ -351,7 +366,8 @@ void pack_block(
     short block_id = 0;
     short orientation = 0;
     short rot = 0;
-    get_block_info(block_data, &block_id, &orientation, &rot, NULL);
+    short current_water_level = 0;
+    get_block_info(block_data, &block_id, &orientation, &rot, &current_water_level);
 
     for (int side = 0; side < 6; side++) {
         chunk* adj = NULL;
@@ -361,8 +377,8 @@ void pack_block(
 
         int visible = 0;
         int underwater = 0;
-        int water_level = 0;
-        get_side_visible(x, y, z, side, c, adj, &visible, &underwater, &water_level);
+        int adj_water_level = 0;
+        get_side_visible(x, y, z, side, c, adj, &visible, &underwater, &adj_water_level);
         if (!visible) {
             continue;
         }
@@ -376,12 +392,17 @@ void pack_block(
             *chunk_side_data = tmp;
         }
 
+        // For liquid blocks, use the current block's water level
+        // For non-liquid blocks, use the adjacent water level (for underwater effects)
+        block_type* block = get_block_type(block_id);
+        short water_level_to_use = block->liquid ? current_water_level : (short)adj_water_level;
+
         pack_side(
             world_x, world_y, world_z,
             side,
             orientation, rot,
             block_id,
-            water_level,
+            water_level_to_use,
             underwater,
             &((*chunk_side_data)[*num_sides])
         );
@@ -653,4 +674,5 @@ void sort_chunk() {
     }
 
     sort_transparent_sides(packet);
+    sort_liquid_sides(packet);
 }

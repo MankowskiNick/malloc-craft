@@ -191,7 +191,7 @@ void block_init() {
 
     BLOCK_COUNT = block_types.root.value.list.count;
 
-    // Initialize block types array
+    // Initialize block types array 
     TYPES = malloc(sizeof(block_type) * BLOCK_COUNT);
     if (TYPES == NULL) {
         fprintf(stderr, "Failed to allocate memory for block types\n");
