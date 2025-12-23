@@ -98,6 +98,7 @@ void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides) {
         head[index + 6] = side.underwater;
         head[index + 7] = side.orientation;
         head[index + 8] = side.water_level;
+        head[index + 9] = side.water_level_transition;
     }
 }
 

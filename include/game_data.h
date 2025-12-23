@@ -11,6 +11,7 @@ typedef struct {
     bool underwater;
     short water_level;  // 0 = dry, 1-7 = flowing water (7=strongest), 8 = source
     short orientation;
+    short water_level_transition;  // For water flow: adjacent water level (height we're transitioning FROM)
 } side_instance;
 
 typedef struct {

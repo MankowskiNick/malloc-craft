@@ -7,6 +7,7 @@ layout (location = 3) in int aSide;
 layout (location = 4) in int aUnderwater;
 layout (location = 5) in int aOrientation;
 layout (location = 6) in int aWaterLevel;
+layout (location = 7) in int aWaterLevelTransition;
 
 out vec2 texCoord;
 out vec2 atlasCoord;
@@ -55,19 +56,44 @@ void main()
     vec3 instancePos = vec3(aInstancePos);
     vec3 worldPos = transformFace(aPos, aSide) + instancePos;
 
-    // For top face, adjust Y position based on water level
-    if (aSide == 4) {
-        // Water level 0-7, where 7 is full block (1.0)
-        // Reduce Y by the inverse of water level
-        float waterHeightReduction = (8.0 - float(aWaterLevel)) / 8.0;
-        worldPos.y -= waterHeightReduction;
+    // Handle water transitions (when water level changes between adjacent blocks)
+    // aWaterLevelTransition != 0 means this is a transition face
+    if (aWaterLevelTransition > 0) {
+        // This is a transition face connecting two water blocks at different levels
+        // aWaterLevel = higher water level (current block)
+        // aWaterLevelTransition = lower water level (adjacent block)
+        
+        // For cardinal directions (sides 0-3), create a sloped connector
+        if (aSide >= 0 && aSide <= 3) {
+            // Map aPos.y (0-1) to the transition height range
+            float lowerHeight = (7.0 - float(aWaterLevelTransition)) / 7.0;
+            float upperHeight = (7.0 - float(aWaterLevel)) / 7.0;
+            
+            // Interpolate between lower and upper heights based on texture Y coordinate
+            float interpolatedHeight = mix(lowerHeight, upperHeight, aPos.y);
+            
+            // Adjust the Y position of the transition face
+            // The face extends from lowerHeight at aPos.y=0 to upperHeight at aPos.y=1
+            worldPos.y = instancePos.y + 1.0 - interpolatedHeight;
+        }
     }
-    // For side faces (0-3), reduce the top edge Y position
-    else if (aSide >= 0 && aSide <= 3) {
-        // Only adjust the top vertices (where aPos.y == 1.0)
-        if (aPos.y > 0.5) {
-            float waterHeightReduction = (8.0 - float(aWaterLevel)) / 8.0;
+    else {
+        // Normal water faces (not transitions)
+        
+        // For top face, adjust Y position based on water level
+        if (aSide == 4) {
+            // Water level 0-7, where 7 is full block (1.0)
+            // Reduce Y by the inverse of water level
+            float waterHeightReduction = (7.0 - float(aWaterLevel)) / 7.0;
             worldPos.y -= waterHeightReduction;
+        }
+        // For side faces (0-3), reduce the top edge Y position
+        else if (aSide >= 0 && aSide <= 3) {
+            // Only adjust the top vertices (where aPos.y == 1.0)
+            if (aPos.y > 0.5) {
+                float waterHeightReduction = (7.0 - float(aWaterLevel)) / 7.0;
+                worldPos.y -= waterHeightReduction;
+            }
         }
     }
 
@@ -81,8 +107,21 @@ void main()
     // Get proper normal for this face
     normal = getFaceNormal(aSide);
 
+    // For transition faces, compute a sloped normal
+    if (aWaterLevelTransition > 0 && aSide >= 0 && aSide <= 3) {
+        // Create a normal that faces both outward and slightly upward to reflect the slope
+        vec3 outwardNormal = getFaceNormal(aSide);
+        vec3 upwardNormal = vec3(0.0, 1.0, 0.0);
+        
+        // Compute slope vector
+        float heightDiff = (7.0 - float(aWaterLevelTransition)) / 7.0 - (7.0 - float(aWaterLevel)) / 7.0;
+        float slopeStrength = abs(heightDiff);
+        
+        // Blend outward normal with upward component based on slope
+        normal = normalize(mix(outwardNormal, upwardNormal, 0.3 * slopeStrength));
+    }
     // For top face, add slight wave perturbation to normal
-    if (aSide == 4) {
+    else if (aSide == 4) {
         vec3 dx = vec3(1.0, 0.075 * 0.5, 0.0);
         vec3 dz = vec3(0.0, 0.075 * 0.5, 1.0);
         normal = normalize(cross(dz, dx));

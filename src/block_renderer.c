@@ -122,6 +122,7 @@ void render_sides(block_renderer* br, int* side_data, int num_sides) {
     i_add_attrib(&(br->instance_vbo), 4, 1, 6 * sizeof(int), VBO_WIDTH * sizeof(int)); // underwater
     i_add_attrib(&(br->instance_vbo), 5, 1, 7 * sizeof(int), VBO_WIDTH * sizeof(int)); // orientation
     i_add_attrib(&(br->instance_vbo), 6, 1, 8 * sizeof(int), VBO_WIDTH * sizeof(int)); // water_level
+    i_add_attrib(&(br->instance_vbo), 7, 1, 9 * sizeof(int), VBO_WIDTH * sizeof(int)); // water_level_transition
     use_vbo(br->instance_vbo);
 
     glVertexAttribDivisor(1, 1);
@@ -130,6 +131,7 @@ void render_sides(block_renderer* br, int* side_data, int num_sides) {
     glVertexAttribDivisor(4, 1);
     glVertexAttribDivisor(5, 1);
     glVertexAttribDivisor(6, 1);
+    glVertexAttribDivisor(7, 1);
 
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_sides);
 }

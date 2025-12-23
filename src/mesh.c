@@ -348,6 +348,7 @@ void pack_side(int x_0, int y_0, int z_0,
     data->z = z_0;
     data->side = side;
     data->water_level = water_level;
+    data->water_level_transition = 0;  // Initialize transition field
     data->underwater = underwater ? 1 : 0;
 
     // block specific data
@@ -360,6 +361,69 @@ void pack_side(int x_0, int y_0, int z_0,
     }
     data->atlas_x = block->face_atlas_coords[display_side][0];
     data->atlas_y = block->face_atlas_coords[display_side][1];
+}
+
+// Generate water flow transition faces between blocks with different water levels
+void pack_water_transitions(
+    int x, int y, int z,
+    chunk* c,
+    chunk* adj_chunks[4],
+    short current_water_level,
+    side_instance** chunk_side_data,
+    int* num_sides) {
+    
+    int world_x = x + (CHUNK_SIZE * c->x);
+    int world_y = y;
+    int world_z = z + (CHUNK_SIZE * c->z);
+
+    short water_id = get_block_id("water");
+    
+    // Check 4 cardinal directions (0=NORTH, 1=WEST, 2=SOUTH, 3=EAST)
+    for (int side = 0; side < 4; side++) {
+        chunk* adj = adj_chunks[side];
+        
+        // Get adjacent block's water level
+        short adj_block_id = get_adjacent_block(x, y, z, side, c, adj);
+        if (adj_block_id != water_id) {
+            continue;  // Only care about water-to-water transitions
+        }
+        
+        block_data_t adj_block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+        short adj_water_level = 0;
+        get_block_info(adj_block_data, NULL, NULL, NULL, &adj_water_level);
+        
+        // Only generate transition if current block has higher water level
+        if (current_water_level <= adj_water_level) {
+            continue;
+        }
+        
+        // Allocate space for transition face
+        int new_side_count = (*num_sides) + 1;
+        if (new_side_count > SIDES_PER_CHUNK) {
+            side_instance* tmp = realloc(*chunk_side_data, new_side_count * sizeof(side_instance));
+            assert(tmp != NULL && "Failed to allocate memory for transition side data");
+            *chunk_side_data = tmp;
+        }
+        
+        // Create transition face
+        side_instance* trans = &((*chunk_side_data)[*num_sides]);
+        trans->x = world_x;
+        trans->y = world_y;
+        trans->z = world_z;
+        trans->side = side;  // Reuse cardinal side type (0-3)
+        trans->water_level = current_water_level;  // Higher level (target)
+        trans->water_level_transition = adj_water_level;  // Lower level (source)
+        trans->underwater = 0;
+        trans->orientation = (short)DOWN;
+        
+        // Use water texture for transition
+        block_type* water_block = get_block_type(water_id);
+        short display_side = side;  // Use the cardinal direction directly
+        trans->atlas_x = water_block->face_atlas_coords[display_side][0];
+        trans->atlas_y = water_block->face_atlas_coords[display_side][1];
+        
+        (*num_sides)++;
+    }
 }
 
 void pack_block(
@@ -516,7 +580,14 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
 
                 block_type* block = get_block_type(block_id);
                 if (block->liquid) {
+                    // Pack normal liquid faces
                     pack_block(i, k, j, c, adj_chunks, 
+                        liquid_side_data, num_liquid_sides);
+                    
+                    // Pack water flow transitions
+                    short current_water_level = 0;
+                    get_block_info(c->blocks[i][k][j], NULL, NULL, NULL, &current_water_level);
+                    pack_water_transitions(i, k, j, c, adj_chunks, current_water_level,
                         liquid_side_data, num_liquid_sides);
                 }
                 else if (block->transparent && !block->is_foliage) {

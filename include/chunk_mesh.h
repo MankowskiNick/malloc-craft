@@ -6,7 +6,7 @@
 #include <game_data.h>
 #include <util.h>
 
-#define VBO_WIDTH 9
+#define VBO_WIDTH 10
 
 void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);
