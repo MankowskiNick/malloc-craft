@@ -3,6 +3,9 @@
 #include <biome.h>
 #include <tree.h>
 #include <block.h>
+#include <mesh.h>
+#include <world.h>
+#include <water.h>
 #include <stdlib.h>
 
 uint chunk_hash(chunk_coord c) {
@@ -30,49 +33,58 @@ int get_block_height(chunk* c, float x, float z, biome* b) {
     return (int)y_;
 }
 
-void set_block_info(chunk* c, int x, int y, int z, short id, short orientation, short rot, short water_level) {
-    short data = 0;
-    // first 9 bits are block id
-    data = id & 0x1FF;
+void set_block_info(game_data* game_data, chunk* c, int x, int y, int z, short id, short orientation, short rot, short water_level) {
+    if (game_data != NULL) {
+        chunk* adj[4] = {
+            get_chunk(c->x, c->z - 1),
+            get_chunk(c->x + 1, c->z),
+            get_chunk(c->x, c->z + 1),
+            get_chunk(c->x - 1, c->z)
+        };
+        check_for_flow(game_data, c, adj, x, y, z);
+    }
+
+    int data = 0;
+
+    // first 10 bits are block id
+    data = id & 0x3FF;
     // next 3 bits are orientation
-    data |= (orientation & 0x7) << 9;
+    data |= (orientation & 0x7) << 10;
 
     // next 2 bits are rotation
-    data |= (rot & 0x3) << 12;
+    data |= (rot & 0x3) << 13;
 
-    // last 2 bits are water level
+    // last 3 bits are water level
     water_level = water_level < 0 ? 0 : water_level;
-    water_level = water_level > 3 ? 3 : water_level;
-    data |= (water_level & 0x3) << 14;
+    water_level = water_level > 7 ? 7 : water_level;
+    data |= (water_level & 0x7) << 15;
 
-    c->blocks[x][y][z] = data;
+    c->blocks[x][y][z] = int_to_block_data(data);
 }
 
-void get_block_info(short data, short* id, short* orientation, short* rot, short* water_level) {
+void get_block_info(block_data_t bd, short* id, short* orientation, short* rot, short* water_level) {
+    int data = block_data_to_int(bd);
     if (id != NULL) {
-        *id = data & 0x1FF;
+        *id = data & 0x3FF;
     }
     if (orientation != NULL) {
-        *orientation = (data >> 9) & 0x7;
+        *orientation = (data >> 10) & 0x7;
     }
     if (rot != NULL) {
-        *rot = (data >> 12) & 0x3;
+        *rot = (data >> 13) & 0x3;
     }
     if (water_level != NULL) {
-        *water_level = (data >> 14) & 0x3;
+        *water_level = (data >> 15) & 0x7;
     }
 }
 
 short calculate_water_level(int y) {
-   short water_level = 0;
-    if (y < WORLDGEN_WATER_LEVEL) {
-        water_level = 3; // full
+    // Water source blocks have level 8
+    // All ocean/lake water is source water (doesn't flow away)
+    if (y <= WORLDGEN_WATER_LEVEL) {
+        return 8; // Source water level
     }
-    else if (y == WORLDGEN_WATER_LEVEL) {
-        water_level = 2; // 2/3
-    }
-    
-    return water_level;
+    return 0;
 }
 
 void generate_blocks(chunk* c, int x, int z) {
@@ -89,25 +101,25 @@ void generate_blocks(chunk* c, int x, int z) {
 
                 if (k > y) {
                     if (k > WORLDGEN_WATER_LEVEL) {
-                        set_block_info(c, i, k, j, get_block_id("air"), (short)UNKNOWN_SIDE, 0, 0);
+                        set_block_info(NULL, c, i, k, j, get_block_id("air"), (short)UNKNOWN_SIDE, 0, 0);
                     }
                     else {
-                        set_block_info(c, i, k, j, get_block_id("water"), (short)DOWN, 0, water_level);
+                        set_block_info(NULL, c, i, k, j, get_block_id("water"), (short)DOWN, 0, water_level);
                     }
                 }
                 else if (k == y) {
                     if (k < WORLDGEN_WATER_LEVEL) {
-                        set_block_info(c, i, k, j, get_block_id(b->underwater_type), (short)DOWN, 0, 0);
+                        set_block_info(NULL, c, i, k, j, get_block_id(b->underwater_type), (short)DOWN, 0, 0);
                     }
                     else {
-                        set_block_info(c, i, k, j, get_block_id(b->surface_type), (short)DOWN, 0, 0);
+                        set_block_info(NULL, c, i, k, j, get_block_id(b->surface_type), (short)DOWN, 0, 0);
                     }
                 }
                 else if (k > y - 3) {
-                    set_block_info(c, i, k, j, get_block_id(b->subsurface_type), (short)DOWN, 0, 0);
+                    set_block_info(NULL, c, i, k, j, get_block_id(b->subsurface_type), (short)DOWN, 0, 0);
                 }
                 else {
-                    set_block_info(c, i, k, j, get_block_id(b->underground_type), (short)DOWN, 0, 0);
+                    set_block_info(NULL, c, i, k, j, get_block_id(b->underground_type), (short)DOWN, 0, 0);
                 }
             }
         }

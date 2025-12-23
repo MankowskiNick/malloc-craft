@@ -100,7 +100,7 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
     render_skybox(&(r->sky));
     glEnable(GL_DEPTH_TEST);
 
-    render_sun(&(r->s), args->tick);
+    // render_sun(&(r->s), args->tick);
 
     glClear(GL_DEPTH_BUFFER_BIT);
     

@@ -9,6 +9,7 @@
 #include <sun.h>
 #include <fbo.h>
 #include <reflection_map.h>
+#include <game_data.h>
 
 typedef struct {
     block_renderer wr; // world renderer

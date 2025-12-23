@@ -163,11 +163,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         switch(button) {
             case GLFW_MOUSE_BUTTON_LEFT:
                 g_data->mesh_requires_update = TRUE;
-                break_block(*g_data->player);
+                break_block(g_data);
                 break;
             case GLFW_MOUSE_BUTTON_RIGHT:
                 g_data->mesh_requires_update = TRUE;
-                place_block(*g_data->player);
+                place_block(g_data);
                 break;
             default:
                 break;

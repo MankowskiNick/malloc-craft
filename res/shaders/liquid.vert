@@ -57,16 +57,16 @@ void main()
 
     // For top face, adjust Y position based on water level
     if (aSide == 4) {
-        // Water level 0-3, where 3 is full block (1.0)
+        // Water level 0-7, where 7 is full block (1.0)
         // Reduce Y by the inverse of water level
-        float waterHeightReduction = (3.0 - float(aWaterLevel)) / 3.0;
+        float waterHeightReduction = (7.0 - float(aWaterLevel)) / 7.0;
         worldPos.y -= waterHeightReduction;
     }
     // For side faces (0-3), reduce the top edge Y position
     else if (aSide >= 0 && aSide <= 3) {
         // Only adjust the top vertices (where aPos.y == 1.0)
         if (aPos.y > 0.5) {
-            float waterHeightReduction = (3.0 - float(aWaterLevel)) / 3.0;
+            float waterHeightReduction = (7.0 - float(aWaterLevel)) / 7.0;
             worldPos.y -= waterHeightReduction;
         }
     }

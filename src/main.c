@@ -13,6 +13,7 @@
 #include <biome.h>
 #include <pthread.h>
 #include <time.h>
+#include <game_data.h>
 
 int main() {
     read_settings("res/settings.json");

@@ -3,60 +3,10 @@
 
 #include <camera.h>
 #include <player_instance.h>
+#include <game_data.h>
 #include <util.h>
 
 #define VBO_WIDTH 9
-
-typedef struct {
-    int x, y, z;
-    short atlas_x, atlas_y;
-    short side;
-    short face;
-    bool underwater;
-    short water_level;  // 0 = dry, 1 = 1/3 water, 2 = 2/3 water, 3 = full water
-    short orientation;
-} side_instance;
-
-typedef struct {
-    int x, z;
-    side_instance* opaque_sides;
-    side_instance* liquid_sides;
-    side_instance* transparent_sides;
-    side_instance* foliage_sides;
-    float* custom_model_data;
-    int num_opaque_sides;
-    int num_transparent_sides;
-    int num_liquid_sides;
-    int num_foliage_sides;
-    int num_custom_verts;
-} chunk_mesh;
-
-typedef struct {
-    int num_opaque_sides;
-    int num_transparent_sides;
-    int num_liquid_sides;
-    int num_foliage_sides;
-    int num_custom_verts;
-
-    int* transparent_data;
-    int* opaque_data;
-    int* liquid_data;
-    int* foliage_data;
-    float* custom_model_data;
-} world_mesh;
-
-typedef struct {
-    int x;
-    int z;
-    int* num_packets;
-    chunk_mesh** packet;
-    world_mesh* world_mesh;
-    player_instance* player;
-    int is_running;
-    int mesh_requires_update;
-
-    int tick;
-} game_data;
 
 void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);

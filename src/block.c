@@ -3,6 +3,7 @@
 #include <world.h>
 #include <asset.h>
 #include <player_instance.h>
+#include <water.h>
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 #include <cerialize/cerialize.h>
@@ -302,8 +303,8 @@ void get_empty_dist(camera cam, block_ray_result* out_result) {
     out_result->water_level = water_level;
 }
 
-void break_block(player_instance player) {
-    camera cam = player.cam;
+void break_block(game_data* data) {
+    camera cam = data->player->cam;
     block_ray_result result;
     get_empty_dist(cam, &result);
     float t = result.distance;
@@ -332,7 +333,7 @@ void break_block(player_instance player) {
         return;
     }
 
-    set_block_info(c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0, water_level);
+    set_block_info(data, c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0, water_level);
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
     queue_chunk_for_sorting(new_mesh);
@@ -354,8 +355,8 @@ short get_selected_block(player_instance player) {
     return get_block_id(block_id);
 }
 
-void place_block(player_instance player) {
-    camera cam = player.cam;
+void place_block(game_data* data) {
+    camera cam = data->player->cam;
     float t = 0.0f;
     short hit_side = (short)UNKNOWN_SIDE;
     short rot = 0;
@@ -386,7 +387,7 @@ void place_block(player_instance player) {
         return;
     }
 
-    set_block_info(c, chunk_x, chunk_y, chunk_z, get_selected_block(player), hit_side, rot, 0);
+    set_block_info(data, c, chunk_x, chunk_y, chunk_z, get_selected_block(*(data->player)), hit_side, rot, 0);
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);

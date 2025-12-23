@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <water.h>
 
 pthread_mutex_t cm_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -119,7 +120,6 @@ void sort_liquid_sides(chunk_mesh* packet) {
 }
 
 void get_chunk_meshes(game_data* args) {
-
     int x = args->x;
     int z = args->z;
 
@@ -189,6 +189,7 @@ void update_chunk_meshes(game_data* data) {
 
     while(data->is_running) {
         get_chunk_meshes(data);
+        flood_chunks(data);
         usleep(TICK_RATE);
     }
 

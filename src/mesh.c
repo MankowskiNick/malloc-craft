@@ -42,7 +42,11 @@ void m_cleanup() {
     pthread_mutex_destroy(&chunk_load_queue_mutex);
 }
 
-short get_adjacent_block_data(int x, int y, int z, short side, chunk* c, chunk* adj) {
+block_data_t get_block_data(int x, int y, int z, chunk* c) {
+    return c->blocks[x][y][z];
+}
+
+block_data_t get_adjacent_block_data(int x, int y, int z, short side, chunk* c, chunk* adj) {
     switch(side) {
         case (int)UP:
             if (y + 1 < CHUNK_HEIGHT) {
@@ -89,11 +93,18 @@ short get_adjacent_block_data(int x, int y, int z, short side, chunk* c, chunk* 
         default:
             break;
     }
-    return 0; // air block data
 }
 
+short get_adjacent_block_id(int x, int y, int z, short side, chunk* c, chunk* adj) {
+    block_data_t block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+    short block_id = -1;
+    get_block_info(block_data, &block_id, NULL, NULL, NULL);
+    return block_id;
+}
+
+
 short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
-    short block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+    block_data_t block_data = get_adjacent_block_data(x, y, z, side, c, adj);
     short block_id = 0;
     get_block_info(block_data, &block_id, NULL, NULL, NULL);
     return block_id;
@@ -130,7 +141,7 @@ void get_side_visible(
     // get water level from adjacent block
     short adj_water_level = 0;
     if (adjacent_id == get_block_id("water")) {
-        short adj_block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+        block_data_t adj_block_data = get_adjacent_block_data(x, y, z, side, c, adj);
         get_block_info(adj_block_data, NULL, NULL, NULL, &adj_water_level);
         *water_level_out = (int)adj_water_level;
     } else {
@@ -362,12 +373,11 @@ void pack_block(
     int world_y = y;
     int world_z = z + (CHUNK_SIZE * c->z);
 
-    short block_data = c->blocks[x][y][z];
     short block_id = 0;
     short orientation = 0;
     short rot = 0;
     short current_water_level = 0;
-    get_block_info(block_data, &block_id, &orientation, &rot, &current_water_level);
+    get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot, &current_water_level);
 
     for (int side = 0; side < 6; side++) {
         chunk* adj = NULL;
