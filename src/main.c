@@ -12,6 +12,8 @@
 #include <world.h>
 #include <biome.h>
 #include <pthread.h>
+#include <time.h>
+#include <game_data.h>
 
 int main() {
     read_settings("res/settings.json");
@@ -47,15 +49,21 @@ int main() {
     start_chunk_mesh_updater(&data);
     start_world_mesh_updater(&data);
 
+    long start = (long)(glfwGetTime() * 1000.0);
+    int last_tick = 0;
+
     while (!glfwWindowShouldClose(window)) {
 
         data.x = player.cam.position[0];
         data.z = player.cam.position[2];
+        data.tick = (int)(glfwGetTime() * 1000.0) - start; // 1 tick = 1 ms
+        int delta_ms = data.tick - last_tick;
+        last_tick = data.tick;
 
-        update_camera();
+        update_camera(delta_ms);
 
         lock_mesh();
-        render(&r, data.world_mesh, *(data.num_packets));
+        render(&data, &r, data.world_mesh, *(data.num_packets));
         unlock_mesh();
 
         glfwSwapBuffers(window);

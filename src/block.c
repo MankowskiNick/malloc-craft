@@ -1,9 +1,9 @@
 #include <block.h>
-// #include <render.h>
 #include <mesh.h>
 #include <world.h>
 #include <asset.h>
 #include <player_instance.h>
+#include <water.h>
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 #include <cerialize/cerialize.h>
@@ -11,6 +11,13 @@
 
 block_type* TYPES;
 int BLOCK_COUNT = 0;
+
+typedef struct block_ray_result {
+    float distance;
+    short side;
+    short rot;
+    short water_level;
+} block_ray_result;
 
 void cache_model(char* model) {
     blockbench_model* m = get_blockbench_model(model);
@@ -185,7 +192,7 @@ void block_init() {
 
     BLOCK_COUNT = block_types.root.value.list.count;
 
-    // Initialize block types array
+    // Initialize block types array 
     TYPES = malloc(sizeof(block_type) * BLOCK_COUNT);
     if (TYPES == NULL) {
         fprintf(stderr, "Failed to allocate memory for block types\n");
@@ -252,7 +259,7 @@ short calculate_rot(float dx, float dz) {
     return (short)UNKNOWN_SIDE;
 }
 
-void get_empty_dist(camera cam, float* out_dist, short* out_side, short* out_rot) {
+void get_empty_dist(camera cam, block_ray_result* out_result) {
     vec3 position = {cam.position[0], cam.position[1], cam.position[2]};
     vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
     glm_normalize_to(dir, dir);
@@ -267,11 +274,12 @@ void get_empty_dist(camera cam, float* out_dist, short* out_side, short* out_rot
     short hit = false;
     short hit_side = (short)UNKNOWN_SIDE;
     short rot = 0;
+    short water_level = 0;
 
     while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT && t <= MAX_REACH && !hit) {
         short block_id = 0;
         short orientation = 0;
-        get_block_info(c->blocks[chunk_x][chunk_y][chunk_z], &block_id, &orientation, &rot);
+        get_block_info(c->blocks[chunk_x][chunk_y][chunk_z], &block_id, &orientation, &rot, &water_level);
 
         if (block_id != get_block_id("air") && block_id != get_block_id("water")) {
             hit = true;
@@ -285,23 +293,24 @@ void get_empty_dist(camera cam, float* out_dist, short* out_side, short* out_rot
         chunk_y = (uint)pos[1];
     }
 
-    if (out_dist) {
-        *out_dist = t;
+    if (out_result == NULL) {
+        out_result = malloc(sizeof(block_ray_result));
     }
-    if (out_side) {
-        *out_side = hit ? hit_side : (short)UNKNOWN_SIDE;
-    }
-    if (out_rot) {
-        *out_rot = rot;
-    }
+
+    out_result->distance = t;
+    out_result->side = hit_side;
+    out_result->rot = rot;
+    out_result->water_level = water_level;
 }
 
-void break_block(player_instance player) {
-    camera cam = player.cam;
-    float t = 0.0f;
-    short hit_side = (short)UNKNOWN_SIDE;
-    short rot = 0;
-    get_empty_dist(cam, &t, &hit_side, &rot);
+void break_block(game_data* data) {
+    camera cam = data->player->cam;
+    block_ray_result result;
+    get_empty_dist(cam, &result);
+    float t = result.distance;
+    short hit_side = result.side;
+    short rot = result.rot;
+    short water_level = result.water_level;
     t += RAY_STEP;
 
     if (t > MAX_REACH) {
@@ -324,7 +333,7 @@ void break_block(player_instance player) {
         return;
     }
 
-    set_block_info(c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0);
+    set_block_info(data, c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0, water_level);
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
     queue_chunk_for_sorting(new_mesh);
@@ -346,12 +355,16 @@ short get_selected_block(player_instance player) {
     return get_block_id(block_id);
 }
 
-void place_block(player_instance player) {
-    camera cam = player.cam;
+void place_block(game_data* data) {
+    camera cam = data->player->cam;
     float t = 0.0f;
     short hit_side = (short)UNKNOWN_SIDE;
     short rot = 0;
-    get_empty_dist(cam, &t, &hit_side, &rot);
+    block_ray_result result;
+    get_empty_dist(cam, &result);
+    t = result.distance;
+    hit_side = result.side;
+    rot = result.rot;
     t -= RAY_STEP;
 
     if (t >= MAX_REACH - RAY_STEP) {
@@ -374,7 +387,13 @@ void place_block(player_instance player) {
         return;
     }
 
-    set_block_info(c, chunk_x, chunk_y, chunk_z, get_selected_block(player), hit_side, rot);
+    short selected_block = get_selected_block(*(data->player));
+    block_type* type = get_block_type(selected_block);
+
+    // Water blocks need water level 7 (source) to render and flow
+    short water_level = (type && type->liquid) ? 7 : 0;
+
+    set_block_info(data, c, chunk_x, chunk_y, chunk_z, selected_block, hit_side, rot, water_level);
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);

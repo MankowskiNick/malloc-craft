@@ -104,14 +104,11 @@ void render_depth(FBO* map, int* side_data, int num_sides) {
     i_add_attrib(&(map->instance_vbo), 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
     i_add_attrib(&(map->instance_vbo), 2, 2, 3 * sizeof(int), VBO_WIDTH * sizeof(int)); // atlas coords
     i_add_attrib(&(map->instance_vbo), 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
-    i_add_attrib(&(map->instance_vbo), 4, 1, 6 * sizeof(int), VBO_WIDTH * sizeof(int)); // underwater
-    i_add_attrib(&(map->instance_vbo), 5, 1, 7 * sizeof(int), VBO_WIDTH * sizeof(int)); // orientation
     use_vbo(map->instance_vbo);
 
     glVertexAttribDivisor(1, 1);
     glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
-    glVertexAttribDivisor(4, 1);
 
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_sides);
 

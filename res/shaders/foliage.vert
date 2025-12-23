@@ -5,12 +5,12 @@ layout (location = 1) in ivec3 aInstancePos;
 layout (location = 2) in ivec2 aAtlasCoord;
 layout (location = 3) in int aSide;
 layout (location = 4) in int aUnderwater;
+layout (location = 5) in int aOrientation;
+layout (location = 6) in int aWaterLevel;
 
 out vec2 texCoord;
-flat out float y;
 out vec2 atlasCoord;
 out float dist;
-flat out float underwater;
 out vec3 normal;
 out vec3 fragPos;
 
@@ -59,17 +59,13 @@ void main() {
 
     gl_Position = proj * view * vec4(worldPos, 1.0);
 
-    texCoord = vec2(aPos.x, aPos.y);
+    // For foliage, texCoord is the quad's local coordinates (0-1)
+    // and we need to apply it directly without transformation since foliage
+    // uses simple diagonal planes with no rotation
+    texCoord = aPos.xy;
     atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
 
-    // Apply slight wave animation to foliage
-    y = worldPos.y;
-    y += sin(worldPos.x * 2.0 + time * 2.0) * 0.02;
-    y += sin(worldPos.z * 2.0 + time * 2.0) * 0.02;
-
     dist = length(gl_Position.xyz);
-    underwater = float(aUnderwater);
     normal = getNormal(aPos, aSide);
-
     fragPos = worldPos;
 }

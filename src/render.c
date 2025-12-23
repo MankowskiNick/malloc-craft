@@ -77,7 +77,7 @@ void destroy_renderer(renderer* r) {
     skybox_cleanup(&(r->sky));
 }
 
-void render(renderer* r, world_mesh* packet, int num_packets) {
+void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
     assert(r != NULL && "Renderer is NULL\n");
     assert(packet != NULL && "World mesh is NULL\n");
 
@@ -100,7 +100,7 @@ void render(renderer* r, world_mesh* packet, int num_packets) {
     render_skybox(&(r->sky));
     glEnable(GL_DEPTH_TEST);
 
-    render_sun(&(r->s));
+    render_sun(&(r->s), args->tick);
 
     glClear(GL_DEPTH_BUFFER_BIT);
     

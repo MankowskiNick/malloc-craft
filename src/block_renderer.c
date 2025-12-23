@@ -82,16 +82,14 @@ void send_atlas(block_renderer* br) {
 
 
 void send_water_info(block_renderer* br) {
-    glUniform1f(glGetUniformLocation(br->program.id, "waterOffset"), WATER_OFFSET);
     glUniform1f(glGetUniformLocation(br->program.id, "waterLevel"), (float)WORLDGEN_WATER_LEVEL);
+}
 
+void send_caustic_texture(block_renderer* br) {
     glActiveTexture(GL_TEXTURE0 + br->caustic.tex_index);
     glBindTexture(GL_TEXTURE_2D, br->caustic.id);
     uint caustic_loc = glGetUniformLocation(br->program.id, "caustic");
     glUniform1i(caustic_loc, br->caustic.tex_index);
-
-    uint water_dist_loc = glGetUniformLocation(br->program.id, "waterDistance");
-    glUniform1f(water_dist_loc, WATER_DISTANCE);
 }
 
 void send_fog(block_renderer* br) {
@@ -123,6 +121,8 @@ void render_sides(block_renderer* br, int* side_data, int num_sides) {
     i_add_attrib(&(br->instance_vbo), 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
     i_add_attrib(&(br->instance_vbo), 4, 1, 6 * sizeof(int), VBO_WIDTH * sizeof(int)); // underwater
     i_add_attrib(&(br->instance_vbo), 5, 1, 7 * sizeof(int), VBO_WIDTH * sizeof(int)); // orientation
+    i_add_attrib(&(br->instance_vbo), 6, 1, 8 * sizeof(int), VBO_WIDTH * sizeof(int)); // water_level
+    i_add_attrib(&(br->instance_vbo), 7, 1, 9 * sizeof(int), VBO_WIDTH * sizeof(int)); // water_level_transition
     use_vbo(br->instance_vbo);
 
     glVertexAttribDivisor(1, 1);
@@ -130,7 +130,9 @@ void render_sides(block_renderer* br, int* side_data, int num_sides) {
     glVertexAttribDivisor(3, 1);
     glVertexAttribDivisor(4, 1);
     glVertexAttribDivisor(5, 1);
-        
+    glVertexAttribDivisor(6, 1);
+    glVertexAttribDivisor(7, 1);
+
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_sides);
 }
 
@@ -141,9 +143,7 @@ void render_solids(block_renderer* br, sun* sun, FBO* shadow_map, world_mesh* pa
     send_view_matrix(br);
     send_proj_matrix(br);
     send_atlas(br);
-    send_water_info(br);
     send_fog(br);
-    send_time(br);
     send_sun_info(&(br->program), sun);
     send_ambient_light(&(br->program));
     send_sun_matrices(&(br->program), sun);

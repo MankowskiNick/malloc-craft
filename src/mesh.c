@@ -42,90 +42,123 @@ void m_cleanup() {
     pthread_mutex_destroy(&chunk_load_queue_mutex);
 }
 
-short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
-    short block_id = 0;
+block_data_t get_block_data(int x, int y, int z, chunk* c) {
+    return c->blocks[x][y][z];
+}
+
+block_data_t get_adjacent_block_data(int x, int y, int z, short side, chunk* c, chunk* adj) {
     switch(side) {
         case (int)UP:
             if (y + 1 < CHUNK_HEIGHT) {
-                get_block_info(c->blocks[x][y + 1][z], &block_id, NULL, NULL);
-                return block_id;
+                return c->blocks[x][y + 1][z];
             }
             break;
         case (int)DOWN:
             if (y - 1 >= 0) {
-                get_block_info(c->blocks[x][y - 1][z], &block_id, NULL, NULL);
-                return block_id;
+                return c->blocks[x][y - 1][z];
             }
             break;
         case (int)WEST:
             if (x + 1 < CHUNK_SIZE) {
-                get_block_info(c->blocks[x + 1][y][z], &block_id, NULL, NULL);
-                return block_id;
+                return c->blocks[x + 1][y][z];
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[0][y][z], &block_id, NULL, NULL);
-                return block_id;
+                return adj->blocks[0][y][z];
             }
             break;
         case (int)EAST:
             if (x - 1 >= 0) {
-                get_block_info(c->blocks[x - 1][y][z], &block_id, NULL, NULL);
-                return block_id;
+                return c->blocks[x - 1][y][z];
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[CHUNK_SIZE - 1][y][z], &block_id, NULL, NULL);
-                return block_id;
+                return adj->blocks[CHUNK_SIZE - 1][y][z];
             }
             break;
         case (int)NORTH:
             if (z - 1 >= 0) {
-                get_block_info(c->blocks[x][y][z - 1], &block_id, NULL, NULL);
-                return block_id;
+                return c->blocks[x][y][z - 1];
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[x][y][CHUNK_SIZE - 1], &block_id, NULL, NULL);
-                return block_id;
+                return adj->blocks[x][y][CHUNK_SIZE - 1];
             }
             break;
         case (int)SOUTH:
             if (z + 1 < CHUNK_SIZE) {
-                get_block_info(c->blocks[x][y][z + 1], &block_id, NULL, NULL);
-                return block_id;
+                return c->blocks[x][y][z + 1];
             }
             else if (adj != NULL) {
-                get_block_info(adj->blocks[x][y][0], &block_id, NULL, NULL);
-                return block_id;
+                return adj->blocks[x][y][0];
             }
             break;
         default:
             break;
     }
-    return get_block_id("air");
+}
+
+short get_adjacent_block_id(int x, int y, int z, short side, chunk* c, chunk* adj) {
+    block_data_t block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+    short block_id = -1;
+    get_block_info(block_data, &block_id, NULL, NULL, NULL);
+    return block_id;
+}
+
+
+short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
+    block_data_t block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+    short block_id = 0;
+    get_block_info(block_data, &block_id, NULL, NULL, NULL);
+    return block_id;
 }
 
 // TODO: this function is messy, clean it up
-void get_side_visible( 
+void get_side_visible(
     int x, int y, int z,
-    short side, 
+    short side,
     chunk* c,
     chunk* adj,
     int* visible_out,
-    int* underwater_out
+    int* underwater_out,
+    int* water_level_out
 ) {
     // calculate adjacent block
     short adjacent_id = get_adjacent_block(x, y, z, side, c, adj);
 
     short current_id = 0;
-    get_block_info(c->blocks[x][y][z], &current_id, NULL, NULL);
+
+    short current_water_level = 0;
+    get_block_info(c->blocks[x][y][z], &current_id, NULL, NULL, &current_water_level);
     block_type* current = get_block_type(current_id);
 
-    // calculate visibility 
+    // calculate visibility
     block_type* adjacent = get_block_type(adjacent_id);
     uint visible = adjacent_id == get_block_id("air") || get_block_type(adjacent_id)->transparent != current->transparent;
 
     // check if we are underwater
     if (adjacent_id == get_block_id("water")) {
         *underwater_out = 1;
+    }
+
+    // get water level from adjacent block
+    short adj_water_level = 0;
+    if (adjacent_id == get_block_id("water")) {
+        block_data_t adj_block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+        get_block_info(adj_block_data, NULL, NULL, NULL, &adj_water_level);
+        *water_level_out = (int)adj_water_level;
+    } else {
+        *water_level_out = 0;
+    }
+
+    // For liquid blocks: show face at any boundary where we can see the water volume
+    // This includes: water-to-air, water-to-solid, but NOT water-to-water
+    if (current->liquid) {
+        // Hide face if adjacent is also liquid (same type)
+        if (adjacent != NULL && adjacent->liquid) {
+            visible = 0;
+        }
+        // Show face if adjacent is not water (air, solid blocks, etc.)
+        else if (adjacent_id != get_block_id("water")) {
+            visible = 1;
+        }
     }
 
     // make sure transparent neighbors are visible
@@ -137,7 +170,7 @@ void get_side_visible(
         visible = 1;
     }
 
-    if (adjacent != NULL 
+    if (adjacent != NULL
         && (adjacent->transparent && current->transparent)
         && adjacent->id != current->id) {
         visible = 1;
@@ -160,7 +193,6 @@ void get_side_visible(
     }
 
     *visible_out = visible;
-    // *underwater_out = underwater;
 }
 
 short get_rotated_side(int side, short rot) {
@@ -303,12 +335,21 @@ void get_model_transformation(mat4 transform, block_type* block, short orientati
     glm_translate(transform, (vec3){-0.5f, -0.5f, -0.5f}); // translate back
 }
 
-void pack_side(int x_0, int y_0, int z_0, short side, short orientation, short rot, short type, uint underwater, side_instance* data) {
+void pack_side(int x_0, int y_0, int z_0, 
+        short side, 
+        short orientation, 
+        short rot, 
+        short type, 
+        short water_level, 
+        bool underwater, 
+        side_instance* data) {
     data->x = x_0;
     data->y = y_0;
     data->z = z_0;
     data->side = side;
-    data->underwater = (short)underwater;
+    data->water_level = water_level;
+    data->water_level_transition = 0;  // Initialize transition field
+    data->underwater = underwater ? 1 : 0;
 
     // block specific data
     block_type* block = get_block_type(type);
@@ -322,16 +363,107 @@ void pack_side(int x_0, int y_0, int z_0, short side, short orientation, short r
     data->atlas_y = block->face_atlas_coords[display_side][1];
 }
 
-void pack_block(
+// Generate water flow transition faces between blocks with different water levels
+void pack_water_transitions(
     int x, int y, int z,
     chunk* c,
-    chunk* adj_chunks[4], // front, back, left, right
-    side_instance** chunk_side_data, 
+    chunk* adj_chunks[4],
+    short current_water_level,
+    side_instance** chunk_side_data,
     int* num_sides) {
     
     int world_x = x + (CHUNK_SIZE * c->x);
     int world_y = y;
     int world_z = z + (CHUNK_SIZE * c->z);
+
+    short water_id = get_block_id("water");
+    
+    // Check 4 cardinal directions (0=NORTH, 1=WEST, 2=SOUTH, 3=EAST)
+    for (int side = 0; side < 4; side++) {
+        chunk* adj = adj_chunks[side];
+        
+        // Get adjacent block's water level
+        short adj_block_id = get_adjacent_block(x, y, z, side, c, adj);
+        if (adj_block_id != water_id) {
+            continue;  // Only care about water-to-water transitions
+        }
+        
+        block_data_t adj_block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+        short adj_water_level = 0;
+        get_block_info(adj_block_data, NULL, NULL, NULL, &adj_water_level);
+        
+        // Generate transition if there's a height difference
+        // Only generate from the higher level to avoid duplicates
+        if (current_water_level == adj_water_level) {
+            continue;  // Same level, no transition needed
+        }
+        
+        // Determine which way the transition should face
+        int should_transition = 0;
+        short from_level = 0, to_level = 0;
+        
+        if (current_water_level > adj_water_level) {
+            // Current is higher - transition faces away from current block
+            should_transition = 1;
+            from_level = adj_water_level;
+            to_level = current_water_level;
+        } else if (current_water_level < adj_water_level && adj_water_level - current_water_level == 1) {
+            // Adjacent is only 1 level higher - add a transition from this side too
+            // This creates the surface from the lower water level's perspective
+            should_transition = 1;
+            from_level = current_water_level;
+            to_level = adj_water_level;
+        }
+        
+        if (!should_transition) {
+            continue;
+        }
+        
+        // Allocate space for transition face
+        int new_side_count = (*num_sides) + 1;
+        if (new_side_count > SIDES_PER_CHUNK) {
+            side_instance* tmp = realloc(*chunk_side_data, new_side_count * sizeof(side_instance));
+            assert(tmp != NULL && "Failed to allocate memory for transition side data");
+            *chunk_side_data = tmp;
+        }
+        
+        // Create transition face
+        side_instance* trans = &((*chunk_side_data)[*num_sides]);
+        trans->x = world_x;
+        trans->y = world_y;
+        trans->z = world_z;
+        trans->side = side;  // Reuse cardinal side type (0-3)
+        trans->water_level = to_level;  // Higher level (target)
+        trans->water_level_transition = from_level;  // Lower level (source)
+        trans->underwater = 0;
+        trans->orientation = (short)DOWN;
+        
+        // Use water texture for transition
+        block_type* water_block = get_block_type(water_id);
+        short display_side = side;  // Use the cardinal direction directly
+        trans->atlas_x = water_block->face_atlas_coords[display_side][0];
+        trans->atlas_y = water_block->face_atlas_coords[display_side][1];
+        
+        (*num_sides)++;
+    }
+}
+
+void pack_block(
+    int x, int y, int z,
+    chunk* c,
+    chunk* adj_chunks[4], // front, back, left, right
+    side_instance** chunk_side_data,
+    int* num_sides) {
+
+    int world_x = x + (CHUNK_SIZE * c->x);
+    int world_y = y;
+    int world_z = z + (CHUNK_SIZE * c->z);
+
+    short block_id = 0;
+    short orientation = 0;
+    short rot = 0;
+    short current_water_level = 0;
+    get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot, &current_water_level);
 
     for (int side = 0; side < 6; side++) {
         chunk* adj = NULL;
@@ -341,7 +473,8 @@ void pack_block(
 
         int visible = 0;
         int underwater = 0;
-        get_side_visible(x, y, z, side, c, adj, &visible, &underwater);
+        int adj_water_level = 0;
+        get_side_visible(x, y, z, side, c, adj, &visible, &underwater, &adj_water_level);
         if (!visible) {
             continue;
         }
@@ -355,17 +488,17 @@ void pack_block(
             *chunk_side_data = tmp;
         }
 
-        short block_id = 0;
-        short orientation = 0;
-        short rot = 0;
-        short block = c->blocks[x][y][z];
-        get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot);
+        // For liquid blocks, use the current block's water level
+        // For non-liquid blocks, use the adjacent water level (for underwater effects)
+        block_type* block = get_block_type(block_id);
+        short water_level_to_use = block->liquid ? current_water_level : (short)adj_water_level;
 
         pack_side(
-            world_x, world_y, world_z, 
-            side, 
+            world_x, world_y, world_z,
+            side,
             orientation, rot,
             block_id,
+            water_level_to_use,
             underwater,
             &((*chunk_side_data)[*num_sides])
         );
@@ -382,7 +515,8 @@ void pack_model(
     short block_id = 0;
     short orientation = 0;
     short rot = 0;
-    get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot);
+    short water_level = 0;
+    get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot, &water_level);
     block_type* block = get_block_type(block_id);
     if (block == NULL || !block->is_custom_model || block->model == NULL) {
         return;
@@ -461,14 +595,21 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
         for (int j = 0; j < CHUNK_SIZE; j++) {
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 short block_id = 0;
-                get_block_info(c->blocks[i][k][j], &block_id, NULL, NULL);
+                get_block_info(c->blocks[i][k][j], &block_id, NULL, NULL, NULL);
                 if (block_id == get_block_id("air")) {
                     continue;
                 }
 
                 block_type* block = get_block_type(block_id);
                 if (block->liquid) {
+                    // Pack normal liquid faces
                     pack_block(i, k, j, c, adj_chunks, 
+                        liquid_side_data, num_liquid_sides);
+                    
+                    // Pack water flow transitions
+                    short current_water_level = 0;
+                    get_block_info(c->blocks[i][k][j], NULL, NULL, NULL, &current_water_level);
+                    pack_water_transitions(i, k, j, c, adj_chunks, current_water_level,
                         liquid_side_data, num_liquid_sides);
                 }
                 else if (block->transparent && !block->is_foliage) {
@@ -636,4 +777,5 @@ void sort_chunk() {
     }
 
     sort_transparent_sides(packet);
+    sort_liquid_sides(packet);
 }

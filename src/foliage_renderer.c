@@ -13,13 +13,11 @@ void render_foliage_sides(block_renderer* br, int* foliage_data, int num_foliage
     i_add_attrib(&(br->instance_vbo), 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
     i_add_attrib(&(br->instance_vbo), 2, 2, 3 * sizeof(int), VBO_WIDTH * sizeof(int)); // atlas coords
     i_add_attrib(&(br->instance_vbo), 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
-    i_add_attrib(&(br->instance_vbo), 4, 1, 6 * sizeof(int), VBO_WIDTH * sizeof(int)); // underwater
     use_vbo(br->instance_vbo);
 
     glVertexAttribDivisor(1, 1);
     glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
-    glVertexAttribDivisor(4, 1);
         
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_foliage_sides);
 }

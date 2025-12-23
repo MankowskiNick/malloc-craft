@@ -45,11 +45,32 @@ void render_liquids(block_renderer* br, sun* sun, FBO* shadow_map, FBO* reflecti
     use_program(br->program);
     bind_vao(br->vao);
 
+    // Enable blending for transparent liquid volumes
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Enable depth writing so water chunks properly occlude each other
+    glDepthMask(GL_TRUE);
+
+    // Use LESS to prevent z-fighting at chunk boundaries
+    glDepthFunc(GL_LESS);
+
+    // Only use polygon offset when underwater to avoid chunk seams when viewing from above
+    // When looking at water from above, proper sorting (front-to-back) should handle blending
+    if (br->cam->position[1] <= (float)(WORLDGEN_WATER_LEVEL + 1)) {
+        // Enable polygon offset to allow water to render over coplanar solid blocks
+        // This creates a small depth separation that allows caustics to show
+        // Negative offset pulls water toward camera in depth space
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(-1.0f, -1.0f);
+    }
+
     send_view_matrix(br);
     send_proj_matrix(br);
     send_atlas(br);
     send_fog(br);
     send_water_info(br);
+    send_caustic_texture(br);
     send_time(br);
     send_sun_info(&(br->program), sun);
     send_fbo_texture(&(br->program), shadow_map, SHADOW_MAP_TEXTURE_INDEX, "shadowMap");
@@ -65,4 +86,11 @@ void render_liquids(block_renderer* br, sun* sun, FBO* shadow_map, FBO* reflecti
             packet->liquid_data,
             packet->num_liquid_sides);
     }
+
+    // Disable polygon offset
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+    // Restore depth mask and depth function
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
 }
