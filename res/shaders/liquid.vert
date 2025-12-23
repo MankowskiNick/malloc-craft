@@ -59,13 +59,6 @@ void main()
     // Treat level 6 as source block (same height as 7) for seamless rendering
     float effectiveWaterLevel = float(aWaterLevel);
     float effectiveTransitionLevel = float(aWaterLevelTransition);
-    
-    if (aWaterLevel == 6) {
-        effectiveWaterLevel = 7.0;
-    }
-    if (aWaterLevelTransition == 6) {
-        effectiveTransitionLevel = 7.0;
-    }
 
     // Handle water transitions (when water level changes between adjacent blocks)
     // aWaterLevelTransition != 0 means this is a transition face

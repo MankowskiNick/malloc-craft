@@ -18,8 +18,8 @@
 #define WATER_LEVEL_DROPOFF 2          // How much water level decreases per block horizontally
 
 // Performance limits
-#define MAX_CHUNKS_PER_TICK 16
-#define MAX_UPDATES_PER_TICK 1000
+#define MAX_CHUNKS_PER_TICK 4
+#define MAX_UPDATES_PER_TICK 50
 
 // Encode/decode chunk coordinates to/from a unique ID
 #define ENCODE_CHUNK_ID(x, z) ((int)(((((x) + 32768) & 0xFFFF) << 16) | (((z) + 32768) & 0xFFFF)))
@@ -257,20 +257,26 @@ static void process_water_block(game_data* data, chunk* c, chunk* adj[4],
                          &below_chunk, &bx, &bz)) {
             if (can_water_flow_into(below_id)) {
                 can_flow_down = true;
-                // Water below should be source level (falling water fills completely)
-                if (below_id != water_id || below_water < WATER_SOURCE_LEVEL) {
+                // ANY water flowing down creates a level 7 (super-full) water source
+                short below_water_level = 7;
+                
+                if (below_id != water_id || below_water < below_water_level) {
                     bool set_block = (below_id != water_id);
                     queue_water_update(below_chunk->x, below_chunk->z, bx, y - 1, bz,
-                                      WATER_SOURCE_LEVEL, set_block);
+                                      below_water_level, set_block);
                     mark_chunk_modified(below_chunk->x, below_chunk->z);
                 }
+            } else if (water_level == 0 && below_id != water_id) {
+                // Level 0 water with solid block below should be removed
+                queue_water_update(c->x, c->z, x, y, z, 0, false);
+                mark_chunk_modified(c->x, c->z);
             }
         }
     }
 
-    // STEP 3: Flow horizontally ONLY if we can't flow down
+    // STEP 3: Flow horizontally (can flow at any level including 0)
     // Water prioritizes going down - only spreads sideways when blocked below
-    if (water_level > WATER_LEVEL_DROPOFF && !can_flow_down) {
+    if (!can_flow_down) {
         for (int dir = 0; dir < 4; dir++) {
             int nx = x + DIR_OFFSETS[dir][0];
             int nz = z + DIR_OFFSETS[dir][1];
@@ -285,8 +291,11 @@ static void process_water_block(game_data* data, chunk* c, chunk* adj[4],
             }
 
             if (can_water_flow_into(neighbor_id)) {
-                // Horizontal spread always decreases by WATER_LEVEL_DROPOFF
+                // Horizontal spread decreases by WATER_LEVEL_DROPOFF
                 short spread_level = water_level - WATER_LEVEL_DROPOFF;
+                
+                // Allow spreading down to level 0
+                if (spread_level < 0) spread_level = 0;
                 
                 // Only update if we're providing higher water level
                 if (spread_level > neighbor_water) {
