@@ -13,8 +13,8 @@
 #include <stdlib.h>
 
 // Water simulation constants - Minecraft-style
-#define WATER_SOURCE_LEVEL 7           // Source water (full block)
-#define WATER_SOURCE_MIN 7             // Minimum level that counts as a source
+#define WATER_SOURCE_LEVEL 6           // Source water (full block)
+#define WATER_SOURCE_MIN 6             // Minimum level that counts as a source
 #define WATER_LEVEL_DROPOFF 2          // How much water level decreases per block horizontally
 
 // Performance limits

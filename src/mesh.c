@@ -392,8 +392,30 @@ void pack_water_transitions(
         short adj_water_level = 0;
         get_block_info(adj_block_data, NULL, NULL, NULL, &adj_water_level);
         
-        // Only generate transition if current block has higher water level
-        if (current_water_level <= adj_water_level) {
+        // Generate transition if there's a height difference
+        // Only generate from the higher level to avoid duplicates
+        if (current_water_level == adj_water_level) {
+            continue;  // Same level, no transition needed
+        }
+        
+        // Determine which way the transition should face
+        int should_transition = 0;
+        short from_level = 0, to_level = 0;
+        
+        if (current_water_level > adj_water_level) {
+            // Current is higher - transition faces away from current block
+            should_transition = 1;
+            from_level = adj_water_level;
+            to_level = current_water_level;
+        } else if (current_water_level < adj_water_level && adj_water_level - current_water_level == 1) {
+            // Adjacent is only 1 level higher - add a transition from this side too
+            // This creates the surface from the lower water level's perspective
+            should_transition = 1;
+            from_level = current_water_level;
+            to_level = adj_water_level;
+        }
+        
+        if (!should_transition) {
             continue;
         }
         
@@ -411,8 +433,8 @@ void pack_water_transitions(
         trans->y = world_y;
         trans->z = world_z;
         trans->side = side;  // Reuse cardinal side type (0-3)
-        trans->water_level = current_water_level;  // Higher level (target)
-        trans->water_level_transition = adj_water_level;  // Lower level (source)
+        trans->water_level = to_level;  // Higher level (target)
+        trans->water_level_transition = from_level;  // Lower level (source)
         trans->underwater = 0;
         trans->orientation = (short)DOWN;
         

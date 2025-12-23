@@ -56,6 +56,17 @@ void main()
     vec3 instancePos = vec3(aInstancePos);
     vec3 worldPos = transformFace(aPos, aSide) + instancePos;
 
+    // Treat level 6 as source block (same height as 7) for seamless rendering
+    float effectiveWaterLevel = float(aWaterLevel);
+    float effectiveTransitionLevel = float(aWaterLevelTransition);
+    
+    if (aWaterLevel == 6) {
+        effectiveWaterLevel = 7.0;
+    }
+    if (aWaterLevelTransition == 6) {
+        effectiveTransitionLevel = 7.0;
+    }
+
     // Handle water transitions (when water level changes between adjacent blocks)
     // aWaterLevelTransition != 0 means this is a transition face
     if (aWaterLevelTransition > 0) {
@@ -66,8 +77,8 @@ void main()
         // For cardinal directions (sides 0-3), create a sloped connector
         if (aSide >= 0 && aSide <= 3) {
             // Map aPos.y (0-1) to the transition height range
-            float lowerHeight = (7.0 - float(aWaterLevelTransition)) / 7.0;
-            float upperHeight = (7.0 - float(aWaterLevel)) / 7.0;
+            float lowerHeight = (7.0 - effectiveTransitionLevel) / 7.0;
+            float upperHeight = (7.0 - effectiveWaterLevel) / 7.0;
             
             // Interpolate between lower and upper heights based on texture Y coordinate
             float interpolatedHeight = mix(lowerHeight, upperHeight, aPos.y);
@@ -84,14 +95,14 @@ void main()
         if (aSide == 4) {
             // Water level 0-7, where 7 is full block (1.0)
             // Reduce Y by the inverse of water level
-            float waterHeightReduction = (7.0 - float(aWaterLevel)) / 7.0;
+            float waterHeightReduction = (7.0 - effectiveWaterLevel) / 7.0;
             worldPos.y -= waterHeightReduction;
         }
         // For side faces (0-3), reduce the top edge Y position
         else if (aSide >= 0 && aSide <= 3) {
             // Only adjust the top vertices (where aPos.y == 1.0)
             if (aPos.y > 0.5) {
-                float waterHeightReduction = (7.0 - float(aWaterLevel)) / 7.0;
+                float waterHeightReduction = (7.0 - effectiveWaterLevel) / 7.0;
                 worldPos.y -= waterHeightReduction;
             }
         }
@@ -113,8 +124,8 @@ void main()
         vec3 outwardNormal = getFaceNormal(aSide);
         vec3 upwardNormal = vec3(0.0, 1.0, 0.0);
         
-        // Compute slope vector
-        float heightDiff = (7.0 - float(aWaterLevelTransition)) / 7.0 - (7.0 - float(aWaterLevel)) / 7.0;
+        // Compute slope vector using effective levels
+        float heightDiff = (7.0 - effectiveTransitionLevel) / 7.0 - (7.0 - effectiveWaterLevel) / 7.0;
         float slopeStrength = abs(heightDiff);
         
         // Blend outward normal with upward component based on slope
