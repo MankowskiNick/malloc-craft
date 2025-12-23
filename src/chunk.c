@@ -34,16 +34,6 @@ int get_block_height(chunk* c, float x, float z, biome* b) {
 }
 
 void set_block_info(game_data* game_data, chunk* c, int x, int y, int z, short id, short orientation, short rot, short water_level) {
-    if (game_data != NULL) {
-        chunk* adj[4] = {
-            get_chunk(c->x, c->z - 1),
-            get_chunk(c->x + 1, c->z),
-            get_chunk(c->x, c->z + 1),
-            get_chunk(c->x - 1, c->z)
-        };
-        check_for_flow(game_data, c, adj, x, y, z);
-    }
-
     int data = 0;
 
     // first 10 bits are block id
@@ -60,6 +50,17 @@ void set_block_info(game_data* game_data, chunk* c, int x, int y, int z, short i
     data |= (water_level & 0x7) << 15;
 
     c->blocks[x][y][z] = int_to_block_data(data);
+
+    // Check for water flow AFTER block data is written
+    if (game_data != NULL) {
+        chunk* adj[4] = {
+            get_chunk(c->x, c->z - 1),
+            get_chunk(c->x + 1, c->z),
+            get_chunk(c->x, c->z + 1),
+            get_chunk(c->x - 1, c->z)
+        };
+        check_for_flow(game_data, c, adj, x, y, z);
+    }
 }
 
 void get_block_info(block_data_t bd, short* id, short* orientation, short* rot, short* water_level) {
@@ -79,10 +80,10 @@ void get_block_info(block_data_t bd, short* id, short* orientation, short* rot, 
 }
 
 short calculate_water_level(int y) {
-    // Water source blocks have level 8
+    // Water source blocks have level 7
     // All ocean/lake water is source water (doesn't flow away)
     if (y <= WORLDGEN_WATER_LEVEL) {
-        return 8; // Source water level
+        return 7; // Source water level
     }
     return 0;
 }

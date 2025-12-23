@@ -387,7 +387,13 @@ void place_block(game_data* data) {
         return;
     }
 
-    set_block_info(data, c, chunk_x, chunk_y, chunk_z, get_selected_block(*(data->player)), hit_side, rot, 0);
+    short selected_block = get_selected_block(*(data->player));
+    block_type* type = get_block_type(selected_block);
+
+    // Water blocks need water level 7 (source) to render and flow
+    short water_level = (type && type->liquid) ? 7 : 0;
+
+    set_block_info(data, c, chunk_x, chunk_y, chunk_z, selected_block, hit_side, rot, water_level);
 
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
