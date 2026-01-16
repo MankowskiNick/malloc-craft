@@ -1,6 +1,6 @@
 #ifndef INPUT_H
 #define INPUT_H
-#include <player_instance.h>
+#include <player.h>
 #include <chunk_mesh.h>
 
 #include <GLFW/glfw3.h>

@@ -5,7 +5,7 @@
 #include <camera.h>
 #include <input.h>
 #include <settings.h>
-#include <player_instance.h>
+#include <player.h>
 #include <skybox.h>
 #include <chunk_mesh.h>
 #include <mesh.h>
@@ -26,7 +26,7 @@ int main() {
 
     block_init();
 
-    player_instance player = player_init(PLAYER_FILE);
+    player player = player_init(PLAYER_FILE);
 
     game_data data = {
         .x = (int)player.cam.position[0],

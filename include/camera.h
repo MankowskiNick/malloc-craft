@@ -16,7 +16,6 @@ typedef struct {
     float pitch;
 } camera;
 
-void update_camera_pos(camera* cam, float direction[3]);
 void update_orientation(camera* cam);
 
 void get_view_matrix(camera c, mat4* view);

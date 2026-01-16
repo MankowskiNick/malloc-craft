@@ -52,8 +52,8 @@ void update_pos(int key, vec3 front, vec3 right, float delta_ms) {
             break;
     }
 
-    camera* cam = &(g_data->player->cam);
-    update_camera_pos(cam, (float[3]){dx, dy, dz});
+    player* player = g_data->player;
+    update_player_pos(player, (float[3]){dx, dy, dz});
 }
 
 void update_position(float delta_ms) {

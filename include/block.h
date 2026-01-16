@@ -2,7 +2,7 @@
 #define BLOCK_H
 
 #include <block_models.h>
-#include <player_instance.h>
+#include <player.h>
 #include <settings.h>
 #include <vao.h>
 #include <vbo.h>
