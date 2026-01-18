@@ -45,6 +45,7 @@ renderer create_renderer(camera* camera) {
     block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     block_renderer fr = create_foliage_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     blockbench_renderer br = create_blockbench_renderer(camera, ATLAS_PATH, BUMP_PATH);
+    outline_renderer or = create_outline_renderer(camera);
 
     skybox sky = create_skybox(camera);
     sun s = create_sun(camera, 1.0f, 1.0f, 1.0f);
@@ -56,6 +57,7 @@ renderer create_renderer(camera* camera) {
         .lr = lr,
         .fr = fr,
         .br = br,
+        .or = or,
         .sky = sky,
         .s = s,
         .cam_cache = {
@@ -74,6 +76,7 @@ void destroy_renderer(renderer* r) {
     destroy_block_renderer(r->wr);
     destroy_block_renderer(r->lr);
     destroy_blockbench_renderer(r->br);
+    destroy_outline_renderer(r->or);
     skybox_cleanup(&(r->sky));
 }
 
@@ -109,4 +112,9 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
     render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
     render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
     render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
+
+    // Render block outline if player is looking at a valid block
+    if (args->player->has_selected_block) {
+        render_outline(&(r->or), args->player->selected_block_pos[0], args->player->selected_block_pos[1], args->player->selected_block_pos[2]);
+    }
 }

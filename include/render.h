@@ -5,6 +5,7 @@
 #include <shader.h>
 #include <block_renderer.h>
 #include <blockbench_renderer.h>
+#include <outline_renderer.h>
 #include <skybox.h>
 #include <sun.h>
 #include <fbo.h>
@@ -16,6 +17,7 @@ typedef struct {
     block_renderer fr; // foliage renderer
     block_renderer lr; // liquid renderer
     blockbench_renderer br; // blockbench renderer
+    outline_renderer or; // outline renderer
     skybox sky;
     sun s;
     FBO shadow_map;

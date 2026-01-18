@@ -62,6 +62,7 @@ int main() {
 
         update_camera(delta_ms);
         apply_physics(&player, delta_ms);
+        update_selected_block(&player);
 
         lock_mesh();
         render(&data, &r, data.world_mesh, *(data.num_packets));

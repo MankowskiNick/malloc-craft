@@ -443,6 +443,11 @@ player player_init(char* player_file) {
     acceleration[1] = 0.0f;
     acceleration[2] = 0.0f;
 
+    int* selected_block_pos = malloc(3 * sizeof(int));
+    selected_block_pos[0] = 0;
+    selected_block_pos[1] = 0;
+    selected_block_pos[2] = 0;
+
     player player = {
         .cam = cam,
 
@@ -462,6 +467,10 @@ player player_init(char* player_file) {
         .selected_block = 0,
         .hotbar = hotbar,
         .hotbar_size = hotbar_obj.value.list.count,
+
+        .selected_block_pos = selected_block_pos,
+        .selected_block_id = 0,
+        .has_selected_block = false,
     };
 
     player.cam.position[0] = player.position[0];

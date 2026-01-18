@@ -23,6 +23,10 @@ typedef struct {
     int selected_block;
     char** hotbar;
     int hotbar_size;
+
+    int* selected_block_pos;  // [x, y, z] of the block player is looking at
+    short selected_block_id;  // Block ID of the selected block
+    bool has_selected_block;  // Whether player is looking at a valid block
 } player;
 
 player player_init(char* player_file);

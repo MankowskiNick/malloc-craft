@@ -1,7 +1,7 @@
 {
   "display": {
-    "width": 1920,
-    "height": 1080,
+    "width": 640,
+    "height": 480,
     "title": "malloc-craft",
     "vsync": true,
     "fov": 60.0
@@ -72,12 +72,12 @@
     "ray_step": 0.05,
     "grav_accel": -30,
     "player_accel": 1000.0,
-    "player_friction": 0.85,
+    "player_friction": 0.75,
     "player_max_speed": 8.0,
     "jump_force": 10.0,
     "coyote_time": 4,
     "swim_accel": 500.0,
-    "water_friction": 0.95,
+    "water_friction": 0.85,
     "water_max_speed": 6.0,
     "water_drag": 0.2,
     "swim_vertical_accel": 1.0
