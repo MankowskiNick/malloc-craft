@@ -8,6 +8,8 @@ typedef struct {
     camera cam;
 
     float* position;
+    float* velocity;
+    
     float height;
     float radius;
 
@@ -17,7 +19,6 @@ typedef struct {
 } player;
 
 player player_init(char* player_file);
-void update_player_pos(player* player, float direction[3]);
 void apply_physics(player* player, float delta_ms);
 
 #endif

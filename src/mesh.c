@@ -43,6 +43,14 @@ void m_cleanup() {
 }
 
 block_data_t get_block_data(int x, int y, int z, chunk* c) {
+    // Validate bounds
+    if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_HEIGHT || z < 0 || z >= CHUNK_SIZE) {
+        block_data_t data = {
+            .bytes = { 0, 0, 0 }
+        };
+        return data;  // Return air block (0) for out-of-bounds access
+    }
+    
     return c->blocks[x][y][z];
 }
 

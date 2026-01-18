@@ -87,16 +87,15 @@ float* parse_position(json_object position_object) {
 }
 
 // Helper function to get block ID at world coordinates
-static short get_block_id_at(float x, float y, float z) {
+static void get_block_info_at(float x, float y, float z, short* id, bool* is_foliage) {
     int chunk_x = 0;
     int chunk_z = 0;
     chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
 
     block_data_t data = get_block_data(chunk_x, (int)y, chunk_z, c);
-    short id = 0;
-    get_block_info(data, &id, NULL, NULL, NULL);
+    get_block_info(data, id, NULL, NULL, NULL);
 
-    return id;
+    *is_foliage = check_block_foliage(*id);
 }
 
 // Check if a bounding box collides with solid blocks
@@ -113,8 +112,10 @@ static int check_collision_box(float center_x, float center_y, float center_z, f
     };
     
     for (int i = 0; i < 4; i++) {
-        short block_id = get_block_id_at(bottom_checks[i][0], bottom_checks[i][1], bottom_checks[i][2]);
-        if (block_id != air_id && block_id != water_id) {
+        short block_id = 0;
+        bool is_foliage = false;
+        get_block_info_at(bottom_checks[i][0], bottom_checks[i][1], bottom_checks[i][2], &block_id, &is_foliage);
+        if (block_id != air_id && block_id != water_id && !is_foliage) {
             return 0;
         }
     }
@@ -128,22 +129,26 @@ static int check_collision_box(float center_x, float center_y, float center_z, f
     };
     
     for (int i = 0; i < 4; i++) {
-        short block_id = get_block_id_at(top_checks[i][0], top_checks[i][1], top_checks[i][2]);
+        short block_id = 0;
+        bool is_foliage = false;
+        get_block_info_at(top_checks[i][0], top_checks[i][1], top_checks[i][2], &block_id, &is_foliage);
         if (block_id != air_id && block_id != water_id) {
             return 0;
         }
     }
     
     // Check center point at middle height
-    short block_id = get_block_id_at(center_x, center_y + height * 0.5f, center_z);
-    if (block_id != air_id && block_id != water_id) {
+    short block_id = 0;
+    bool is_foliage = false;
+    get_block_info_at(center_x, center_y + height * 0.5f, center_z, &block_id, &is_foliage);
+    if (block_id != air_id && block_id != water_id && !is_foliage) {
         return 0;
     }
     
     return 1;  // No collision
 }
 
-void update_player_pos(player* player, float direction[3]) {
+void update_player_pos(player* player, float delta_ms) {
     // load chunk and adjacent chunk data
     int chunk_x, chunk_z;
     chunk* current = get_chunk_at(player->position[0], player->position[2], &chunk_x, &chunk_z);
@@ -154,6 +159,11 @@ void update_player_pos(player* player, float direction[3]) {
         get_chunk(chunk_x, chunk_z + 1),
         get_chunk(chunk_x - 1, chunk_z)
     };
+
+    float* direction = player->velocity;
+    direction[0] *= delta_ms / 1000.0f;
+    direction[1] *= delta_ms / 1000.0f;
+    direction[2] *= delta_ms / 1000.0f;
 
     // Try X movement
     if (check_collision_box(player->position[0] + direction[0], player->position[1], player->position[2], player->radius, player->height, current, adj, chunk_x, chunk_z)) {
@@ -176,14 +186,10 @@ void update_player_pos(player* player, float direction[3]) {
 
 void apply_physics(player* player, float delta_ms) {
     // Gravity pulls downward (negative Y)
-    float check_dist = delta_ms * GRAV_ACCEL / 1000.0f; 
+    float check_dist = delta_ms * GRAV_ACCEL; 
     
-    float direction[3] = {
-        0.0f,
-        check_dist,  // Already negative from GRAV_ACCEL
-        0.0f
-    };
-    update_player_pos(player, direction);
+    player->velocity[1] += GRAV_ACCEL;
+    update_player_pos(player, delta_ms);
 }
 
 player player_init(char* player_file) {
@@ -203,10 +209,17 @@ player player_init(char* player_file) {
     float radius = parse_radius(radius_obj);
     float* position = parse_position(position_object);
 
+    float* velocity = malloc(3 * sizeof(float));
+    velocity[0] = 0.0f;
+    velocity[1] = 0.0f;
+    velocity[2] = 0.0f;
+
     player player = {
         .cam = cam,
 
         .position = position,
+        .velocity = velocity,
+
         .height = height,
         .radius = radius,
 

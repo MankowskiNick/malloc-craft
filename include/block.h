@@ -21,6 +21,7 @@ void block_init();
 void break_block(game_data* data);
 void place_block(game_data* data);
 short get_block_id(char* name);
+bool check_block_foliage(short id);
 
 void send_cube_vbo(VAO vao, VBO vbo);
 
