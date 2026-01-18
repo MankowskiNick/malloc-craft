@@ -53,10 +53,14 @@ typedef struct {
     bool mesh_requires_update;
 
     // array of chunks that need water updates.  this is an array of chunk ids determined by a prime factorization hash.
-    int* chunks_to_flow; 
+    int* chunks_to_flow;
     int num_chunks_to_flow;
 
     int tick;
+
+    // UI state
+    bool show_fps;
+    int fps;
 } game_data;
 
 #endif

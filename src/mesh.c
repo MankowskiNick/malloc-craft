@@ -367,6 +367,10 @@ void pack_side(int x_0, int y_0, int z_0,
     if (!block->is_custom_model && !block->is_foliage && block->oriented) {
         display_side = get_converted_side(side, orientation);
     }
+    // Foliage only uses sides 0 and 1, clamp to valid range
+    if (block->is_foliage && display_side > 1) {
+        display_side = side % 2;
+    }
     data->atlas_x = block->face_atlas_coords[display_side][0];
     data->atlas_y = block->face_atlas_coords[display_side][1];
 }

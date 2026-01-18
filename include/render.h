@@ -11,6 +11,7 @@
 #include <fbo.h>
 #include <reflection_map.h>
 #include <game_data.h>
+#include "ui/ui_renderer.h"
 
 typedef struct {
     block_renderer wr; // world renderer
@@ -18,6 +19,7 @@ typedef struct {
     block_renderer lr; // liquid renderer
     blockbench_renderer br; // blockbench renderer
     outline_renderer or; // outline renderer
+    ui_renderer ui; // ui renderer
     skybox sky;
     sun s;
     FBO shadow_map;

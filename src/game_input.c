@@ -118,6 +118,12 @@ void handle_keypress(int key) {
         return;
     }
 
+    /* Toggle FPS counter with F1 key */
+    if (key == GLFW_KEY_F1) {
+        g_data->show_fps = !g_data->show_fps;
+        return;
+    }
+
     /* Toggle fly mode with V key */
     if (key == GLFW_KEY_V) {
         g_data->player->fly_mode = !g_data->player->fly_mode;

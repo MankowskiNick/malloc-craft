@@ -68,6 +68,14 @@ int load_gl() {
     gladLoadGL();
 
     glViewport(0, 0, screen.width, screen.height);
-    
+
     return 1;
+}
+
+int get_screen_width() {
+    return screen.width;
+}
+
+int get_screen_height() {
+    return screen.height;
 }

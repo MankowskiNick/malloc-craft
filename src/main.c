@@ -32,7 +32,9 @@ int main() {
         .x = (int)player.cam.position[0],
         .z = (int)player.cam.position[2],
         .player = &player,
-        .is_running = TRUE
+        .is_running = TRUE,
+        .show_fps = false,
+        .fps = 0
     };
     
     renderer r = create_renderer(&(player.cam));
@@ -59,6 +61,11 @@ int main() {
         data.tick = (int)(glfwGetTime() * 1000.0) - start; // 1 tick = 1 ms
         int delta_ms = data.tick - last_tick;
         last_tick = data.tick;
+
+        // Calculate FPS
+        if (delta_ms > 0) {
+            data.fps = 1000 / delta_ms;
+        }
 
         update_camera(delta_ms);
         apply_physics(&player, delta_ms);
