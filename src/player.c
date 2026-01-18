@@ -3,6 +3,7 @@
 #include <world.h>
 #include <block.h>
 #include <mesh.h>
+#include <settings.h>
 #include <math.h>
 
 camera parse_camera(json_object cam_obj) {
@@ -176,6 +177,24 @@ static int is_player_grounded(player* p, chunk* current, chunk* adj[4], int curr
     return 0;  // Not grounded
 }
 
+// Check if player is submerged in water
+static int is_player_underwater(player* p, chunk* current, chunk* adj[4], int current_chunk_x, int current_chunk_z) {
+    short air_id = get_block_id("air");
+    short water_id = get_block_id("water");
+    
+    // Check if player's center/head is in water
+    float center_x = p->position[0];
+    float center_y = p->position[1] + p->height * 0.5f;  // Check at middle of body
+    float center_z = p->position[2];
+    
+    short block_id = 0;
+    bool is_foliage = false;
+    get_block_info_at(center_x, center_y, center_z, &block_id, &is_foliage);
+    
+    // Underwater if we're in a water block
+    return (block_id == water_id);
+}
+
 void update_player_pos(player* player, float delta_ms) {
     // load chunk and adjacent chunk data
     int chunk_x, chunk_z;
@@ -226,7 +245,11 @@ void apply_physics(player* player, float delta_ms) {
 
     float dt = delta_ms / 1000.0f;  // Convert ms to seconds
 
-    // 1. Ground Detection
+    // 1. Underwater Detection
+    int was_underwater = player->is_underwater;
+    player->is_underwater = is_player_underwater(player, current, adj, chunk_x, chunk_z);
+
+    // 2. Ground Detection
     int was_grounded = player->is_grounded;
     player->is_grounded = is_player_grounded(player, current, adj, chunk_x, chunk_z);
     
@@ -240,46 +263,73 @@ void apply_physics(player* player, float delta_ms) {
         player->coyote_counter++;
     }
 
-    // 2. Jump Input
+    // 3. Jump Input (disabled when underwater)
     if (player->jump_requested) {
-        if (player->is_grounded || player->coyote_counter < COYOTE_TIME) {
-            // Apply jump impulse
+        if (!player->is_underwater && (player->is_grounded || player->coyote_counter < COYOTE_TIME)) {
+            // Apply jump impulse (only on ground, not underwater)
             player->velocity[1] = JUMP_FORCE;
             player->coyote_counter = COYOTE_TIME + 1;  // Consume coyote time
         }
-        player->jump_requested = 0;  // Consume jump input
+        player->jump_requested = 0;  // Always consume jump input
     }
 
-    // 3. Normalize and apply horizontal acceleration
+    // 4. Select physics parameters based on underwater state
+    float accel = player->is_underwater ? SWIM_ACCEL : PLAYER_ACCEL;
+    float friction = player->is_underwater ? WATER_FRICTION : PLAYER_FRICTION;
+    float max_speed = player->is_underwater ? WATER_MAX_SPEED : PLAYER_MAX_SPEED;
+    float gravity = player->is_underwater ? (GRAV_ACCEL * WATER_DRAG) : GRAV_ACCEL;
+
+    // 5. Normalize and apply 3D acceleration (vertical included when underwater via input)
     float accel_mag = sqrtf(player->acceleration[0] * player->acceleration[0] + 
+                            player->acceleration[1] * player->acceleration[1] +
                             player->acceleration[2] * player->acceleration[2]);
     if (accel_mag > 0.0f) {
         // Normalize direction
         float dir_x = player->acceleration[0] / accel_mag;
+        float dir_y = player->acceleration[1] / accel_mag;
         float dir_z = player->acceleration[2] / accel_mag;
         
         // Apply acceleration in normalized direction
-        player->velocity[0] += dir_x * PLAYER_ACCEL * dt;
-        player->velocity[2] += dir_z * PLAYER_ACCEL * dt;
+        player->velocity[0] += dir_x * accel * dt;
+        player->velocity[1] += dir_y * accel * dt;  // Vertical acceleration when swimming
+        player->velocity[2] += dir_z * accel * dt;
     }
 
-    // 4. Apply gravity
-    player->velocity[1] += GRAV_ACCEL * dt;
+    // 6. Apply gravity (always applied, but reduced underwater by WATER_DRAG)
+    player->velocity[1] += gravity * dt;
 
-    // 5. Apply friction (only horizontal)
-    player->velocity[0] *= PLAYER_FRICTION;
-    player->velocity[2] *= PLAYER_FRICTION;
-
-    // 6. Clamp max horizontal speed
-    float horizontal_speed = sqrtf(player->velocity[0] * player->velocity[0] + 
-                                   player->velocity[2] * player->velocity[2]);
-    if (horizontal_speed > PLAYER_MAX_SPEED) {
-        float speed_factor = PLAYER_MAX_SPEED / horizontal_speed;
-        player->velocity[0] *= speed_factor;
-        player->velocity[2] *= speed_factor;
+    // 7. Apply friction (only horizontal when not underwater, full 3D when underwater)
+    if (player->is_underwater) {
+        player->velocity[0] *= friction;
+        player->velocity[1] *= friction;
+        player->velocity[2] *= friction;
+    } else {
+        player->velocity[0] *= friction;
+        player->velocity[2] *= friction;
     }
 
-    // 7. Apply velocity to position
+    // 8. Clamp max speed (horizontal for ground, all directions for underwater)
+    if (player->is_underwater) {
+        float total_speed = sqrtf(player->velocity[0] * player->velocity[0] + 
+                                  player->velocity[1] * player->velocity[1] +
+                                  player->velocity[2] * player->velocity[2]);
+        if (total_speed > max_speed) {
+            float speed_factor = max_speed / total_speed;
+            player->velocity[0] *= speed_factor;
+            player->velocity[1] *= speed_factor;
+            player->velocity[2] *= speed_factor;
+        }
+    } else {
+        float horizontal_speed = sqrtf(player->velocity[0] * player->velocity[0] + 
+                                       player->velocity[2] * player->velocity[2]);
+        if (horizontal_speed > max_speed) {
+            float speed_factor = max_speed / horizontal_speed;
+            player->velocity[0] *= speed_factor;
+            player->velocity[2] *= speed_factor;
+        }
+    }
+
+    // 9. Apply velocity to position
     float direction[3] = {
         player->velocity[0] * dt,
         player->velocity[1] * dt,
@@ -349,6 +399,7 @@ player player_init(char* player_file) {
         .radius = radius,
 
         .is_grounded = 0,
+        .is_underwater = 0,
         .coyote_counter = 0,
         .jump_requested = 0,
 

@@ -19,19 +19,35 @@ typedef struct key_entry {
 key_entry* key_stack;
 game_data* g_data;
 
-void update_pos(int key, vec3 front, vec3 right) {
+void update_pos(int key, vec3 front, vec3 right, int is_underwater) {
     // Calculate desired direction (not velocity, not acceleration directly)
     // This will be applied as acceleration in apply_physics()
-    float dx = 0.0f, dz = 0.0f;
+    float dx = 0.0f, dy = 0.0f, dz = 0.0f;
     
     switch(key) {
         case GLFW_KEY_W:
-            dx = front[0];
-            dz = front[2];
+            if (is_underwater) {
+                // When underwater, W moves in full 3D camera direction (includes vertical)
+                dx = front[0];
+                dy = front[1];
+                dz = front[2];
+            } else {
+                // On ground, W moves only horizontally (camera front's horizontal component)
+                dx = front[0];
+                dz = front[2];
+            }
             break;
         case GLFW_KEY_S:
-            dx = -front[0];
-            dz = -front[2];
+            if (is_underwater) {
+                // Reverse full 3D direction when underwater
+                dx = -front[0];
+                dy = -front[1];
+                dz = -front[2];
+            } else {
+                // Reverse horizontal direction
+                dx = -front[0];
+                dz = -front[2];
+            }
             break;
         case GLFW_KEY_A:
             dx = -right[0];
@@ -48,6 +64,7 @@ void update_pos(int key, vec3 front, vec3 right) {
     // Accumulate desired direction (will be normalized later)
     player* p = g_data->player;
     p->acceleration[0] += dx;
+    p->acceleration[1] += dy;  // Vertical movement when swimming
     p->acceleration[2] += dz;
 }
 
@@ -55,13 +72,24 @@ void update_position() {
     // Reset desired direction accumulation
     player* p = g_data->player;
     p->acceleration[0] = 0.0f;
+    p->acceleration[1] = 0.0f;  // Reset vertical acceleration
     p->acceleration[2] = 0.0f;
     
     // Iterate through key stack to accumulate desired direction
     key_entry* cur = key_stack;
     while(cur != NULL) {
-        // Skip SPACE and SHIFT (handled separately as jump)
-        if (cur->key != GLFW_KEY_SPACE && cur->key != GLFW_KEY_LEFT_SHIFT) {
+        if (cur->key == GLFW_KEY_SPACE) {
+            // Space: swim up when underwater
+            if (p->is_underwater) {
+                p->acceleration[1] += SWIM_VERTICAL_ACCEL;  // Strong upward acceleration
+            }
+        } else if (cur->key == GLFW_KEY_LEFT_SHIFT) {
+            // Shift: swim down faster when underwater
+            if (p->is_underwater) {
+                p->acceleration[1] -= SWIM_VERTICAL_ACCEL;  // Strong downward acceleration
+            }
+        } else {
+            // Movement keys (W, A, S, D)
             vec3 front, up, right;
             camera* cam = &(g_data->player->cam);
             glm_normalize_to(cam->front, front);
@@ -69,7 +97,7 @@ void update_position() {
             glm_vec3_cross(front, up, right);
             glm_normalize_to(right, right);
             
-            update_pos(cur->key, front, right);
+            update_pos(cur->key, front, right, p->is_underwater);
         }
         cur = cur->next;
     }
@@ -101,6 +129,15 @@ void handle_keypress(int key) {
     /* Handle jump input */
     if (key == GLFW_KEY_SPACE) {
         g_data->player->jump_requested = 1;
+        // Also add to key stack for swimming control
+        for (key_entry* cur = key_stack; cur != NULL; cur = cur->next) {
+            if (cur->key == key) return;  // Already in stack
+        }
+        key_entry* new_entry = malloc(sizeof(*new_entry));
+        if (!new_entry) return;
+        new_entry->key = key;
+        new_entry->next = key_stack;
+        key_stack = new_entry;
         return;
     }
 

@@ -64,6 +64,11 @@ float PLAYER_FRICTION = 0.85f;
 float PLAYER_MAX_SPEED = 15.0f;
 float JUMP_FORCE = 10.0f;
 int COYOTE_TIME = 4;
+float SWIM_ACCEL = 10.0f;
+float WATER_FRICTION = 0.95f;
+float WATER_MAX_SPEED = 6.0f;
+float WATER_DRAG = 0.2f;
+float SWIM_VERTICAL_ACCEL = 15.0f;
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
 float WORLDGEN_BIOME_AMPLITUDE = 1.0f;
@@ -431,6 +436,31 @@ void parse_player_settings(json_object player_obj) {
     json_object coyote_time = json_get_property(player_obj, "coyote_time");
     if (coyote_time.type == JSON_NUMBER) {
         COYOTE_TIME = (int)coyote_time.value.number;
+    }
+
+    json_object swim_accel = json_get_property(player_obj, "swim_accel");
+    if (swim_accel.type == JSON_NUMBER) {
+        SWIM_ACCEL = swim_accel.value.number;
+    }
+
+    json_object water_friction = json_get_property(player_obj, "water_friction");
+    if (water_friction.type == JSON_NUMBER) {
+        WATER_FRICTION = water_friction.value.number;
+    }
+
+    json_object water_max_speed = json_get_property(player_obj, "water_max_speed");
+    if (water_max_speed.type == JSON_NUMBER) {
+        WATER_MAX_SPEED = water_max_speed.value.number;
+    }
+
+    json_object water_drag = json_get_property(player_obj, "water_drag");
+    if (water_drag.type == JSON_NUMBER) {
+        WATER_DRAG = water_drag.value.number;
+    }
+
+    json_object swim_vertical_accel = json_get_property(player_obj, "swim_vertical_accel");
+    if (swim_vertical_accel.type == JSON_NUMBER) {
+        SWIM_VERTICAL_ACCEL = swim_vertical_accel.value.number;
     }
 }
 

@@ -116,6 +116,13 @@ extern float PLAYER_MAX_SPEED;     // Max horizontal speed cap (units/s)
 extern float JUMP_FORCE;           // Initial upward velocity on jump (units/s)
 extern int COYOTE_TIME;            // Frames to allow jump after leaving ground
 
+// Water/Swimming physics settings
+extern float SWIM_ACCEL;           // Swimming acceleration magnitude (units/s²)
+extern float WATER_FRICTION;       // Water friction multiplier (0.0-1.0)
+extern float WATER_MAX_SPEED;      // Max swimming speed cap (units/s)
+extern float WATER_DRAG;           // Water drag/buoyancy modifier (0.0-1.0)
+extern float SWIM_VERTICAL_ACCEL;  // Vertical acceleration when holding space/shift underwater (units/s²)
+
 // Player settings
 extern float MAX_REACH;
 extern float RAY_STEP;

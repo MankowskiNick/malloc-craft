@@ -15,6 +15,7 @@ typedef struct {
     float radius;
 
     int is_grounded;        // 1 if touching ground, 0 if airborne
+    int is_underwater;      // 1 if submerged in water, 0 if in air
     int coyote_counter;     // Frames since leaving ground (allows jumping within grace period)
     int jump_requested;     // 1 if jump input was triggered this frame
 
