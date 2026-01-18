@@ -58,7 +58,12 @@ float DELTA_Z = 0.1f;
 float SENSITIVITY = 0.001f;
 float MAX_REACH = 5.0f;
 float RAY_STEP = 0.05f;
-float GRAV_ACCEL = -9.0f;
+float GRAV_ACCEL = -9.81f;
+float PLAYER_ACCEL = 20.0f;
+float PLAYER_FRICTION = 0.85f;
+float PLAYER_MAX_SPEED = 15.0f;
+float JUMP_FORCE = 10.0f;
+int COYOTE_TIME = 4;
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
 float WORLDGEN_BIOME_AMPLITUDE = 1.0f;
@@ -401,6 +406,31 @@ void parse_player_settings(json_object player_obj) {
     json_object grav_accel = json_get_property(player_obj, "grav_accel");
     if (grav_accel.type == JSON_NUMBER) {
         GRAV_ACCEL = grav_accel.value.number;
+    }
+
+    json_object player_accel = json_get_property(player_obj, "player_accel");
+    if (player_accel.type == JSON_NUMBER) {
+        PLAYER_ACCEL = player_accel.value.number;
+    }
+
+    json_object player_friction = json_get_property(player_obj, "player_friction");
+    if (player_friction.type == JSON_NUMBER) {
+        PLAYER_FRICTION = player_friction.value.number;
+    }
+
+    json_object player_max_speed = json_get_property(player_obj, "player_max_speed");
+    if (player_max_speed.type == JSON_NUMBER) {
+        PLAYER_MAX_SPEED = player_max_speed.value.number;
+    }
+
+    json_object jump_force = json_get_property(player_obj, "jump_force");
+    if (jump_force.type == JSON_NUMBER) {
+        JUMP_FORCE = jump_force.value.number;
+    }
+
+    json_object coyote_time = json_get_property(player_obj, "coyote_time");
+    if (coyote_time.type == JSON_NUMBER) {
+        COYOTE_TIME = (int)coyote_time.value.number;
     }
 }
 

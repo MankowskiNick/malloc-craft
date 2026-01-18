@@ -20,51 +20,57 @@ key_entry* key_stack;
 game_data* g_data;
 
 void update_pos(int key, vec3 front, vec3 right) {
-    float dx = 0.0f, dy = 0.0f, dz = 0.0f;
+    // Calculate desired direction (not velocity, not acceleration directly)
+    // This will be applied as acceleration in apply_physics()
+    float dx = 0.0f, dz = 0.0f;
+    
     switch(key) {
         case GLFW_KEY_W:
-            dx = DELTA_X * front[0];
-            dz = DELTA_Z * front[2];
+            dx = front[0];
+            dz = front[2];
             break;
         case GLFW_KEY_S:
-            dx = -DELTA_X * front[0];
-            dz = -DELTA_Z * front[2];
+            dx = -front[0];
+            dz = -front[2];
             break;
         case GLFW_KEY_A:
-            dx = -DELTA_X * right[0];
-            dz = -DELTA_Z * right[2];
+            dx = -right[0];
+            dz = -right[2];
             break;
         case GLFW_KEY_D:
-            dx = DELTA_X * right[0];
-            dz = DELTA_Z * right[2];
-            break;
-        case GLFW_KEY_SPACE:
-            dy = DELTA_Y;
-            break;
-        case GLFW_KEY_LEFT_SHIFT:
-            dy = -DELTA_Y;
+            dx = right[0];
+            dz = right[2];
             break;
         default:
             break;
     }
-
-    player* player = g_data->player;
-    player->velocity[0] += dx;
-    player->velocity[1] += dy;
-    player->velocity[2] += dz;
+    
+    // Accumulate desired direction (will be normalized later)
+    player* p = g_data->player;
+    p->acceleration[0] += dx;
+    p->acceleration[2] += dz;
 }
 
 void update_position() {
+    // Reset desired direction accumulation
+    player* p = g_data->player;
+    p->acceleration[0] = 0.0f;
+    p->acceleration[2] = 0.0f;
+    
+    // Iterate through key stack to accumulate desired direction
     key_entry* cur = key_stack;
     while(cur != NULL) {
-        vec3 front, up, right;
-        camera* cam = &(g_data->player->cam);
-        glm_normalize_to(cam->front, front);
-        glm_normalize_to(cam->up, up);
-        glm_vec3_cross(front, up, right);
-        glm_normalize_to(right, right);
-
-        update_pos(cur->key, front, right);
+        // Skip SPACE and SHIFT (handled separately as jump)
+        if (cur->key != GLFW_KEY_SPACE && cur->key != GLFW_KEY_LEFT_SHIFT) {
+            vec3 front, up, right;
+            camera* cam = &(g_data->player->cam);
+            glm_normalize_to(cam->front, front);
+            glm_normalize_to(cam->up, up);
+            glm_vec3_cross(front, up, right);
+            glm_normalize_to(right, right);
+            
+            update_pos(cur->key, front, right);
+        }
         cur = cur->next;
     }
 }
@@ -89,6 +95,12 @@ void handle_keypress(int key) {
         if (index < g_data->player->hotbar_size) {
             g_data->player->selected_block = index;
         }
+        return;
+    }
+
+    /* Handle jump input */
+    if (key == GLFW_KEY_SPACE) {
+        g_data->player->jump_requested = 1;
         return;
     }
 

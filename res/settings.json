@@ -9,7 +9,7 @@
   "chunks": {
     "chunk_load_per_frame": 1,
     "chunk_cache_size": 1024,
-    "chunk_render_distance": 20
+    "chunk_render_distance": 12
   },
   "graphics": {
     "wireframe": false,
@@ -64,12 +64,18 @@
     "water_shininess": 5000.0
   },
   "player": {
-    "delta_x": 0.012,
-    "delta_y": 0.012,
-    "delta_z": 0.012,
+    "delta_x": 8,
+    "delta_y": 20,
+    "delta_z": 8,
     "sensitivity": 0.001,
     "max_reach": 5.0,
-    "ray_step": 0.05
+    "ray_step": 0.05,
+    "grav_accel": -30,
+    "player_accel": 1000.0,
+    "player_friction": 0.85,
+    "player_max_speed": 8.0,
+    "jump_force": 10.0,
+    "coyote_time": 4
   },
   "world_generation": {
     "seed": 42069,

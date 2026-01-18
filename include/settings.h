@@ -108,10 +108,17 @@ extern float DELTA_Y;
 extern float DELTA_Z;
 extern float SENSITIVITY;
 
+// Player physics settings
+extern float GRAV_ACCEL;
+extern float PLAYER_ACCEL;         // Horizontal acceleration magnitude (units/s²)
+extern float PLAYER_FRICTION;      // Friction multiplier (0.0-1.0)
+extern float PLAYER_MAX_SPEED;     // Max horizontal speed cap (units/s)
+extern float JUMP_FORCE;           // Initial upward velocity on jump (units/s)
+extern int COYOTE_TIME;            // Frames to allow jump after leaving ground
+
 // Player settings
 extern float MAX_REACH;
 extern float RAY_STEP;
-extern float GRAV_ACCEL;
 
 
 // WORLD GENERATION SETTINGS

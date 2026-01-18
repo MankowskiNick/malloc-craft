@@ -9,9 +9,14 @@ typedef struct {
 
     float* position;
     float* velocity;
+    float* acceleration;    // Current acceleration [x, y, z] (forces applied each frame)
     
     float height;
     float radius;
+
+    int is_grounded;        // 1 if touching ground, 0 if airborne
+    int coyote_counter;     // Frames since leaving ground (allows jumping within grace period)
+    int jump_requested;     // 1 if jump input was triggered this frame
 
     int selected_block;
     char** hotbar;

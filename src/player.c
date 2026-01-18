@@ -3,6 +3,7 @@
 #include <world.h>
 #include <block.h>
 #include <mesh.h>
+#include <math.h>
 
 camera parse_camera(json_object cam_obj) {
     camera cam;
@@ -148,6 +149,33 @@ static int check_collision_box(float center_x, float center_y, float center_z, f
     return 1;  // No collision
 }
 
+// Check if player is standing on solid ground
+static int is_player_grounded(player* p, chunk* current, chunk* adj[4], int current_chunk_x, int current_chunk_z) {
+    short air_id = get_block_id("air");
+    short water_id = get_block_id("water");
+    
+    // Check 4 points slightly below feet level
+    float check_dist = 0.05f;
+    float ground_checks[4][3] = {
+        {p->position[0] - p->radius, p->position[1] - check_dist, p->position[2] - p->radius},
+        {p->position[0] + p->radius, p->position[1] - check_dist, p->position[2] - p->radius},
+        {p->position[0] - p->radius, p->position[1] - check_dist, p->position[2] + p->radius},
+        {p->position[0] + p->radius, p->position[1] - check_dist, p->position[2] + p->radius},
+    };
+    
+    for (int i = 0; i < 4; i++) {
+        short block_id = 0;
+        bool is_foliage = false;
+        get_block_info_at(ground_checks[i][0], ground_checks[i][1], ground_checks[i][2], &block_id, &is_foliage);
+        // Grounded if touching solid block (not air, not water, not foliage)
+        if (block_id != air_id && block_id != water_id && !is_foliage) {
+            return 1;
+        }
+    }
+    
+    return 0;  // Not grounded
+}
+
 void update_player_pos(player* player, float delta_ms) {
     // load chunk and adjacent chunk data
     int chunk_x, chunk_z;
@@ -185,11 +213,102 @@ void update_player_pos(player* player, float delta_ms) {
 }
 
 void apply_physics(player* player, float delta_ms) {
-    // Gravity pulls downward (negative Y)
-    float check_dist = delta_ms * GRAV_ACCEL; 
+    // Load chunk and adjacent chunk data
+    int chunk_x, chunk_z;
+    chunk* current = get_chunk_at(player->position[0], player->position[2], &chunk_x, &chunk_z);
     
-    player->velocity[1] += GRAV_ACCEL;
-    update_player_pos(player, delta_ms);
+    chunk* adj[4] = {
+        get_chunk(chunk_x, chunk_z - 1),
+        get_chunk(chunk_x + 1, chunk_z),
+        get_chunk(chunk_x, chunk_z + 1),
+        get_chunk(chunk_x - 1, chunk_z)
+    };
+
+    float dt = delta_ms / 1000.0f;  // Convert ms to seconds
+
+    // 1. Ground Detection
+    int was_grounded = player->is_grounded;
+    player->is_grounded = is_player_grounded(player, current, adj, chunk_x, chunk_z);
+    
+    // Update coyote counter (grace period for jumping after leaving ground)
+    if (player->is_grounded) {
+        player->coyote_counter = 0;
+    } else if (was_grounded) {
+        // Just left ground, start coyote timer
+        player->coyote_counter = 1;
+    } else if (player->coyote_counter > 0 && player->coyote_counter < COYOTE_TIME) {
+        player->coyote_counter++;
+    }
+
+    // 2. Jump Input
+    if (player->jump_requested) {
+        if (player->is_grounded || player->coyote_counter < COYOTE_TIME) {
+            // Apply jump impulse
+            player->velocity[1] = JUMP_FORCE;
+            player->coyote_counter = COYOTE_TIME + 1;  // Consume coyote time
+        }
+        player->jump_requested = 0;  // Consume jump input
+    }
+
+    // 3. Normalize and apply horizontal acceleration
+    float accel_mag = sqrtf(player->acceleration[0] * player->acceleration[0] + 
+                            player->acceleration[2] * player->acceleration[2]);
+    if (accel_mag > 0.0f) {
+        // Normalize direction
+        float dir_x = player->acceleration[0] / accel_mag;
+        float dir_z = player->acceleration[2] / accel_mag;
+        
+        // Apply acceleration in normalized direction
+        player->velocity[0] += dir_x * PLAYER_ACCEL * dt;
+        player->velocity[2] += dir_z * PLAYER_ACCEL * dt;
+    }
+
+    // 4. Apply gravity
+    player->velocity[1] += GRAV_ACCEL * dt;
+
+    // 5. Apply friction (only horizontal)
+    player->velocity[0] *= PLAYER_FRICTION;
+    player->velocity[2] *= PLAYER_FRICTION;
+
+    // 6. Clamp max horizontal speed
+    float horizontal_speed = sqrtf(player->velocity[0] * player->velocity[0] + 
+                                   player->velocity[2] * player->velocity[2]);
+    if (horizontal_speed > PLAYER_MAX_SPEED) {
+        float speed_factor = PLAYER_MAX_SPEED / horizontal_speed;
+        player->velocity[0] *= speed_factor;
+        player->velocity[2] *= speed_factor;
+    }
+
+    // 7. Apply velocity to position
+    float direction[3] = {
+        player->velocity[0] * dt,
+        player->velocity[1] * dt,
+        player->velocity[2] * dt
+    };
+
+    // Try X movement
+    if (check_collision_box(player->position[0] + direction[0], player->position[1], player->position[2], player->radius, player->height, current, adj, chunk_x, chunk_z)) {
+        player->position[0] += direction[0];
+        player->cam.position[0] += direction[0];
+    } else {
+        player->velocity[0] = 0.0f;  // Stop horizontal velocity on collision
+    }
+
+    // Try Z movement
+    if (check_collision_box(player->position[0], player->position[1], player->position[2] + direction[2], player->radius, player->height, current, adj, chunk_x, chunk_z)) {
+        player->position[2] += direction[2];
+        player->cam.position[2] += direction[2];
+    } else {
+        player->velocity[2] = 0.0f;  // Stop horizontal velocity on collision
+    }
+
+    // Try Y movement
+    if (check_collision_box(player->position[0], player->position[1] + direction[1], player->position[2], player->radius, player->height, current, adj, chunk_x, chunk_z)) {
+        player->position[1] += direction[1];
+        player->cam.position[1] += direction[1];
+    } else {
+        player->velocity[1] = 0.0f;  // Stop vertical velocity on collision
+    }
 }
 
 player player_init(char* player_file) {
@@ -214,14 +333,24 @@ player player_init(char* player_file) {
     velocity[1] = 0.0f;
     velocity[2] = 0.0f;
 
+    float* acceleration = malloc(3 * sizeof(float));
+    acceleration[0] = 0.0f;
+    acceleration[1] = 0.0f;
+    acceleration[2] = 0.0f;
+
     player player = {
         .cam = cam,
 
         .position = position,
         .velocity = velocity,
+        .acceleration = acceleration,
 
         .height = height,
         .radius = radius,
+
+        .is_grounded = 0,
+        .coyote_counter = 0,
+        .jump_requested = 0,
 
         .selected_block = 0,
         .hotbar = hotbar,
