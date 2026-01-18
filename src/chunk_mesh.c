@@ -124,8 +124,8 @@ void get_chunk_meshes(game_data* args) {
     int x = args->x;
     int z = args->z;
 
-    int player_chunk_x = CAMERA_POS_TO_CHUNK_POS(x);
-    int player_chunk_z = CAMERA_POS_TO_CHUNK_POS(z);
+    int player_chunk_x = WORLD_POS_TO_CHUNK_POS(x);
+    int player_chunk_z = WORLD_POS_TO_CHUNK_POS(z);
 
     int movedBlocks = ((int)x == (int)(cm_camera_cache.x) && (int)z == (int)(cm_camera_cache.z)) ? 0 : 1;
 

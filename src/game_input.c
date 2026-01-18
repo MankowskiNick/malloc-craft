@@ -24,22 +24,18 @@ void update_pos(int key, vec3 front, vec3 right, float delta_ms) {
     switch(key) {
         case GLFW_KEY_W:
             dx = DELTA_X * front[0] * delta_ms;
-            dy = DELTA_Y * front[1] * delta_ms;
             dz = DELTA_Z * front[2] * delta_ms;
             break;
         case GLFW_KEY_S:
             dx = -DELTA_X * front[0] * delta_ms;
-            dy = -DELTA_Y * front[1] * delta_ms;
             dz = -DELTA_Z * front[2] * delta_ms;
             break;
         case GLFW_KEY_A:
             dx = -DELTA_X * right[0] * delta_ms;
-            dy = -DELTA_Y * right[1] * delta_ms;
             dz = -DELTA_Z * right[2] * delta_ms;
             break;
         case GLFW_KEY_D:
             dx = DELTA_X * right[0] * delta_ms;
-            dy = DELTA_Y * right[1] * delta_ms;
             dz = DELTA_Z * right[2] * delta_ms;
             break;
         case GLFW_KEY_SPACE:

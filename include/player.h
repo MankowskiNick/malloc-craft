@@ -9,6 +9,7 @@ typedef struct {
 
     float* position;
     float height;
+    float radius;
 
     int selected_block;
     char** hotbar;
@@ -17,5 +18,6 @@ typedef struct {
 
 player player_init(char* player_file);
 void update_player_pos(player* player, float direction[3]);
+void apply_physics(player* player, float delta_ms);
 
 #endif

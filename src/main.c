@@ -61,6 +61,7 @@ int main() {
         last_tick = data.tick;
 
         update_camera(delta_ms);
+        apply_physics(&player, delta_ms);
 
         lock_mesh();
         render(&data, &r, data.world_mesh, *(data.num_packets));

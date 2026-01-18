@@ -58,6 +58,7 @@ float DELTA_Z = 0.1f;
 float SENSITIVITY = 0.001f;
 float MAX_REACH = 5.0f;
 float RAY_STEP = 0.05f;
+float GRAV_ACCEL = -9.0f;
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
 float WORLDGEN_BIOME_AMPLITUDE = 1.0f;
@@ -395,6 +396,11 @@ void parse_player_settings(json_object player_obj) {
     json_object ray_step = json_get_property(player_obj, "ray_step");
     if (ray_step.type == JSON_NUMBER) {
         RAY_STEP = ray_step.value.number;
+    }
+
+    json_object grav_accel = json_get_property(player_obj, "grav_accel");
+    if (grav_accel.type == JSON_NUMBER) {
+        GRAV_ACCEL = grav_accel.value.number;
     }
 }
 

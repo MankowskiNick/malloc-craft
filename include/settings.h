@@ -111,9 +111,7 @@ extern float SENSITIVITY;
 // Player settings
 extern float MAX_REACH;
 extern float RAY_STEP;
-
-
-
+extern float GRAV_ACCEL;
 
 
 // WORLD GENERATION SETTINGS
