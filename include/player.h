@@ -18,6 +18,7 @@ typedef struct {
     int is_underwater;      // 1 if submerged in water, 0 if in air
     int coyote_counter;     // Frames since leaving ground (allows jumping within grace period)
     int jump_requested;     // 1 if jump input was triggered this frame
+    int fly_mode;           // 1 if in fly mode, 0 if normal physics
 
     int selected_block;
     char** hotbar;

@@ -232,6 +232,61 @@ void update_player_pos(player* player, float delta_ms) {
 }
 
 void apply_physics(player* player, float delta_ms) {
+    // In fly mode, handle movement differently
+    if (player->fly_mode) {
+        float dt = delta_ms / 1000.0f;  // Convert ms to seconds
+        
+        // In fly mode: no gravity, no collision checking, but apply friction to stop movement
+        // Normalize and apply 3D acceleration
+        float accel_mag = sqrtf(player->acceleration[0] * player->acceleration[0] + 
+                                player->acceleration[1] * player->acceleration[1] +
+                                player->acceleration[2] * player->acceleration[2]);
+        if (accel_mag > 0.0f) {
+            // Normalize direction
+            float dir_x = player->acceleration[0] / accel_mag;
+            float dir_y = player->acceleration[1] / accel_mag;
+            float dir_z = player->acceleration[2] / accel_mag;
+            
+            // Apply acceleration in normalized direction
+            player->velocity[0] += dir_x * PLAYER_ACCEL * dt;
+            player->velocity[1] += dir_y * PLAYER_ACCEL * dt;
+            player->velocity[2] += dir_z * PLAYER_ACCEL * dt;
+        }
+        
+        // Apply friction to velocity (for deceleration when no keys pressed)
+        player->velocity[0] *= PLAYER_FRICTION;
+        player->velocity[1] *= PLAYER_FRICTION;
+        player->velocity[2] *= PLAYER_FRICTION;
+        
+        // Clamp max speed
+        float total_speed = sqrtf(player->velocity[0] * player->velocity[0] + 
+                                  player->velocity[1] * player->velocity[1] +
+                                  player->velocity[2] * player->velocity[2]);
+        if (total_speed > PLAYER_MAX_SPEED) {
+            float speed_factor = PLAYER_MAX_SPEED / total_speed;
+            player->velocity[0] *= speed_factor;
+            player->velocity[1] *= speed_factor;
+            player->velocity[2] *= speed_factor;
+        }
+        
+        // Apply velocity to position without collision checking
+        float direction[3] = {
+            player->velocity[0] * dt,
+            player->velocity[1] * dt,
+            player->velocity[2] * dt
+        };
+        
+        player->position[0] += direction[0];
+        player->position[1] += direction[1];
+        player->position[2] += direction[2];
+        
+        player->cam.position[0] += direction[0];
+        player->cam.position[1] += direction[1];
+        player->cam.position[2] += direction[2];
+        
+        return;
+    }
+
     // Load chunk and adjacent chunk data
     int chunk_x, chunk_z;
     chunk* current = get_chunk_at(player->position[0], player->position[2], &chunk_x, &chunk_z);
@@ -402,6 +457,7 @@ player player_init(char* player_file) {
         .is_underwater = 0,
         .coyote_counter = 0,
         .jump_requested = 0,
+        .fly_mode = 0,
 
         .selected_block = 0,
         .hotbar = hotbar,

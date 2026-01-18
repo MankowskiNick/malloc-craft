@@ -79,13 +79,13 @@ void update_position() {
     key_entry* cur = key_stack;
     while(cur != NULL) {
         if (cur->key == GLFW_KEY_SPACE) {
-            // Space: swim up when underwater
-            if (p->is_underwater) {
+            // Space: move up when flying or swimming
+            if (p->fly_mode || p->is_underwater) {
                 p->acceleration[1] += SWIM_VERTICAL_ACCEL;  // Strong upward acceleration
             }
         } else if (cur->key == GLFW_KEY_LEFT_SHIFT) {
-            // Shift: swim down faster when underwater
-            if (p->is_underwater) {
+            // Shift: move down when flying or swimming
+            if (p->fly_mode || p->is_underwater) {
                 p->acceleration[1] -= SWIM_VERTICAL_ACCEL;  // Strong downward acceleration
             }
         } else {
@@ -97,7 +97,7 @@ void update_position() {
             glm_vec3_cross(front, up, right);
             glm_normalize_to(right, right);
             
-            update_pos(cur->key, front, right, p->is_underwater);
+            update_pos(cur->key, front, right, p->is_underwater || p->fly_mode);
         }
         cur = cur->next;
     }
@@ -115,6 +115,16 @@ void handle_keypress(int key) {
     if (key == GLFW_KEY_ESCAPE) {
         glfwSetWindowShouldClose(glfwGetCurrentContext(), GLFW_TRUE);
         g_data->is_running = FALSE;
+        return;
+    }
+
+    /* Toggle fly mode with V key */
+    if (key == GLFW_KEY_V) {
+        g_data->player->fly_mode = !g_data->player->fly_mode;
+        // Reset velocity when entering/exiting fly mode to prevent momentum carry-over
+        g_data->player->velocity[0] = 0.0f;
+        g_data->player->velocity[1] = 0.0f;
+        g_data->player->velocity[2] = 0.0f;
         return;
     }
 
