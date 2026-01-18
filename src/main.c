@@ -5,7 +5,7 @@
 #include <camera.h>
 #include <input.h>
 #include <settings.h>
-#include <player_instance.h>
+#include <player.h>
 #include <skybox.h>
 #include <chunk_mesh.h>
 #include <mesh.h>
@@ -26,7 +26,7 @@ int main() {
 
     block_init();
 
-    player_instance player = player_init(PLAYER_FILE);
+    player player = player_init(PLAYER_FILE);
 
     game_data data = {
         .x = (int)player.cam.position[0],
@@ -61,6 +61,7 @@ int main() {
         last_tick = data.tick;
 
         update_camera(delta_ms);
+        apply_physics(&player, delta_ms);
 
         lock_mesh();
         render(&data, &r, data.world_mesh, *(data.num_packets));

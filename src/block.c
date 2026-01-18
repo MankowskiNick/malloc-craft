@@ -2,7 +2,7 @@
 #include <mesh.h>
 #include <world.h>
 #include <asset.h>
-#include <player_instance.h>
+#include <player.h>
 #include <water.h>
 #include <cglm/cglm.h>
 #include <glad/glad.h>
@@ -350,7 +350,18 @@ short get_block_id(char* block_type) {
     return -1;
 }
 
-short get_selected_block(player_instance player) {
+bool check_block_foliage(short id) {
+    for (int i = 0; i < BLOCK_COUNT; i++) {
+        if (TYPES[i].id == id) {
+            return TYPES[i].is_foliage;
+        }
+    }
+
+    printf("ERROR: Block type '%i' not found\n", id);
+    return false;
+}
+
+short get_selected_block(player player) {
     char* block_id = player.hotbar[player.selected_block];
     return get_block_id(block_id);
 }

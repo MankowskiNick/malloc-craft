@@ -81,7 +81,7 @@ void get_block_info(block_data_t bd, short* id, short* orientation, short* rot, 
 
 short calculate_water_level(int y) {
     if (y == WORLDGEN_WATER_LEVEL) {
-        return 6; // Source water level
+        return 5; // Source water level
     }
     if (y < WORLDGEN_WATER_LEVEL) {
         return 7; // Source water level

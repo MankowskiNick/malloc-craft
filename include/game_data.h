@@ -1,7 +1,7 @@
 #ifndef GAME_DATA_H
 #define GAME_DATA_H
 
-#include <player_instance.h>
+#include <player.h>
 
 typedef struct {
     int x, y, z;
@@ -48,7 +48,7 @@ typedef struct {
     int* num_packets;
     chunk_mesh** packet;
     world_mesh* world_mesh;
-    player_instance* player;
+    player* player;
     int is_running;
     bool mesh_requires_update;
 

@@ -2,7 +2,7 @@
 #define CHUNK_MESH_H
 
 #include <camera.h>
-#include <player_instance.h>
+#include <player.h>
 #include <game_data.h>
 #include <util.h>
 
