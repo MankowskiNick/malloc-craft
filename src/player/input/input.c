@@ -165,6 +165,14 @@ void handle_keypress(int key) {
         return;
     }
 
+    /* Handle crouch input (Left Shift) - only when grounded */
+    if (key == GLFW_KEY_LEFT_SHIFT) {
+        if (g_data->player->is_grounded) {
+            g_data->player->is_crouching = true;
+        }
+        return;
+    }
+
     /* avoid duplicate entries in the key stack */
     for (key_entry* cur = key_stack; cur != NULL; cur = cur->next) {
         if (cur->key == key) return;
@@ -178,6 +186,12 @@ void handle_keypress(int key) {
 }
 
 void handle_keyrelease(int key) {
+    /* Handle crouch release */
+    if (key == GLFW_KEY_LEFT_SHIFT) {
+        g_data->player->is_crouching = false;
+        return;
+    }
+
     key_entry* cur = key_stack;
     key_entry* prev = NULL;
 

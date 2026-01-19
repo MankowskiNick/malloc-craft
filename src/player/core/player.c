@@ -96,6 +96,33 @@ static int is_player_grounded(player* p, chunk* current, chunk* adj[4], int curr
     return 0;  // Not grounded
 }
 
+// Check if there's solid ground ahead at a given horizontal position (for crouch edge prevention)
+static int has_ground_ahead(float check_x, float check_z, float current_y, float radius, chunk* current, chunk* adj[4], int current_chunk_x, int current_chunk_z) {
+    short air_id = get_block_id("air");
+    short water_id = get_block_id("water");
+    
+    // Check 4 points around the target position at ground level
+    float check_dist = 0.05f;
+    float ground_checks[4][3] = {
+        {check_x - radius, current_y - check_dist, check_z - radius},
+        {check_x + radius, current_y - check_dist, check_z - radius},
+        {check_x - radius, current_y - check_dist, check_z + radius},
+        {check_x + radius, current_y - check_dist, check_z + radius},
+    };
+    
+    for (int i = 0; i < 4; i++) {
+        short block_id = 0;
+        bool is_foliage = false;
+        get_block_info_at(ground_checks[i][0], ground_checks[i][1], ground_checks[i][2], &block_id, &is_foliage);
+        // Has ground if any point touches solid block (not air, not water, not foliage)
+        if (block_id != air_id && block_id != water_id && !is_foliage) {
+            return 1;
+        }
+    }
+    
+    return 0;  // No ground ahead
+}
+
 // Check if player is submerged in water
 static int is_player_underwater(player* p, chunk* current, chunk* adj[4], int current_chunk_x, int current_chunk_z) {
     short air_id = get_block_id("air");
@@ -252,11 +279,19 @@ void apply_physics(player* player, float delta_ms) {
         player->jump_requested = 0;  // Always consume jump input
     }
 
-    // 4. Select physics parameters based on underwater state
+    // 4. Select physics parameters based on underwater state and crouch state
     float accel = player->is_underwater ? SWIM_ACCEL : PLAYER_ACCEL;
     float friction = player->is_underwater ? WATER_FRICTION : PLAYER_FRICTION;
     float max_speed = player->is_underwater ? WATER_MAX_SPEED : PLAYER_MAX_SPEED;
     float gravity = player->is_underwater ? (GRAV_ACCEL * WATER_DRAG) : GRAV_ACCEL;
+    
+    // Apply crouch modifiers to acceleration and speed when crouching
+    float crouch_height = player->height;
+    if (player->is_crouching && player->is_grounded) {
+        accel *= CROUCH_ACCEL_MULTIPLIER;
+        max_speed *= CROUCH_MAX_SPEED_MULTIPLIER;
+        crouch_height *= CROUCH_HEIGHT_MULTIPLIER;
+    }
 
     // 5. Normalize and apply 3D acceleration (vertical included when underwater via input)
     float accel_mag = sqrtf(player->acceleration[0] * player->acceleration[0] + 
@@ -322,28 +357,68 @@ void apply_physics(player* player, float delta_ms) {
     };
 
     // Try X movement
-    if (check_collision_box(player->position[0] + direction[0], player->position[1], player->position[2], player->radius, player->height, current, adj, chunk_x, chunk_z)) {
-        player->position[0] += direction[0];
-        player->cam.position[0] += direction[0];
+    if (check_collision_box(player->position[0] + direction[0], player->position[1], player->position[2], player->radius, crouch_height, current, adj, chunk_x, chunk_z)) {
+        // When crouching, also check that there's ground ahead before moving
+        if (player->is_crouching && player->is_grounded) {
+            if (has_ground_ahead(player->position[0] + direction[0], player->position[2], player->position[1], player->radius, current, adj, chunk_x, chunk_z)) {
+                player->position[0] += direction[0];
+                player->cam.position[0] += direction[0];
+            } else {
+                player->velocity[0] = 0.0f;  // Can't walk off edge while crouching
+            }
+        } else {
+            player->position[0] += direction[0];
+            player->cam.position[0] += direction[0];
+        }
     } else {
         player->velocity[0] = 0.0f;  // Stop horizontal velocity on collision
     }
 
     // Try Z movement
-    if (check_collision_box(player->position[0], player->position[1], player->position[2] + direction[2], player->radius, player->height, current, adj, chunk_x, chunk_z)) {
-        player->position[2] += direction[2];
-        player->cam.position[2] += direction[2];
+    if (check_collision_box(player->position[0], player->position[1], player->position[2] + direction[2], player->radius, crouch_height, current, adj, chunk_x, chunk_z)) {
+        // When crouching, also check that there's ground ahead before moving
+        if (player->is_crouching && player->is_grounded) {
+            if (has_ground_ahead(player->position[0], player->position[2] + direction[2], player->position[1], player->radius, current, adj, chunk_x, chunk_z)) {
+                player->position[2] += direction[2];
+                player->cam.position[2] += direction[2];
+            } else {
+                player->velocity[2] = 0.0f;  // Can't walk off edge while crouching
+            }
+        } else {
+            player->position[2] += direction[2];
+            player->cam.position[2] += direction[2];
+        }
     } else {
         player->velocity[2] = 0.0f;  // Stop horizontal velocity on collision
     }
 
     // Try Y movement
-    if (check_collision_box(player->position[0], player->position[1] + direction[1], player->position[2], player->radius, player->height, current, adj, chunk_x, chunk_z)) {
+    if (check_collision_box(player->position[0], player->position[1] + direction[1], player->position[2], player->radius, crouch_height, current, adj, chunk_x, chunk_z)) {
         player->position[1] += direction[1];
         player->cam.position[1] += direction[1];
     } else {
         player->velocity[1] = 0.0f;  // Stop vertical velocity on collision
     }
+
+    // Smooth camera height transition when crouching/uncroching
+    float target_camera_height = player->height;
+    if (player->is_crouching) {
+        target_camera_height *= CROUCH_HEIGHT_MULTIPLIER;
+    }
+    
+    // Interpolate smoothly toward target height
+    float height_diff = target_camera_height - player->camera_height_offset;
+    float max_change = CROUCH_SMOOTHING_SPEED * dt;
+    
+    if (height_diff > max_change) {
+        player->camera_height_offset += max_change;
+    } else if (height_diff < -max_change) {
+        player->camera_height_offset -= max_change;
+    } else {
+        player->camera_height_offset = target_camera_height;
+    }
+    
+    player->cam.position[1] = player->position[1] + player->camera_height_offset;
 }
 
 player player_init(char* player_file) {
@@ -393,6 +468,8 @@ player player_init(char* player_file) {
         .coyote_counter = 0,
         .jump_requested = 0,
         .fly_mode = 0,
+        .is_crouching = false,
+        .camera_height_offset = height,
 
         .selected_block = 0,
         .hotbar = hotbar,

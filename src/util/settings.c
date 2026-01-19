@@ -53,9 +53,6 @@ float AMBIENT_G_INTENSITY = 0.3f;
 float AMBIENT_B_INTENSITY = 0.3f;
 float WATER_HEIGHT = 1.0f;
 float WATER_DISTANCE = 50.0f;
-float DELTA_X = 0.1f;
-float DELTA_Y = 0.1f;
-float DELTA_Z = 0.1f;
 float SENSITIVITY = 0.001f;
 float MAX_REACH = 5.0f;
 float RAY_STEP = 0.05f;
@@ -71,6 +68,13 @@ float WATER_MAX_SPEED = 6.0f;
 float WATER_DRAG = 0.2f;
 float SWIM_VERTICAL_ACCEL = 15.0f;
 float WATER_JUMP_BOOST = 1.5f;
+
+// Crouch settings
+float CROUCH_HEIGHT_MULTIPLIER = 0.6f;
+float CROUCH_ACCEL_MULTIPLIER = 0.7f;
+float CROUCH_MAX_SPEED_MULTIPLIER = 0.5f;
+float CROUCH_SMOOTHING_SPEED = 10.0f;  // How fast the camera transitions when crouching
+
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
 float WORLDGEN_BIOME_AMPLITUDE = 1.0f;
@@ -412,21 +416,6 @@ void parse_player_settings(json_object player_obj) {
         exit(EXIT_FAILURE);
     }
 
-    json_object delta_x = json_get_property(player_obj, "delta_x");
-    if (delta_x.type == JSON_NUMBER) {
-        DELTA_X = delta_x.value.number;
-    }
-
-    json_object delta_y = json_get_property(player_obj, "delta_y");
-    if (delta_y.type == JSON_NUMBER) {
-        DELTA_Y = delta_y.value.number;
-    }
-
-    json_object delta_z = json_get_property(player_obj, "delta_z");
-    if (delta_z.type == JSON_NUMBER) {
-        DELTA_Z = delta_z.value.number;
-    }
-
     json_object sensitivity = json_get_property(player_obj, "sensitivity");
     if (sensitivity.type == JSON_NUMBER) {
         SENSITIVITY = sensitivity.value.number;
@@ -500,6 +489,26 @@ void parse_player_settings(json_object player_obj) {
     json_object water_jump_boost = json_get_property(player_obj, "water_jump_boost");
     if (water_jump_boost.type == JSON_NUMBER) {
         WATER_JUMP_BOOST = water_jump_boost.value.number;
+    }
+
+    json_object crouch_height_multiplier = json_get_property(player_obj, "crouch_height_multiplier");
+    if (crouch_height_multiplier.type == JSON_NUMBER) {
+        CROUCH_HEIGHT_MULTIPLIER = crouch_height_multiplier.value.number;
+    }
+
+    json_object crouch_accel_multiplier = json_get_property(player_obj, "crouch_accel_multiplier");
+    if (crouch_accel_multiplier.type == JSON_NUMBER) {
+        CROUCH_ACCEL_MULTIPLIER = crouch_accel_multiplier.value.number;
+    }
+
+    json_object crouch_max_speed_multiplier = json_get_property(player_obj, "crouch_max_speed_multiplier");
+    if (crouch_max_speed_multiplier.type == JSON_NUMBER) {
+        CROUCH_MAX_SPEED_MULTIPLIER = crouch_max_speed_multiplier.value.number;
+    }
+
+    json_object crouch_smoothing_speed = json_get_property(player_obj, "crouch_smoothing_speed");
+    if (crouch_smoothing_speed.type == JSON_NUMBER) {
+        CROUCH_SMOOTHING_SPEED = crouch_smoothing_speed.value.number;
     }
 }
 
