@@ -107,5 +107,10 @@
     "block_file": "res/blocks.json",
     "player_file": "res/player.json",
     "time_scale": 0.0001047
+  },
+  "ui": {
+    "fps_average_frames": 60,
+    "ui_scale": 1.0,
+    "fps_counter_scale": 0.5
   }
 }

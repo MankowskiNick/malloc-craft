@@ -164,6 +164,10 @@ ui_renderer create_ui_renderer() {
     mat4 projection;
     glm_ortho(0.0f, (float)WIDTH, (float)HEIGHT, 0.0f, -1.0f, 1.0f, projection);
 
+    // Apply scaling from settings
+    g_hotbar_config.scale = (int)(g_hotbar_config.scale * UI_SCALE);
+    g_fps_config.scale = FPS_COUNTER_SCALE;
+
     ui_renderer ui = {
         .vao = vao,
         .vbo = vbo,
@@ -210,8 +214,8 @@ void render_ui_quad_ex(ui_renderer* ui, float x, float y, float width, float hei
     glUniform1i(atlas_tex_loc, ui->atlas.tex_index);
 
     // UV coordinates - flip if requested
-    float v_top = flip_v ? 1.0f : 0.0f;
-    float v_bottom = flip_v ? 0.0f : 1.0f;
+    float v_top = flip_v ? 0.0f : 1.0f;
+    float v_bottom = flip_v ? 1.0f : 0.0f;
 
     // Update vertex data for this quad
     float quad_vertices[] = {
@@ -241,17 +245,15 @@ void render_fps(ui_renderer* ui, int fps) {
     if (fps < 0) fps = 0;
     if (fps > 9999) fps = 9999;
 
-    printf("fps: %i\n", fps);
-
     // Convert FPS to digits
     char fps_str[8];
     snprintf(fps_str, sizeof(fps_str), "%d", fps);
 
     float x = (float)ui->fps_config.x;
     float y = (float)ui->fps_config.y;
-    float char_width = (float)(ui->font.char_width * ui->font.scale);
-    float char_height = (float)(ui->font.char_height * ui->font.scale);
-    float spacing = (float)ui->fps_config.spacing;
+    float char_width = (float)(ui->font.char_width * ui->font.scale) * ui->fps_config.scale;
+    float char_height = (float)(ui->font.char_height * ui->font.scale) * ui->fps_config.scale;
+    float spacing = (float)ui->fps_config.spacing * ui->fps_config.scale;
 
     // Render each digit
     for (int i = 0; fps_str[i] != '\0'; i++) {
@@ -272,7 +274,7 @@ void render_hotbar(ui_renderer* ui, char** hotbar, int hotbar_size, int selected
     float padding = (float)(ui->hotbar.padding * ui->hotbar.scale);
     float total_width = hotbar_size * slot_size + (hotbar_size - 1) * padding;
     float start_x = ((float)screen_width - total_width) / 2.0f;
-    float y = (float)screen_height - slot_size - 20.0f;  // 20 pixels from bottom
+    float y = (float)screen_height - slot_size - (20.0f * ui->hotbar.scale);  // 20 pixels from bottom
 
     for (int i = 0; i < hotbar_size; i++) {
         // Map visual position to slot: display order is 1,2,3,4,5,6,7,8,9,0
@@ -305,11 +307,10 @@ void render_hotbar(ui_renderer* ui, char** hotbar, int hotbar_size, int selected
                     // Only render if valid coords
                     if (atlas_x >= 0 && atlas_y >= 0) {
                         // Render block slightly smaller and centered within slot
-                        // Flip V for foliage since their textures are oriented differently
                         float block_padding = slot_size * 0.1f;
                         float block_size = slot_size - 2 * block_padding;
                         render_ui_quad_ex(ui, x + block_padding, y + block_padding,
-                                      block_size, block_size, atlas_x, atlas_y, bt->is_foliage);
+                                      block_size, block_size, atlas_x, atlas_y, false);
                     }
                 }
             }

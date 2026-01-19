@@ -159,4 +159,9 @@ extern int BLOCK_COUNT;
 extern char* BLOCK_FILE;
 extern char* PLAYER_FILE;
 
+// UI settings
+extern int FPS_AVERAGE_FRAMES;
+extern float UI_SCALE;
+extern float FPS_COUNTER_SCALE;
+
 #endif

@@ -26,6 +26,7 @@ typedef struct {
     int x;
     int y;
     int spacing;
+    float scale;
 } ui_fps_config;
 
 typedef struct {

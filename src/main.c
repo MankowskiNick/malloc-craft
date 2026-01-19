@@ -34,8 +34,17 @@ int main() {
         .player = &player,
         .is_running = TRUE,
         .show_fps = false,
-        .fps = 0
+        .fps = 0,
+        .fps_average_frames = FPS_AVERAGE_FRAMES,
+        .frame_buffer_index = 0,
+        .average_fps = 0
     };
+    
+    // Initialize frame time buffer for rolling average
+    data.frame_time_buffer = (float*)malloc(sizeof(float) * data.fps_average_frames);
+    for (int i = 0; i < data.fps_average_frames; i++) {
+        data.frame_time_buffer[i] = 16.67f; // Default ~60 FPS
+    }
     
     renderer r = create_renderer(&(player.cam));
 
@@ -62,9 +71,22 @@ int main() {
         int delta_ms = data.tick - last_tick;
         last_tick = data.tick;
 
-        // Calculate FPS
+        // Calculate rolling average FPS
         if (delta_ms > 0) {
-            data.fps = 1000 / delta_ms;
+            // Add current frame time to circular buffer
+            data.frame_time_buffer[data.frame_buffer_index] = (float)delta_ms;
+            data.frame_buffer_index = (data.frame_buffer_index + 1) % data.fps_average_frames;
+            
+            // Calculate average frame time
+            float avg_delta_ms = 0.0f;
+            for (int i = 0; i < data.fps_average_frames; i++) {
+                avg_delta_ms += data.frame_time_buffer[i];
+            }
+            avg_delta_ms /= (float)data.fps_average_frames;
+            
+            // Convert to FPS
+            data.average_fps = (int)(1000.0f / avg_delta_ms);
+            data.fps = 1000 / delta_ms; // Keep for backwards compatibility
         }
 
         update_camera(delta_ms);
@@ -83,6 +105,10 @@ int main() {
     i_cleanup();
     m_cleanup();
     w_cleanup();
+    
+    free_game_data(data);
+    // // Clean up frame time buffer
+    // free(data.frame_time_buffer);
 
     glfwDestroyWindow(window);
     glfwTerminate();

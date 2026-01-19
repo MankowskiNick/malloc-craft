@@ -129,7 +129,7 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
 
     // Render FPS counter if enabled
     if (args->show_fps) {
-        render_fps(&(r->ui), args->fps);
+        render_fps(&(r->ui), args->average_fps);
     }
 
     glEnable(GL_DEPTH_TEST);

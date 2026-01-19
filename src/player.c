@@ -321,7 +321,13 @@ void apply_physics(player* player, float delta_ms) {
     // 3. Jump Input (disabled when underwater)
     if (player->jump_requested) {
         if (!player->is_underwater && (player->is_grounded || player->coyote_counter < COYOTE_TIME)) {
-            player->velocity[1] = JUMP_FORCE;
+            // Apply jump impulse (only on ground, not underwater)
+            // Apply water jump boost if jumping from grounded water position
+            float jump_velocity = JUMP_FORCE;
+            if (was_underwater) {
+                jump_velocity *= WATER_JUMP_BOOST;
+            }
+            player->velocity[1] = jump_velocity;
             player->coyote_counter = COYOTE_TIME + 1;  // Consume coyote time
         }
         player->jump_requested = 0;  // Always consume jump input

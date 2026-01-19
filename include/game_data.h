@@ -61,6 +61,19 @@ typedef struct {
     // UI state
     bool show_fps;
     int fps;
+    
+    // FPS averaging
+    float* frame_time_buffer;
+    int frame_buffer_index;
+    int fps_average_frames;
+    int average_fps;
 } game_data;
+
+static inline void free_game_data(game_data data) {
+    free(data.chunks_to_flow);
+    free(data.frame_time_buffer);
+    free(data.world_mesh);
+    free(data.packet);
+}
 
 #endif

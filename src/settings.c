@@ -84,6 +84,11 @@ int WORLDGEN_BLOCKHEIGHT_OCTAVES = 6;
 char* BLOCK_FILE = "res/blocks.json";
 char* PLAYER_FILE = "res/player.json";
 
+// UI settings
+int FPS_AVERAGE_FRAMES = 60;
+float UI_SCALE = 1.0f;
+float FPS_COUNTER_SCALE = 1.0f;
+
 void parse_display_settings(json_object display_obj) {
     if (display_obj.type != JSON_OBJECT) {
         fprintf(stderr, "Error: display section is not an object in settings.json\n");
@@ -566,6 +571,28 @@ void parse_game_data_settings(json_object gamedata_obj) {
     }
 }
 
+void parse_ui_settings(json_object ui_obj) {
+    if (ui_obj.type != JSON_OBJECT) {
+        fprintf(stderr, "Error: ui section is not an object in settings.json\n");
+        exit(EXIT_FAILURE);
+    }
+
+    json_object fps_average_frames = json_get_property(ui_obj, "fps_average_frames");
+    if (fps_average_frames.type == JSON_NUMBER) {
+        FPS_AVERAGE_FRAMES = (int)fps_average_frames.value.number;
+    }
+
+    json_object ui_scale = json_get_property(ui_obj, "ui_scale");
+    if (ui_scale.type == JSON_NUMBER) {
+        UI_SCALE = (float)ui_scale.value.number;
+    }
+
+    json_object fps_counter_scale = json_get_property(ui_obj, "fps_counter_scale");
+    if (fps_counter_scale.type == JSON_NUMBER) {
+        FPS_COUNTER_SCALE = (float)fps_counter_scale.value.number;
+    }
+}
+
 void read_settings(const char* filename) {
     // Read the JSON file to string
     char* settings_json = read_file_to_string(filename);
@@ -649,6 +676,11 @@ void read_settings(const char* filename) {
     json_object gamedata_obj = json_get_property(obj.root, "game_data");
     if (gamedata_obj.type != JSON_NULL) {
         parse_game_data_settings(gamedata_obj);
+    }
+
+    json_object ui_obj = json_get_property(obj.root, "ui");
+    if (ui_obj.type != JSON_NULL) {
+        parse_ui_settings(ui_obj);
     }
 
     // Clean up memory
