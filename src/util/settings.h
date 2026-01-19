@@ -129,6 +129,12 @@ extern float CROUCH_ACCEL_MULTIPLIER;       // Acceleration multiplier when crou
 extern float CROUCH_MAX_SPEED_MULTIPLIER;   // Max speed multiplier when crouching (0.0-1.0)
 extern float CROUCH_SMOOTHING_SPEED;        // Speed of camera height transition when crouching (units/s)
 
+// Sprint physics settings
+extern float SPRINT_ACCEL_MULTIPLIER;       // Acceleration multiplier when sprinting (1.0+ recommended)
+extern float SPRINT_MAX_SPEED_MULTIPLIER;   // Max speed multiplier when sprinting (1.0+ recommended)
+extern int SPRINT_DOUBLE_TAP_TIME;          // Max frames between W taps to trigger sprint
+extern int SPRINT_TIMEOUT;                  // Frames without movement to disable sprint
+
 // Player settings
 extern float MAX_REACH;
 extern float RAY_STEP;

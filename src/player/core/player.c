@@ -187,6 +187,17 @@ void apply_physics(player* player, float delta_ms) {
         float accel_mag = sqrtf(player->acceleration[0] * player->acceleration[0] + 
                                 player->acceleration[1] * player->acceleration[1] +
                                 player->acceleration[2] * player->acceleration[2]);
+        
+        // Get base acceleration and max speed
+        float fly_accel = PLAYER_ACCEL;
+        float fly_max_speed = PLAYER_MAX_SPEED;
+        
+        // Apply sprint modifiers in fly mode
+        if (player->is_sprinting) {
+            fly_accel *= SPRINT_ACCEL_MULTIPLIER;
+            fly_max_speed *= SPRINT_MAX_SPEED_MULTIPLIER;
+        }
+        
         if (accel_mag > 0.0f) {
             // Normalize direction
             float dir_x = player->acceleration[0] / accel_mag;
@@ -194,9 +205,9 @@ void apply_physics(player* player, float delta_ms) {
             float dir_z = player->acceleration[2] / accel_mag;
             
             // Apply acceleration in normalized direction
-            player->velocity[0] += dir_x * PLAYER_ACCEL * dt;
-            player->velocity[1] += dir_y * PLAYER_ACCEL * dt;
-            player->velocity[2] += dir_z * PLAYER_ACCEL * dt;
+            player->velocity[0] += dir_x * fly_accel * dt;
+            player->velocity[1] += dir_y * fly_accel * dt;
+            player->velocity[2] += dir_z * fly_accel * dt;
         }
         
         // Apply friction to velocity (for deceleration when no keys pressed)
@@ -208,8 +219,8 @@ void apply_physics(player* player, float delta_ms) {
         float total_speed = sqrtf(player->velocity[0] * player->velocity[0] + 
                                   player->velocity[1] * player->velocity[1] +
                                   player->velocity[2] * player->velocity[2]);
-        if (total_speed > PLAYER_MAX_SPEED) {
-            float speed_factor = PLAYER_MAX_SPEED / total_speed;
+        if (total_speed > fly_max_speed) {
+            float speed_factor = fly_max_speed / total_speed;
             player->velocity[0] *= speed_factor;
             player->velocity[1] *= speed_factor;
             player->velocity[2] *= speed_factor;
@@ -291,6 +302,12 @@ void apply_physics(player* player, float delta_ms) {
         accel *= CROUCH_ACCEL_MULTIPLIER;
         max_speed *= CROUCH_MAX_SPEED_MULTIPLIER;
         crouch_height *= CROUCH_HEIGHT_MULTIPLIER;
+    }
+    
+    // Apply sprint modifiers to acceleration and speed when sprinting (not underwater)
+    if (player->is_sprinting && !player->is_underwater) {
+        accel *= SPRINT_ACCEL_MULTIPLIER;
+        max_speed *= SPRINT_MAX_SPEED_MULTIPLIER;
     }
 
     // 5. Normalize and apply 3D acceleration (vertical included when underwater via input)
@@ -470,6 +487,9 @@ player player_init(char* player_file) {
         .fly_mode = 0,
         .is_crouching = false,
         .camera_height_offset = height,
+        .is_sprinting = false,
+        .last_w_press = 0,
+        .sprint_timeout = 0,
 
         .selected_block = 0,
         .hotbar = hotbar,

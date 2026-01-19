@@ -75,6 +75,12 @@ float CROUCH_ACCEL_MULTIPLIER = 0.7f;
 float CROUCH_MAX_SPEED_MULTIPLIER = 0.5f;
 float CROUCH_SMOOTHING_SPEED = 10.0f;  // How fast the camera transitions when crouching
 
+// Sprint settings
+float SPRINT_ACCEL_MULTIPLIER = 1.3f;     // 30% faster acceleration when sprinting
+float SPRINT_MAX_SPEED_MULTIPLIER = 1.5f; // 50% faster max speed when sprinting
+int SPRINT_DOUBLE_TAP_TIME = 200;         // 200 ms to double-tap W
+int SPRINT_TIMEOUT = 500;                 // 500 ms without movement to disable sprint
+
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
 float WORLDGEN_BIOME_AMPLITUDE = 1.0f;
@@ -509,6 +515,26 @@ void parse_player_settings(json_object player_obj) {
     json_object crouch_smoothing_speed = json_get_property(player_obj, "crouch_smoothing_speed");
     if (crouch_smoothing_speed.type == JSON_NUMBER) {
         CROUCH_SMOOTHING_SPEED = crouch_smoothing_speed.value.number;
+    }
+
+    json_object sprint_accel_multiplier = json_get_property(player_obj, "sprint_accel_multiplier");
+    if (sprint_accel_multiplier.type == JSON_NUMBER) {
+        SPRINT_ACCEL_MULTIPLIER = sprint_accel_multiplier.value.number;
+    }
+
+    json_object sprint_max_speed_multiplier = json_get_property(player_obj, "sprint_max_speed_multiplier");
+    if (sprint_max_speed_multiplier.type == JSON_NUMBER) {
+        SPRINT_MAX_SPEED_MULTIPLIER = sprint_max_speed_multiplier.value.number;
+    }
+
+    json_object sprint_double_tap_time = json_get_property(player_obj, "sprint_double_tap_time");
+    if (sprint_double_tap_time.type == JSON_NUMBER) {
+        SPRINT_DOUBLE_TAP_TIME = (int)sprint_double_tap_time.value.number;
+    }
+
+    json_object sprint_timeout = json_get_property(player_obj, "sprint_timeout");
+    if (sprint_timeout.type == JSON_NUMBER) {
+        SPRINT_TIMEOUT = (int)sprint_timeout.value.number;
     }
 }
 
