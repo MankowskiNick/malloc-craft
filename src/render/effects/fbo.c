@@ -1,0 +1,148 @@
+#include "fbo.h"
+
+#include <glad/glad.h>
+#include "vao.h"
+#include "vbo.h"
+#include "block.h"
+
+void FBO_cleanup(FBO* map) {
+    glDeleteFramebuffers(1, &map->fbo);
+    glDeleteTextures(1, &map->texture);
+}
+
+void get_sun_view_matrix(vec3 pos, vec3 player_pos, mat4* view) {
+    vec3 sun_pos = {pos[0] + player_pos[0], pos[1] + player_pos[1], pos[2] + player_pos[2]};
+    glm_lookat(sun_pos, 
+        player_pos,
+        (vec3){0.0f, 1.0f, 0.0f},
+        *view);
+}
+
+void get_sun_proj_matrix(mat4* proj, sun* s) {
+    float x = s->cam->position[0];
+    float y = s->cam->position[1];
+    float z = s->cam->position[2];
+    glm_ortho(-SHADOW_RENDER_DIST, SHADOW_RENDER_DIST, 
+        -SHADOW_RENDER_DIST, SHADOW_RENDER_DIST, 
+        -SHADOW_RENDER_DIST, SHADOW_RENDER_DIST, 
+        *proj);
+}
+
+void send_sun_matrices(shader_program* program, sun* sun) {
+    mat4 view;
+    get_sun_view_matrix(
+        (vec3){sun->x, sun->y, sun->z}, 
+        (vec3){sun->cam->position[0], sun->cam->position[1], sun->cam->position[2]},
+        &view);
+    uint view_loc = glGetUniformLocation(program->id, "sunView");
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float*)view);
+
+    mat4 proj;
+    get_sun_proj_matrix(&proj, sun);
+    uint proj_loc = glGetUniformLocation(program->id, "sunProj");
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
+}
+
+void get_reflection_view_matrix(camera* cam, float water_level, mat4* view) {
+    // Create a reflected camera position across the water plane
+    vec3 reflected_pos = {
+        cam->position[0],
+        2.0f * water_level - cam->position[1],  // Reflect Y across water plane
+        cam->position[2]
+    };
+    
+    // Calculate reflected target position
+    vec3 front;
+    glm_vec3_copy(cam->front, front);
+    front[1] = -front[1];  // Flip Y component of front vector
+    
+    vec3 target;
+    glm_vec3_add(reflected_pos, front, target);
+    
+    // Up vector remains the same for planar reflection
+    vec3 up = {0.0f, 1.0f, 0.0f};
+    
+    glm_lookat(reflected_pos, target, up, *view);
+}
+
+void get_reflection_proj_matrix(mat4* proj, camera* cam) {
+    // Use the same projection parameters as the main camera for full render distance
+    glm_perspective(RADS(FOV), (float)WIDTH / (float)HEIGHT, 0.1f, RENDER_DISTANCE, *proj);
+}
+
+void send_reflection_matrices(shader_program* program, camera* cam, float water_level) {
+    mat4 view;
+    get_reflection_view_matrix(cam, water_level, &view);
+    uint view_loc = glGetUniformLocation(program->id, "reflectionView");
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float*)view);
+
+    mat4 proj;
+    get_reflection_proj_matrix(&proj, cam);
+    uint proj_loc = glGetUniformLocation(program->id, "reflectionProj");
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, (float*)proj);
+
+    // Send water level uniform for clipping
+    uint water_level_loc = glGetUniformLocation(program->id, "waterLevel");
+    glUniform1f(water_level_loc, water_level);
+
+    // Send atlas size uniform for proper texture sampling
+    uint atlas_size_loc = glGetUniformLocation(program->id, "atlasSize");
+    glUniform1f(atlas_size_loc, (float)ATLAS_SIZE);
+}
+
+void send_fbo_texture(shader_program* program, FBO* map, uint texture_index, char* uniform_name) {
+    glActiveTexture(GL_TEXTURE0 + texture_index);
+    glBindTexture(GL_TEXTURE_2D, map->texture);
+    uint shadow_loc = glGetUniformLocation(program->id, uniform_name);
+    glUniform1i(shadow_loc, texture_index);
+}
+
+void render_depth(FBO* map, int* side_data, int num_sides) {
+    use_program(map->program);
+    bind_vao(map->vao);
+    buffer_data(map->instance_vbo, GL_STATIC_DRAW, side_data, num_sides * VBO_WIDTH * sizeof(int));
+    i_add_attrib(&(map->instance_vbo), 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
+    i_add_attrib(&(map->instance_vbo), 2, 2, 3 * sizeof(int), VBO_WIDTH * sizeof(int)); // atlas coords
+    i_add_attrib(&(map->instance_vbo), 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
+    use_vbo(map->instance_vbo);
+
+    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(2, 1);
+    glVertexAttribDivisor(3, 1);
+
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_sides);
+
+}
+
+void FBO_render(FBO* map, sun* s, world_mesh* packet) {
+    // Save current viewport
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, map->fbo);
+    glViewport(0, 0, map->width, map->height);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    use_program(map->program);
+
+    send_sun_matrices(&(map->program), s);
+
+    // send cube vbo
+    send_cube_vbo(map->vao, map->cube_vbo);
+
+    if (packet != NULL) {
+        render_depth(map,
+            packet->opaque_data,
+            packet->num_opaque_sides);
+        render_depth(map,
+            packet->transparent_data,
+            packet->num_transparent_sides);
+    }
+
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // Restore the viewport to what it was before
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+}
