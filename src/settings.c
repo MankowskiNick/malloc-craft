@@ -24,6 +24,7 @@ int SKYBOX_TEXTURE_INDEX = 3;
 int SHADOW_MAP_TEXTURE_INDEX = 4;
 int REFLECTION_MAP_TEXTURE_INDEX = 5;
 int VSYNC = 1;
+int FULLSCREEN = 0;
 int CHUNK_RENDER_DISTANCE = 16;
 int SHADOW_MAP_WIDTH = 10000;
 int SHADOW_MAP_HEIGHT = 10000;
@@ -69,6 +70,7 @@ float WATER_FRICTION = 0.95f;
 float WATER_MAX_SPEED = 6.0f;
 float WATER_DRAG = 0.2f;
 float SWIM_VERTICAL_ACCEL = 15.0f;
+float WATER_JUMP_BOOST = 1.5f;
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
 float WORLDGEN_BIOME_AMPLITUDE = 1.0f;
@@ -81,6 +83,11 @@ float WORLDGEN_BLOCKHEIGHT_AMPLITUDE = 2.0f;
 int WORLDGEN_BLOCKHEIGHT_OCTAVES = 6;
 char* BLOCK_FILE = "res/blocks.json";
 char* PLAYER_FILE = "res/player.json";
+
+// UI settings
+int FPS_AVERAGE_FRAMES = 60;
+float UI_SCALE = 1.0f;
+float FPS_COUNTER_SCALE = 1.0f;
 
 void parse_display_settings(json_object display_obj) {
     if (display_obj.type != JSON_OBJECT) {
@@ -111,6 +118,11 @@ void parse_display_settings(json_object display_obj) {
     json_object fov = json_get_property(display_obj, "fov");
     if (fov.type == JSON_NUMBER) {
         FOV = fov.value.number;
+    }
+
+    json_object fullscreen = json_get_property(display_obj, "fullscreen");
+    if (fullscreen.type == JSON_BOOL) {
+        FULLSCREEN = fullscreen.value.boolean ? 1 : 0;
     }
 }
 
@@ -462,6 +474,11 @@ void parse_player_settings(json_object player_obj) {
     if (swim_vertical_accel.type == JSON_NUMBER) {
         SWIM_VERTICAL_ACCEL = swim_vertical_accel.value.number;
     }
+
+    json_object water_jump_boost = json_get_property(player_obj, "water_jump_boost");
+    if (water_jump_boost.type == JSON_NUMBER) {
+        WATER_JUMP_BOOST = water_jump_boost.value.number;
+    }
 }
 
 void parse_world_generation_settings(json_object worldgen_obj) {
@@ -554,6 +571,28 @@ void parse_game_data_settings(json_object gamedata_obj) {
     }
 }
 
+void parse_ui_settings(json_object ui_obj) {
+    if (ui_obj.type != JSON_OBJECT) {
+        fprintf(stderr, "Error: ui section is not an object in settings.json\n");
+        exit(EXIT_FAILURE);
+    }
+
+    json_object fps_average_frames = json_get_property(ui_obj, "fps_average_frames");
+    if (fps_average_frames.type == JSON_NUMBER) {
+        FPS_AVERAGE_FRAMES = (int)fps_average_frames.value.number;
+    }
+
+    json_object ui_scale = json_get_property(ui_obj, "ui_scale");
+    if (ui_scale.type == JSON_NUMBER) {
+        UI_SCALE = (float)ui_scale.value.number;
+    }
+
+    json_object fps_counter_scale = json_get_property(ui_obj, "fps_counter_scale");
+    if (fps_counter_scale.type == JSON_NUMBER) {
+        FPS_COUNTER_SCALE = (float)fps_counter_scale.value.number;
+    }
+}
+
 void read_settings(const char* filename) {
     // Read the JSON file to string
     char* settings_json = read_file_to_string(filename);
@@ -637,6 +676,11 @@ void read_settings(const char* filename) {
     json_object gamedata_obj = json_get_property(obj.root, "game_data");
     if (gamedata_obj.type != JSON_NULL) {
         parse_game_data_settings(gamedata_obj);
+    }
+
+    json_object ui_obj = json_get_property(obj.root, "ui");
+    if (ui_obj.type != JSON_NULL) {
+        parse_ui_settings(ui_obj);
     }
 
     // Clean up memory

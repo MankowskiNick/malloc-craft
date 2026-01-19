@@ -31,7 +31,8 @@ GLFWwindow* create_window(char* title, int width, int height) {
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
 
-    GLFWwindow* window = glfwCreateWindow(width, height, title, NULL, NULL);
+    GLFWmonitor* monitor = FULLSCREEN ? glfwGetPrimaryMonitor() : NULL;
+    GLFWwindow* window = glfwCreateWindow(width, height, title, monitor, NULL);
     if (!window) {
         printf("Window creation failed\n");
         return NULL;
@@ -68,6 +69,33 @@ int load_gl() {
     gladLoadGL();
 
     glViewport(0, 0, screen.width, screen.height);
-    
+
     return 1;
+}
+
+int get_screen_width() {
+    return screen.width;
+}
+
+int get_screen_height() {
+    return screen.height;
+}
+
+void toggle_fullscreen(GLFWwindow* window) {
+    FULLSCREEN = !FULLSCREEN;
+    
+    if (FULLSCREEN) {
+        // Switch to fullscreen
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        screen.width = mode->width;
+        screen.height = mode->height;
+    } else {
+        // Switch to windowed
+        glfwSetWindowMonitor(window, NULL, 100, 100, WIDTH, HEIGHT, 0);
+        screen.width = WIDTH;
+        screen.height = HEIGHT;
+    }
+    glViewport(0, 0, screen.width, screen.height);
 }

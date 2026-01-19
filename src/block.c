@@ -436,3 +436,55 @@ void send_cube_vbo(VAO vao, VBO vbo) {
     f_add_attrib(&vbo, 0, 3, 0, 3 * sizeof(float)); // position
     use_vbo(vbo);
 }
+
+void update_selected_block(player* p) {
+    if (p == NULL) {
+        return;
+    }
+
+    camera cam = p->cam;
+    vec3 position = {cam.position[0], cam.position[1], cam.position[2]};
+    vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
+    glm_normalize_to(dir, dir);
+
+    float t = 0.0f;
+    int chunk_x = 0;
+    int chunk_y = (int)position[1];
+    int chunk_z = 0;
+
+    chunk* c = get_chunk_at(position[0], position[2], &chunk_x, &chunk_z);
+
+    short hit = false;
+    short water_id = get_block_id("water");
+
+    while (chunk_y >= 0 && chunk_y < CHUNK_HEIGHT && t <= MAX_REACH && !hit) {
+        short block_id = 0;
+        short orientation = 0;
+        short rot = 0;
+        short water_level = 0;
+        get_block_info(c->blocks[chunk_x][chunk_y][chunk_z], &block_id, &orientation, &rot, &water_level);
+
+        // Skip air and water blocks
+        if (block_id != get_block_id("air") && block_id != water_id) {
+            hit = true;
+            p->selected_block_pos[0] = chunk_x + (c->x * CHUNK_SIZE);
+            p->selected_block_pos[1] = chunk_y;
+            p->selected_block_pos[2] = chunk_z + (c->z * CHUNK_SIZE);
+            p->selected_block_id = block_id;
+            p->has_selected_block = true;
+            break;
+        }
+
+        t += 0.005f;
+        vec3 pos = {position[0] + dir[0] * t, position[1] + dir[1] * t, position[2] + dir[2] * t};
+        c = get_chunk_at(pos[0], pos[2], &chunk_x, &chunk_z);
+        chunk_y = (uint)pos[1];
+    }
+
+    // If no block was hit, clear the selection
+    if (!hit) {
+        p->has_selected_block = false;
+        p->selected_block_id = 0;
+    }
+}
+

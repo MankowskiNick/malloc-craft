@@ -46,6 +46,8 @@ extern int REFLECTION_MAP_TEXTURE_INDEX;
 
 // Vsync on?  Comment to disable
 extern int VSYNC;
+// Fullscreen mode
+extern int FULLSCREEN;
 // Radius of chunks to render
 extern int CHUNK_RENDER_DISTANCE;
 
@@ -122,6 +124,7 @@ extern float WATER_FRICTION;       // Water friction multiplier (0.0-1.0)
 extern float WATER_MAX_SPEED;      // Max swimming speed cap (units/s)
 extern float WATER_DRAG;           // Water drag/buoyancy modifier (0.0-1.0)
 extern float SWIM_VERTICAL_ACCEL;  // Vertical acceleration when holding space/shift underwater (units/s²)
+extern float WATER_JUMP_BOOST;     // Multiplier applied to jump force when jumping from grounded water
 
 // Player settings
 extern float MAX_REACH;
@@ -155,5 +158,10 @@ extern int TREE_COUNT;
 extern int BLOCK_COUNT;
 extern char* BLOCK_FILE;
 extern char* PLAYER_FILE;
+
+// UI settings
+extern int FPS_AVERAGE_FRAMES;
+extern float UI_SCALE;
+extern float FPS_COUNTER_SCALE;
 
 #endif

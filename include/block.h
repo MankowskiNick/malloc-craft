@@ -20,6 +20,7 @@ void block_init();
 
 void break_block(game_data* data);
 void place_block(game_data* data);
+void update_selected_block(player* p);
 short get_block_id(char* name);
 bool check_block_foliage(short id);
 

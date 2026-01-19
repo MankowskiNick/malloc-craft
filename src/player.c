@@ -322,7 +322,12 @@ void apply_physics(player* player, float delta_ms) {
     if (player->jump_requested) {
         if (!player->is_underwater && (player->is_grounded || player->coyote_counter < COYOTE_TIME)) {
             // Apply jump impulse (only on ground, not underwater)
-            player->velocity[1] = JUMP_FORCE;
+            // Apply water jump boost if jumping from grounded water position
+            float jump_velocity = JUMP_FORCE;
+            if (was_underwater) {
+                jump_velocity *= WATER_JUMP_BOOST;
+            }
+            player->velocity[1] = jump_velocity;
             player->coyote_counter = COYOTE_TIME + 1;  // Consume coyote time
         }
         player->jump_requested = 0;  // Always consume jump input
@@ -345,8 +350,14 @@ void apply_physics(player* player, float delta_ms) {
         float dir_z = player->acceleration[2] / accel_mag;
         
         // Apply acceleration in normalized direction
+        float vertical_accel = accel;
+        // Apply water jump boost to upward movement when transitioning out of water
+        if (was_underwater && !player->is_underwater && dir_y > 0.0f) {
+            vertical_accel *= WATER_JUMP_BOOST;
+        }
+        
         player->velocity[0] += dir_x * accel * dt;
-        player->velocity[1] += dir_y * accel * dt;  // Vertical acceleration when swimming
+        player->velocity[1] += dir_y * vertical_accel * dt;  // Vertical acceleration when swimming
         player->velocity[2] += dir_z * accel * dt;
     }
 
@@ -443,6 +454,11 @@ player player_init(char* player_file) {
     acceleration[1] = 0.0f;
     acceleration[2] = 0.0f;
 
+    int* selected_block_pos = malloc(3 * sizeof(int));
+    selected_block_pos[0] = 0;
+    selected_block_pos[1] = 0;
+    selected_block_pos[2] = 0;
+
     player player = {
         .cam = cam,
 
@@ -462,6 +478,10 @@ player player_init(char* player_file) {
         .selected_block = 0,
         .hotbar = hotbar,
         .hotbar_size = hotbar_obj.value.list.count,
+
+        .selected_block_pos = selected_block_pos,
+        .selected_block_id = 0,
+        .has_selected_block = false,
     };
 
     player.cam.position[0] = player.position[0];
