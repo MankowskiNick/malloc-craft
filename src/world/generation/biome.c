@@ -1,7 +1,7 @@
 #include "biome.h"
-#include "block_models.h"
+#include <block_models.h>
 #include "noise.h"
-#include "settings.h"
+#include <settings.h>
 #include <cerialize/cerialize.h>
 #include <util.h>
 

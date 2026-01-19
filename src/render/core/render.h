@@ -11,7 +11,7 @@
 #include <fbo.h>
 #include <reflection_map.h>
 #include <game_data.h>
-#include "ui/ui_renderer.h"
+#include <ui_renderer.h>
 
 typedef struct {
     block_renderer wr; // world renderer

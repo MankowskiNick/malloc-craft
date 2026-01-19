@@ -1,6 +1,6 @@
 #ifndef TREE_H
 #define TREE_H
-#include <chunk.h>
+#include <world/core/chunk.h>
 
 typedef struct {
     char* block;

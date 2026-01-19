@@ -1,10 +1,10 @@
 #include "window.h"
 #include "input.h"
-#include "block_models.h"
-#include "block.h"
-#include "world.h"
+#include <block_models.h>
+#include "world/core/block.h"
+#include "world/core/world.h"
 #include "camera.h"
-#include "chunk_mesh.h"
+#include <chunk_mesh.h>
 #include "settings.h"
 #include <cglm/cglm.h>
 

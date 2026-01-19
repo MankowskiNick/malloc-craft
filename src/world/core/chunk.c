@@ -1,11 +1,11 @@
 #include "chunk.h"
-#include "noise.h"
-#include "biome.h"
-#include "tree.h"
+#include "../generation/noise.h"
+#include "../generation/biome.h"
+#include "../generation/tree.h"
 #include "block.h"
-#include "mesh.h"
+#include <mesh.h>
 #include "world.h"
-#include "water.h"
+#include "../physics/water.h"
 #include <stdlib.h>
 
 uint chunk_hash(chunk_coord c) {

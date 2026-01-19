@@ -6,13 +6,13 @@
 #include "foliage_renderer.h"
 #include "skybox.h"
 #include <glad/glad.h>
-#include "chunk_mesh.h"
-#include "mesh.h"
+#include <chunk_mesh.h>
+#include <mesh.h>
 #include "sort.h"
-#include "world.h"
+#include "../../world/core/world.h"
 #include <util.h>
 #include "settings.h"
-#include "world_mesh.h"
+#include <world_mesh.h>
 #include "fbo.h"
 #include "shadow_map.h"
 #include "reflection_map.h"

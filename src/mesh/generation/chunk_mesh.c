@@ -1,13 +1,13 @@
 #include "chunk_mesh.h"
-#include "block.h"
+#include "../../world/core/block.h"
 #include "sort.h"
-#include "chunk.h"
+#include "../../world/core/chunk.h"
 #include "mesh.h"
 #include "settings.h"
 #include <assert.h>
 #include <pthread.h>
 #include <unistd.h>
-#include "water.h"
+#include "../../world/physics/water.h"
 
 pthread_mutex_t cm_mutex = PTHREAD_MUTEX_INITIALIZER;
 

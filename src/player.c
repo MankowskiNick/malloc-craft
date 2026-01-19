@@ -1,8 +1,8 @@
 #include "player.h"
 #include <util.h>
-#include "world.h"
-#include "block.h"
-#include "mesh.h"
+#include "world/core/world.h"
+#include "world/core/block.h"
+#include <mesh.h>
 #include "settings.h"
 #include <math.h>
 

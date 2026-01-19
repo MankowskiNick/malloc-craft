@@ -1,13 +1,13 @@
 #include "block.h"
-#include "mesh.h"
+#include <mesh.h>
 #include "world.h"
 #include <util.h>
 #include "player.h"
-#include "water.h"
+#include "../physics/water.h"
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 #include <cerialize/cerialize.h>
-#include "blockbench_loader.h"
+#include <blockbench_loader.h>
 
 block_type* TYPES;
 int BLOCK_COUNT = 0;

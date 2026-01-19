@@ -1,8 +1,8 @@
 #include "foliage_renderer.h"
 // #include "mesh.h"
 #include "sort.h"
-#include "block.h"
-#include "world.h"
+#include "../../world/core/block.h"
+#include "../../world/core/world.h"
 #include <util.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

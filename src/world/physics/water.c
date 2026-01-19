@@ -1,11 +1,10 @@
 #include "water.h"
 #include <util.h>
-#include "settings.h"
-#include "mesh.h"
-#include "chunk.h"
-#include "world.h"
-#include <block.h>
-#include <block.h>
+#include <settings.h>
+#include <mesh.h>
+#include <world/core/chunk.h>
+#include <world/core/world.h>
+#include <world/core/block.h>
 #include <chunk_mesh.h>
 
 #include <stdio.h>
@@ -557,3 +556,4 @@ void check_for_flow(game_data* data, chunk* c, chunk* adj[4], int x, int y, int 
         }
     }
 }
+

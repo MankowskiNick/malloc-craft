@@ -1,6 +1,6 @@
 #include "world.h"
 #include "chunk.h"
-#include "hashmap.h"
+#include <hashmap.h>
 
 
 #include <stdlib.h>
