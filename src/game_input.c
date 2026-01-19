@@ -1,3 +1,4 @@
+#include <window.h>
 #include <input.h>
 #include <block_models.h>
 #include <block.h>
@@ -18,6 +19,7 @@ typedef struct key_entry {
 
 key_entry* key_stack;
 game_data* g_data;
+GLFWwindow* g_window;
 
 void update_pos(int key, vec3 front, vec3 right, int is_underwater) {
     // Calculate desired direction (not velocity, not acceleration directly)
@@ -121,6 +123,12 @@ void handle_keypress(int key) {
     /* Toggle FPS counter with F1 key */
     if (key == GLFW_KEY_F1) {
         g_data->show_fps = !g_data->show_fps;
+        return;
+    }
+
+    /* Toggle fullscreen with F11 key */
+    if (key == GLFW_KEY_F11) {
+        toggle_fullscreen(g_window);
         return;
     }
 
@@ -241,6 +249,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 void i_init(GLFWwindow* window, game_data* data) {
     key_stack = NULL;
+    g_window = window;
 
     // lock cursor to center of window
 

@@ -321,7 +321,6 @@ void apply_physics(player* player, float delta_ms) {
     // 3. Jump Input (disabled when underwater)
     if (player->jump_requested) {
         if (!player->is_underwater && (player->is_grounded || player->coyote_counter < COYOTE_TIME)) {
-            // Apply jump impulse (only on ground, not underwater)
             player->velocity[1] = JUMP_FORCE;
             player->coyote_counter = COYOTE_TIME + 1;  // Consume coyote time
         }
@@ -345,8 +344,14 @@ void apply_physics(player* player, float delta_ms) {
         float dir_z = player->acceleration[2] / accel_mag;
         
         // Apply acceleration in normalized direction
+        float vertical_accel = accel;
+        // Apply water jump boost to upward movement when transitioning out of water
+        if (was_underwater && !player->is_underwater && dir_y > 0.0f) {
+            vertical_accel *= WATER_JUMP_BOOST;
+        }
+        
         player->velocity[0] += dir_x * accel * dt;
-        player->velocity[1] += dir_y * accel * dt;  // Vertical acceleration when swimming
+        player->velocity[1] += dir_y * vertical_accel * dt;  // Vertical acceleration when swimming
         player->velocity[2] += dir_z * accel * dt;
     }
 

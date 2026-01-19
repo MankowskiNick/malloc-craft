@@ -24,6 +24,7 @@ int SKYBOX_TEXTURE_INDEX = 3;
 int SHADOW_MAP_TEXTURE_INDEX = 4;
 int REFLECTION_MAP_TEXTURE_INDEX = 5;
 int VSYNC = 1;
+int FULLSCREEN = 0;
 int CHUNK_RENDER_DISTANCE = 16;
 int SHADOW_MAP_WIDTH = 10000;
 int SHADOW_MAP_HEIGHT = 10000;
@@ -69,6 +70,7 @@ float WATER_FRICTION = 0.95f;
 float WATER_MAX_SPEED = 6.0f;
 float WATER_DRAG = 0.2f;
 float SWIM_VERTICAL_ACCEL = 15.0f;
+float WATER_JUMP_BOOST = 1.5f;
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
 float WORLDGEN_BIOME_AMPLITUDE = 1.0f;
@@ -111,6 +113,11 @@ void parse_display_settings(json_object display_obj) {
     json_object fov = json_get_property(display_obj, "fov");
     if (fov.type == JSON_NUMBER) {
         FOV = fov.value.number;
+    }
+
+    json_object fullscreen = json_get_property(display_obj, "fullscreen");
+    if (fullscreen.type == JSON_BOOL) {
+        FULLSCREEN = fullscreen.value.boolean ? 1 : 0;
     }
 }
 
@@ -461,6 +468,11 @@ void parse_player_settings(json_object player_obj) {
     json_object swim_vertical_accel = json_get_property(player_obj, "swim_vertical_accel");
     if (swim_vertical_accel.type == JSON_NUMBER) {
         SWIM_VERTICAL_ACCEL = swim_vertical_accel.value.number;
+    }
+
+    json_object water_jump_boost = json_get_property(player_obj, "water_jump_boost");
+    if (water_jump_boost.type == JSON_NUMBER) {
+        WATER_JUMP_BOOST = water_jump_boost.value.number;
     }
 }
 

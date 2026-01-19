@@ -1,10 +1,11 @@
 {
   "display": {
-    "width": 640,
-    "height": 480,
+    "width": 1920,
+    "height": 1080,
     "title": "malloc-craft",
     "vsync": true,
-    "fov": 60.0
+    "fov": 60.0,
+    "fullscreen": true
   },
   "chunks": {
     "chunk_load_per_frame": 1,
@@ -80,7 +81,8 @@
     "water_friction": 0.85,
     "water_max_speed": 6.0,
     "water_drag": 0.2,
-    "swim_vertical_accel": 1.0
+    "swim_vertical_accel": 1.0,
+    "water_jump_boost": 2.5
   },
   "world_generation": {
     "seed": 42069,
