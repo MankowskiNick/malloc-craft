@@ -247,6 +247,19 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     }
 }
 
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    if (g_data->player->hotbar_size <= 0) return;
+    
+    // yoffset > 0 means scroll up (next item), < 0 means scroll down (previous item)
+    if (yoffset < 0) {
+        // Scroll up - cycle to next item
+        g_data->player->selected_block = (g_data->player->selected_block + 1) % g_data->player->hotbar_size;
+    } else if (yoffset > 0) {
+        // Scroll down - cycle to previous item
+        g_data->player->selected_block = (g_data->player->selected_block - 1 + g_data->player->hotbar_size) % g_data->player->hotbar_size;
+    }
+}
+
 void i_init(GLFWwindow* window, game_data* data) {
     key_stack = NULL;
     g_window = window;
@@ -257,6 +270,7 @@ void i_init(GLFWwindow* window, game_data* data) {
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_move_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     g_data = data;
 }
