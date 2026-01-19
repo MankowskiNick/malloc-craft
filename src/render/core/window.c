@@ -1,5 +1,5 @@
 #include "window.h"
-#include "settings.h"
+#include "util/settings.h"
 #include <stdio.h>
 
 typedef struct {

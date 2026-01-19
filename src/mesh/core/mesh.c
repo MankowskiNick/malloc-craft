@@ -1,10 +1,10 @@
 #include "mesh.h"
-#include "settings.h"
+#include "util/settings.h"
 #include "../../world/core/block.h"
 #include "../../world/core/world.h"
 #include <player/core/camera.h>
 #include "chunk_mesh.h"
-#include "queue.h"
+#include "util/queue.h"
 #include <pthread.h>
 #include <assert.h>
 #include "blockbench_loader.h"

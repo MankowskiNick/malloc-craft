@@ -1,7 +1,7 @@
 #ifndef MODELS_H
 #define MODELS_H
 
-#include <settings.h>
+#include <util/settings.h>
 #include <util.h>
 
 #define NORTH   0.0f

@@ -1,9 +1,9 @@
 #include "chunk_mesh.h"
 #include "../../world/core/block.h"
-#include "sort.h"
+#include "util/sort.h"
 #include "../../world/core/chunk.h"
 #include "mesh.h"
-#include "settings.h"
+#include "util/settings.h"
 #include <assert.h>
 #include <pthread.h>
 #include <unistd.h>

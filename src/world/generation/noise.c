@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <settings.h>
+#include <util/settings.h>
 
 int permutation[256];
 

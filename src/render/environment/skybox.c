@@ -1,5 +1,5 @@
 #include "skybox.h"
-#include "settings.h"
+#include "util/settings.h"
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>

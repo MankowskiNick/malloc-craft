@@ -3,7 +3,7 @@
 #include "world/core/world.h"
 #include "world/core/block.h"
 #include <mesh.h>
-#include "settings.h"
+#include "util/settings.h"
 #include <math.h>
 #include <player/serialization/player_loader.h>
 

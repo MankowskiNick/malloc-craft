@@ -3,7 +3,7 @@
 #include <cerialize/cerialize.h>
 #include <util.h>
 #include <cglm/cglm.h>
-#include "settings.h"
+#include "util/settings.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>

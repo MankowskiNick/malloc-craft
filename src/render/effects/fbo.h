@@ -8,7 +8,7 @@
 #include <vbo.h>
 #include <sun.h>
 #include <world_mesh.h>
-#include <settings.h>
+#include <util/settings.h>
 
 typedef struct {
     uint width;

@@ -8,10 +8,10 @@
 #include <glad/glad.h>
 #include <chunk_mesh.h>
 #include <mesh.h>
-#include "sort.h"
+#include "util/sort.h"
 #include "../../world/core/world.h"
 #include <util.h>
-#include "settings.h"
+#include "util/settings.h"
 #include <world_mesh.h>
 #include "fbo.h"
 #include "shadow_map.h"

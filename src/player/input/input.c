@@ -1,11 +1,11 @@
-#include "window.h"
+#include "render/core/window.h"
 #include "input.h"
 #include <block_models.h>
 #include "world/core/block.h"
 #include "world/core/world.h"
 #include <player/core/camera.h>
 #include <chunk_mesh.h>
-#include "settings.h"
+#include "util/settings.h"
 #include <cglm/cglm.h>
 
 #ifndef PI

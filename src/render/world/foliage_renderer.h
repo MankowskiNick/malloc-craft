@@ -7,10 +7,10 @@
 #include <glad/glad.h>
 #include <chunk_mesh.h>
 #include <mesh.h>
-#include <sort.h>
+#include <util/sort.h>
 #include <world.h>
 #include <util.h>
-#include <settings.h>
+#include <util/settings.h>
 #include <world_mesh.h>
 #include <assert.h>
 

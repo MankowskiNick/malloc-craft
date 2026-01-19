@@ -4,7 +4,7 @@
 #include <vao.h>
 #include <vbo.h>
 #include <util.h>
-#include <settings.h>
+#include <util/settings.h>
 #include <shader.h>
 #include <player/core/camera.h>
 #include <texture.h>

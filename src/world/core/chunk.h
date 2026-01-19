@@ -2,7 +2,7 @@
 #define CHUNK_H
 
 #include <block_models.h>
-#include <settings.h>
+#include <util/settings.h>
 #include <player/core/camera.h>
 #include <game_data.h>
 #include <util.h>

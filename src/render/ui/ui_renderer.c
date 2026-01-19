@@ -1,6 +1,6 @@
 #include "ui_renderer.h"
-#include <settings.h>
-#include <window.h>
+#include <util/settings.h>
+#include <render/core/window.h>
 #include <block.h>
 #include <block_models.h>
 #include <cerialize/cerialize.h>

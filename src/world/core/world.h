@@ -2,7 +2,7 @@
 #define WORLD_H
 
 #include <block_models.h>
-#include <settings.h>
+#include <util/settings.h>
 
 void w_init();
 void w_cleanup();

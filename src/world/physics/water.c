@@ -1,6 +1,6 @@
 #include "water.h"
 #include <util.h>
-#include <settings.h>
+#include <util/settings.h>
 #include <mesh.h>
 #include <world/core/chunk.h>
 #include <world/core/world.h>
