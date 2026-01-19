@@ -21,8 +21,8 @@ block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* bump_
     VBO cube_vbo = create_vbo(GL_STATIC_DRAW);
     VBO instance_vbo = create_vbo(GL_STATIC_DRAW);
 
-    shader vertex_shader = create_shader("res/shaders/liquid.vert", GL_VERTEX_SHADER);
-    shader fragment_shader = create_shader("res/shaders/liquid.frag", GL_FRAGMENT_SHADER);
+    shader vertex_shader = create_shader(LIQUID_VERTEX_SHADER, GL_VERTEX_SHADER);
+    shader fragment_shader = create_shader(LIQUID_FRAGMENT_SHADER, GL_FRAGMENT_SHADER);
     shader_program program = create_program(vertex_shader, fragment_shader);
     delete_shader(vertex_shader);
     delete_shader(fragment_shader);

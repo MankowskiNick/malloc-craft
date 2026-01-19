@@ -151,8 +151,8 @@ ui_renderer create_ui_renderer() {
     f_add_attrib(&vbo, 1, 2, 2 * sizeof(float), 4 * sizeof(float));
 
     // Create shaders
-    shader vertex_shader = create_shader("res/shaders/ui.vert", GL_VERTEX_SHADER);
-    shader fragment_shader = create_shader("res/shaders/ui.frag", GL_FRAGMENT_SHADER);
+    shader vertex_shader = create_shader(UI_VERTEX_SHADER, GL_VERTEX_SHADER);
+    shader fragment_shader = create_shader(UI_FRAGMENT_SHADER, GL_FRAGMENT_SHADER);
     shader_program program = create_program(vertex_shader, fragment_shader);
     delete_shader(vertex_shader);
     delete_shader(fragment_shader);

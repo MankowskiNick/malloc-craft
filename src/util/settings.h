@@ -159,6 +159,28 @@ extern int BLOCK_COUNT;
 extern char* BLOCK_FILE;
 extern char* PLAYER_FILE;
 
+// Shader paths
+extern char* WORLD_VERTEX_SHADER;
+extern char* WORLD_FRAGMENT_SHADER;
+extern char* LIQUID_VERTEX_SHADER;
+extern char* LIQUID_FRAGMENT_SHADER;
+extern char* FOLIAGE_VERTEX_SHADER;
+extern char* FOLIAGE_FRAGMENT_SHADER;
+extern char* BLOCKBENCH_VERTEX_SHADER;
+extern char* BLOCKBENCH_FRAGMENT_SHADER;
+extern char* SKYBOX_VERTEX_SHADER;
+extern char* SKYBOX_FRAGMENT_SHADER;
+extern char* SUN_VERTEX_SHADER;
+extern char* SUN_FRAGMENT_SHADER;
+extern char* SHADOW_VERTEX_SHADER;
+extern char* SHADOW_FRAGMENT_SHADER;
+extern char* REFLECTION_VERTEX_SHADER;
+extern char* REFLECTION_FRAGMENT_SHADER;
+extern char* OUTLINE_VERTEX_SHADER;
+extern char* OUTLINE_FRAGMENT_SHADER;
+extern char* UI_VERTEX_SHADER;
+extern char* UI_FRAGMENT_SHADER;
+
 // UI settings
 extern int FPS_AVERAGE_FRAMES;
 extern float UI_SCALE;

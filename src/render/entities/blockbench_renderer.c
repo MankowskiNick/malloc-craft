@@ -17,8 +17,8 @@ blockbench_renderer create_blockbench_renderer(camera* cam, char* atlas_path, ch
     bind_vao(vao);
     VBO vertex_vbo = create_vbo(GL_DYNAMIC_DRAW);
 
-    shader vertex_shader = create_shader("res/shaders/blockbench.vert", GL_VERTEX_SHADER);
-    shader fragment_shader = create_shader("res/shaders/blockbench.frag", GL_FRAGMENT_SHADER);
+    shader vertex_shader = create_shader(BLOCKBENCH_VERTEX_SHADER, GL_VERTEX_SHADER);
+    shader fragment_shader = create_shader(BLOCKBENCH_FRAGMENT_SHADER, GL_FRAGMENT_SHADER);
     shader_program program = create_program(vertex_shader, fragment_shader);
     delete_shader(vertex_shader);
     delete_shader(fragment_shader);

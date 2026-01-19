@@ -13,8 +13,8 @@ FBO create_shadow_map(uint width, uint height) {
     glGenFramebuffers(1, &fbo);
 
     // create program
-    shader vert_shader = create_shader("res/shaders/shadow.vert", GL_VERTEX_SHADER);
-    shader frag_shader = create_shader("res/shaders/shadow.frag", GL_FRAGMENT_SHADER);
+    shader vert_shader = create_shader(SHADOW_VERTEX_SHADER, GL_VERTEX_SHADER);
+    shader frag_shader = create_shader(SHADOW_FRAGMENT_SHADER, GL_FRAGMENT_SHADER);
     shader_program program = create_program(vert_shader, frag_shader);
     delete_shader(vert_shader);
     delete_shader(frag_shader);

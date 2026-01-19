@@ -75,8 +75,8 @@ skybox create_skybox(camera* cam) {
     texture sky = t_init(SKYBOX_PATH, SKYBOX_TEXTURE_INDEX);
 
     // shader program
-    shader vert_shader = create_shader("res/shaders/skybox.vert", GL_VERTEX_SHADER);
-    shader frag_shader = create_shader("res/shaders/skybox.frag", GL_FRAGMENT_SHADER);
+    shader vert_shader = create_shader(SKYBOX_VERTEX_SHADER, GL_VERTEX_SHADER);
+    shader frag_shader = create_shader(SKYBOX_FRAGMENT_SHADER, GL_FRAGMENT_SHADER);
     shader_program program = create_program(vert_shader, frag_shader);
     delete_shader(vert_shader);
     delete_shader(frag_shader);

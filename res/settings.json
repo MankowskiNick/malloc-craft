@@ -108,6 +108,28 @@
     "player_file": "res/player.json",
     "time_scale": 0.000001047
   },
+  "shaders": {
+    "world_vertex": "res/shaders/world/world.vert",
+    "world_fragment": "res/shaders/world/world.frag",
+    "liquid_vertex": "res/shaders/world/liquid.vert",
+    "liquid_fragment": "res/shaders/world/liquid.frag",
+    "foliage_vertex": "res/shaders/world/foliage.vert",
+    "foliage_fragment": "res/shaders/world/foliage.frag",
+    "blockbench_vertex": "res/shaders/world/blockbench.vert",
+    "blockbench_fragment": "res/shaders/world/blockbench.frag",
+    "skybox_vertex": "res/shaders/environment/skybox.vert",
+    "skybox_fragment": "res/shaders/environment/skybox.frag",
+    "sun_vertex": "res/shaders/environment/sun.vert",
+    "sun_fragment": "res/shaders/environment/sun.frag",
+    "shadow_vertex": "res/shaders/effects/shadow.vert",
+    "shadow_fragment": "res/shaders/effects/shadow.frag",
+    "reflection_vertex": "res/shaders/effects/reflection.vert",
+    "reflection_fragment": "res/shaders/effects/reflection.frag",
+    "outline_vertex": "res/shaders/ui/outline.vert",
+    "outline_fragment": "res/shaders/ui/outline.frag",
+    "ui_vertex": "res/shaders/ui/ui.vert",
+    "ui_fragment": "res/shaders/ui/ui.frag"
+  },
   "ui": {
     "fps_average_frames": 60,
     "ui_scale": 1.0,

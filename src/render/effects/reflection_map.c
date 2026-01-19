@@ -13,8 +13,8 @@ FBO create_reflection_map(uint width, uint height) {
     glGenFramebuffers(1, &fbo);
 
     // create program
-    shader vert_shader = create_shader("res/shaders/reflection.vert", GL_VERTEX_SHADER);
-    shader frag_shader = create_shader("res/shaders/reflection.frag", GL_FRAGMENT_SHADER);
+    shader vert_shader = create_shader(REFLECTION_VERTEX_SHADER, GL_VERTEX_SHADER);
+    shader frag_shader = create_shader(REFLECTION_FRAGMENT_SHADER, GL_FRAGMENT_SHADER);
     shader_program program = create_program(vert_shader, frag_shader);
     delete_shader(vert_shader);
     delete_shader(frag_shader);

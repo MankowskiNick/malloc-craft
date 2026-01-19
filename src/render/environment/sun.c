@@ -46,8 +46,8 @@ sun create_sun(camera* cam, float r, float b, float g) {
     VBO vbo = create_vbo(GL_STATIC_DRAW);
     
 
-    shader vertex_shader = create_shader("res/shaders/sun.vert", GL_VERTEX_SHADER);
-    shader fragment_shader = create_shader("res/shaders/sun.frag", GL_FRAGMENT_SHADER);
+    shader vertex_shader = create_shader(SUN_VERTEX_SHADER, GL_VERTEX_SHADER);
+    shader fragment_shader = create_shader(SUN_FRAGMENT_SHADER, GL_FRAGMENT_SHADER);
     shader_program program = create_program(vertex_shader, fragment_shader);
 
     delete_shader(vertex_shader);

@@ -84,6 +84,28 @@ int WORLDGEN_BLOCKHEIGHT_OCTAVES = 6;
 char* BLOCK_FILE = "res/blocks.json";
 char* PLAYER_FILE = "res/player.json";
 
+// Shader paths
+char* WORLD_VERTEX_SHADER = "res/shaders/world/world.vert";
+char* WORLD_FRAGMENT_SHADER = "res/shaders/world/world.frag";
+char* LIQUID_VERTEX_SHADER = "res/shaders/world/liquid.vert";
+char* LIQUID_FRAGMENT_SHADER = "res/shaders/world/liquid.frag";
+char* FOLIAGE_VERTEX_SHADER = "res/shaders/world/foliage.vert";
+char* FOLIAGE_FRAGMENT_SHADER = "res/shaders/world/foliage.frag";
+char* BLOCKBENCH_VERTEX_SHADER = "res/shaders/world/blockbench.vert";
+char* BLOCKBENCH_FRAGMENT_SHADER = "res/shaders/world/blockbench.frag";
+char* SKYBOX_VERTEX_SHADER = "res/shaders/environment/skybox.vert";
+char* SKYBOX_FRAGMENT_SHADER = "res/shaders/environment/skybox.frag";
+char* SUN_VERTEX_SHADER = "res/shaders/environment/sun.vert";
+char* SUN_FRAGMENT_SHADER = "res/shaders/environment/sun.frag";
+char* SHADOW_VERTEX_SHADER = "res/shaders/effects/shadow.vert";
+char* SHADOW_FRAGMENT_SHADER = "res/shaders/effects/shadow.frag";
+char* REFLECTION_VERTEX_SHADER = "res/shaders/effects/reflection.vert";
+char* REFLECTION_FRAGMENT_SHADER = "res/shaders/effects/reflection.frag";
+char* OUTLINE_VERTEX_SHADER = "res/shaders/ui/outline.vert";
+char* OUTLINE_FRAGMENT_SHADER = "res/shaders/ui/outline.frag";
+char* UI_VERTEX_SHADER = "res/shaders/ui/ui.vert";
+char* UI_FRAGMENT_SHADER = "res/shaders/ui/ui.frag";
+
 // UI settings
 int FPS_AVERAGE_FRAMES = 60;
 float UI_SCALE = 1.0f;
@@ -593,6 +615,113 @@ void parse_ui_settings(json_object ui_obj) {
     }
 }
 
+void parse_shader_settings(json_object shader_obj) {
+    if (shader_obj.type != JSON_OBJECT) {
+        fprintf(stderr, "Error: shaders section is not an object in settings.json\n");
+        exit(EXIT_FAILURE);
+    }
+
+    json_object world_vertex = json_get_property(shader_obj, "world_vertex");
+    if (world_vertex.type == JSON_STRING) {
+        WORLD_VERTEX_SHADER = strdup(world_vertex.value.string);
+    }
+
+    json_object world_fragment = json_get_property(shader_obj, "world_fragment");
+    if (world_fragment.type == JSON_STRING) {
+        WORLD_FRAGMENT_SHADER = strdup(world_fragment.value.string);
+    }
+
+    json_object liquid_vertex = json_get_property(shader_obj, "liquid_vertex");
+    if (liquid_vertex.type == JSON_STRING) {
+        LIQUID_VERTEX_SHADER = strdup(liquid_vertex.value.string);
+    }
+
+    json_object liquid_fragment = json_get_property(shader_obj, "liquid_fragment");
+    if (liquid_fragment.type == JSON_STRING) {
+        LIQUID_FRAGMENT_SHADER = strdup(liquid_fragment.value.string);
+    }
+
+    json_object foliage_vertex = json_get_property(shader_obj, "foliage_vertex");
+    if (foliage_vertex.type == JSON_STRING) {
+        FOLIAGE_VERTEX_SHADER = strdup(foliage_vertex.value.string);
+    }
+
+    json_object foliage_fragment = json_get_property(shader_obj, "foliage_fragment");
+    if (foliage_fragment.type == JSON_STRING) {
+        FOLIAGE_FRAGMENT_SHADER = strdup(foliage_fragment.value.string);
+    }
+
+    json_object blockbench_vertex = json_get_property(shader_obj, "blockbench_vertex");
+    if (blockbench_vertex.type == JSON_STRING) {
+        BLOCKBENCH_VERTEX_SHADER = strdup(blockbench_vertex.value.string);
+    }
+
+    json_object blockbench_fragment = json_get_property(shader_obj, "blockbench_fragment");
+    if (blockbench_fragment.type == JSON_STRING) {
+        BLOCKBENCH_FRAGMENT_SHADER = strdup(blockbench_fragment.value.string);
+    }
+
+    json_object skybox_vertex = json_get_property(shader_obj, "skybox_vertex");
+    if (skybox_vertex.type == JSON_STRING) {
+        SKYBOX_VERTEX_SHADER = strdup(skybox_vertex.value.string);
+    }
+
+    json_object skybox_fragment = json_get_property(shader_obj, "skybox_fragment");
+    if (skybox_fragment.type == JSON_STRING) {
+        SKYBOX_FRAGMENT_SHADER = strdup(skybox_fragment.value.string);
+    }
+
+    json_object sun_vertex = json_get_property(shader_obj, "sun_vertex");
+    if (sun_vertex.type == JSON_STRING) {
+        SUN_VERTEX_SHADER = strdup(sun_vertex.value.string);
+    }
+
+    json_object sun_fragment = json_get_property(shader_obj, "sun_fragment");
+    if (sun_fragment.type == JSON_STRING) {
+        SUN_FRAGMENT_SHADER = strdup(sun_fragment.value.string);
+    }
+
+    json_object shadow_vertex = json_get_property(shader_obj, "shadow_vertex");
+    if (shadow_vertex.type == JSON_STRING) {
+        SHADOW_VERTEX_SHADER = strdup(shadow_vertex.value.string);
+    }
+
+    json_object shadow_fragment = json_get_property(shader_obj, "shadow_fragment");
+    if (shadow_fragment.type == JSON_STRING) {
+        SHADOW_FRAGMENT_SHADER = strdup(shadow_fragment.value.string);
+    }
+
+    json_object reflection_vertex = json_get_property(shader_obj, "reflection_vertex");
+    if (reflection_vertex.type == JSON_STRING) {
+        REFLECTION_VERTEX_SHADER = strdup(reflection_vertex.value.string);
+    }
+
+    json_object reflection_fragment = json_get_property(shader_obj, "reflection_fragment");
+    if (reflection_fragment.type == JSON_STRING) {
+        REFLECTION_FRAGMENT_SHADER = strdup(reflection_fragment.value.string);
+    }
+
+    json_object outline_vertex = json_get_property(shader_obj, "outline_vertex");
+    if (outline_vertex.type == JSON_STRING) {
+        OUTLINE_VERTEX_SHADER = strdup(outline_vertex.value.string);
+    }
+
+    json_object outline_fragment = json_get_property(shader_obj, "outline_fragment");
+    if (outline_fragment.type == JSON_STRING) {
+        OUTLINE_FRAGMENT_SHADER = strdup(outline_fragment.value.string);
+    }
+
+    json_object ui_vertex = json_get_property(shader_obj, "ui_vertex");
+    if (ui_vertex.type == JSON_STRING) {
+        UI_VERTEX_SHADER = strdup(ui_vertex.value.string);
+    }
+
+    json_object ui_fragment = json_get_property(shader_obj, "ui_fragment");
+    if (ui_fragment.type == JSON_STRING) {
+        UI_FRAGMENT_SHADER = strdup(ui_fragment.value.string);
+    }
+}
+
 void read_settings(const char* filename) {
     // Read the JSON file to string
     char* settings_json = read_file_to_string(filename);
@@ -676,6 +805,11 @@ void read_settings(const char* filename) {
     json_object gamedata_obj = json_get_property(obj.root, "game_data");
     if (gamedata_obj.type != JSON_NULL) {
         parse_game_data_settings(gamedata_obj);
+    }
+
+    json_object shader_obj = json_get_property(obj.root, "shaders");
+    if (shader_obj.type != JSON_NULL) {
+        parse_shader_settings(shader_obj);
     }
 
     json_object ui_obj = json_get_property(obj.root, "ui");
