@@ -74,7 +74,7 @@
     "player_max_speed": 8.0,
     "jump_force": 8,
     "coyote_time": 4,
-    "swim_accel": 500.0,
+    "swim_accel": 250.0,
     "water_friction": 0.85,
     "water_max_speed": 6.0,
     "water_drag": 0.2,

@@ -111,10 +111,16 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
     glClear(GL_DEPTH_BUFFER_BIT);
     
     render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
-    render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
-    render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
-    render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
     render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
+    if (args->player->is_underwater) {
+        render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
+        render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
+        render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
+    } else {
+        render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
+        render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
+        render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
+    }
 
     // Render block outline if player is looking at a valid block
     if (args->player->has_selected_block) {
