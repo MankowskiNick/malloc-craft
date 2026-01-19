@@ -75,22 +75,26 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
 
         chunk_mesh_to_buffer(transparent_data + transparent_offset, 
             mesh->transparent_sides, 
-            mesh->num_transparent_sides);
+            mesh->num_transparent_sides,
+            mesh->lod_scale);
         transparent_offset += mesh->num_transparent_sides * VBO_WIDTH;
         
         chunk_mesh_to_buffer(opaque_data + opaque_offset, 
             mesh->opaque_sides, 
-            mesh->num_opaque_sides);
+            mesh->num_opaque_sides,
+            mesh->lod_scale);
         opaque_offset += mesh->num_opaque_sides * VBO_WIDTH;
         
         chunk_mesh_to_buffer(liquid_data + liquid_offset, 
             mesh->liquid_sides, 
-            mesh->num_liquid_sides);
+            mesh->num_liquid_sides,
+            mesh->lod_scale);
         liquid_offset += mesh->num_liquid_sides * VBO_WIDTH;
 
         chunk_mesh_to_buffer(foliage_data + foliage_offset,
             mesh->foliage_sides,
-            mesh->num_foliage_sides);
+            mesh->num_foliage_sides,
+            mesh->lod_scale);
         foliage_offset += mesh->num_foliage_sides * VBO_WIDTH;
 
         custom_vert_to_buffer(custom_model_data + custom_model_offset, 

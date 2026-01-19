@@ -50,6 +50,8 @@ extern int VSYNC;
 extern int FULLSCREEN;
 // Radius of chunks to render
 extern int CHUNK_RENDER_DISTANCE;
+extern int TRUE_RENDER_DISTANCE;
+extern int LOD_SCALING_CONSTANT;
 
 // Shadow map settings
 extern int SHADOW_MAP_WIDTH;

@@ -11,6 +11,7 @@
 #define RADS(deg) ((deg) * (PI / 180.0f))
 
 #define WORLD_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1
+#define F_WORLD_POS_TO_CHUNK_POS(x) x >= 0 ? (x / (float)CHUNK_SIZE) : (x / (float)CHUNK_SIZE) - 1.0f
 
 typedef unsigned int uint;
 

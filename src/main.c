@@ -26,12 +26,13 @@ int main() {
 
     block_init();
 
-    player player = player_init(PLAYER_FILE);
+    player* player = malloc(sizeof(player));
+    *player = player_init(PLAYER_FILE);
 
     game_data data = {
-        .x = (int)player.cam.position[0],
-        .z = (int)player.cam.position[2],
-        .player = &player,
+        .x = (int)player->cam.position[0],
+        .z = (int)player->cam.position[2],
+        .player = player,
         .is_running = TRUE,
         .show_fps = false,
         .fps = 0,
@@ -46,9 +47,9 @@ int main() {
         data.frame_time_buffer[i] = 16.67f; // Default ~60 FPS
     }
     
-    renderer r = create_renderer(&(player.cam));
+    renderer r = create_renderer(&data);
 
-    wm_init(&(player.cam));
+    wm_init(&(data.player->cam));
 
     i_init(window, &data);
 
@@ -63,10 +64,12 @@ int main() {
     long start = (long)(glfwGetTime() * 1000.0);
     int last_tick = 0;
 
+    printf("RENDER DISTANCE: %i\n\n", TRUE_RENDER_DISTANCE);
+
     while (!glfwWindowShouldClose(window)) {
 
-        data.x = player.cam.position[0];
-        data.z = player.cam.position[2];
+        data.x = data.player->cam.position[0];
+        data.z = data.player->cam.position[2];
         data.tick = (int)(glfwGetTime() * 1000.0) - start; // 1 tick = 1 ms
         int delta_ms = data.tick - last_tick;
         last_tick = data.tick;
@@ -90,8 +93,8 @@ int main() {
         }
 
         update_camera(delta_ms);
-        apply_physics(&player, delta_ms);
-        update_selected_block(&player);
+        apply_physics(data.player, delta_ms);
+        update_selected_block(data.player);
 
         lock_mesh();
         render(&data, &r, data.world_mesh, *(data.num_packets));

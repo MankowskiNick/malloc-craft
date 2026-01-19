@@ -1,9 +1,12 @@
 #include "settings.h"
-#include <cerialize/cerialize.h>
-#include <util.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#include <cerialize/cerialize.h>
+
+#include "util.h"
 
 int WIDTH = 1200;
 int HEIGHT = 900;
@@ -26,6 +29,8 @@ int REFLECTION_MAP_TEXTURE_INDEX = 5;
 int VSYNC = 1;
 int FULLSCREEN = 0;
 int CHUNK_RENDER_DISTANCE = 16;
+int TRUE_RENDER_DISTANCE = 16;
+int LOD_SCALING_CONSTANT = 2;
 int SHADOW_MAP_WIDTH = 10000;
 int SHADOW_MAP_HEIGHT = 10000;
 float SHADOW_RENDER_DIST = 16.0f * 16.0f;
@@ -174,9 +179,20 @@ void parse_chunks_settings(json_object chunks_obj) {
         CHUNK_CACHE_SIZE = (int)chunk_cache_size.value.number;
     }
 
+    json_object lod_scaling_constant = json_get_property(chunks_obj, "lod_scaling_constant");
+    if (lod_scaling_constant.type == JSON_NUMBER) {
+        LOD_SCALING_CONSTANT = (int)lod_scaling_constant.value.number;
+    }
+
     json_object chunk_render_distance = json_get_property(chunks_obj, "chunk_render_distance");
     if (chunk_render_distance.type == JSON_NUMBER) {
-        CHUNK_RENDER_DISTANCE = (int)chunk_render_distance.value.number;
+        CHUNK_RENDER_DISTANCE = (int)chunk_render_distance.value.number;    
+        
+        int lod_steps = (int)(log(CHUNK_SIZE) / log(LOD_SCALING_CONSTANT));
+        TRUE_RENDER_DISTANCE = CHUNK_RENDER_DISTANCE;
+        for (int i = 0; i < lod_steps; i++) {
+            TRUE_RENDER_DISTANCE += pow(LOD_SCALING_CONSTANT, i + 1);
+        }
     }
 }
 

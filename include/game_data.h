@@ -26,6 +26,7 @@ typedef struct {
     int num_liquid_sides;
     int num_foliage_sides;
     int num_custom_verts;
+    short lod_scale;
 } chunk_mesh;
 
 typedef struct {
@@ -74,6 +75,7 @@ static inline void free_game_data(game_data data) {
     free(data.frame_time_buffer);
     free(data.world_mesh);
     free(data.packet);
+    free(data.player);
 }
 
 #endif

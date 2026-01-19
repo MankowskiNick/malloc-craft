@@ -35,7 +35,7 @@ typedef struct {
     int num_packets;
 } render_args;
 
-renderer create_renderer(camera* camera);
+renderer create_renderer(game_data* data);
 void destroy_renderer(renderer* r);
 void render(game_data* args, renderer* r, world_mesh* packet, int num_packets);
 

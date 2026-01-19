@@ -18,10 +18,13 @@
 #include "reflection_map.h"
 #include <assert.h>
 
-renderer create_renderer(camera* camera) {
+renderer create_renderer(game_data* data) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    player* player = data->player;
+    camera* camera = &(player->cam);
 
     if (WIREFRAME) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -30,14 +33,14 @@ renderer create_renderer(camera* camera) {
     glViewport(0, 0, WIDTH, HEIGHT);
 
     w_init();
-    m_init(camera);
+    m_init(&(player->cam));
 
-    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
-            int x = (int)(camera->position[0]) - CHUNK_RENDER_DISTANCE + i;
-            int z = (int)(camera->position[2]) - CHUNK_RENDER_DISTANCE + j;
+    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
+            int x = (int)(player->position[0]) - TRUE_RENDER_DISTANCE + i;
+            int z = (int)(player->position[2]) - TRUE_RENDER_DISTANCE + j;
             get_chunk_mesh(x, z);
-            load_chunk();
+            load_chunk(player->position[0], player->position[2]);
         }
     }
 

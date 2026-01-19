@@ -335,7 +335,7 @@ void break_block(game_data* data) {
 
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0, water_level);
     
-    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
+    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
     queue_chunk_for_sorting(new_mesh);
 }
 
@@ -398,7 +398,7 @@ void place_block(game_data* data) {
         return;
     }
 
-    short selected_block = get_selected_block(*(data->player));
+    short selected_block = get_selected_block(*data->player);
     block_type* type = get_block_type(selected_block);
 
     // Water blocks need water level 7 (source) to render and flow
@@ -407,7 +407,7 @@ void place_block(game_data* data) {
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, selected_block, hit_side, rot, water_level);
 
     // update chunk and adjacent chunks
-    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z);
+    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
     queue_chunk_for_sorting(new_mesh);
 }
 

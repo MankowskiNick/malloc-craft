@@ -84,7 +84,7 @@ float chunk_distance_to_camera(const void* item) {
     );
 }
 
-void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides) {
+void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides, int lod_scale) {
     // x y z type side
     for (int i = 0; i < num_sides; i++) {
         int index = i * VBO_WIDTH;
@@ -99,6 +99,7 @@ void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides) {
         head[index + 7] = side.orientation;
         head[index + 8] = side.water_level;
         head[index + 9] = side.water_level_transition;
+        head[index + 10] = lod_scale;
     }
 }
 
@@ -137,12 +138,12 @@ void get_chunk_meshes(game_data* args) {
     chunk_mesh** packet = NULL;
     int count = 0;
 
-    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
-            int x = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
-            int z = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
+    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
+            int x = player_chunk_x - TRUE_RENDER_DISTANCE + i;
+            int z = player_chunk_z - TRUE_RENDER_DISTANCE + j;
 
-            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
+            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
                 continue;
             }
             
@@ -169,7 +170,7 @@ void get_chunk_meshes(game_data* args) {
     }
 
     sort_chunk();
-    load_chunk();
+    load_chunk(args->player->position[0], args->player->position[2]);
 
     quicksort(packet, count, sizeof(chunk_mesh*), chunk_distance_to_camera);
 
@@ -190,7 +191,7 @@ void update_chunk_meshes(game_data* data) {
 
     while(data->is_running) {
         get_chunk_meshes(data);
-        flood_chunks(data);
+        // flood_chunks(data);
         usleep(TICK_RATE);
     }
 

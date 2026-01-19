@@ -1,13 +1,16 @@
 #include "mesh.h"
-#include "util/settings.h"
-#include "../../world/core/block.h"
-#include "../../world/core/world.h"
-#include <player/core/camera.h>
-#include "chunk_mesh.h"
-#include "util/queue.h"
+
 #include <pthread.h>
 #include <assert.h>
-#include "blockbench_loader.h"
+#include <math.h>
+
+#include "../../util/settings.h"
+#include "../../util/queue.h"
+#include "../../world/core/block.h"
+#include "../../world/core/world.h"
+#include "../../player/core/camera.h"
+#include "../generation/chunk_mesh.h"
+#include "../geometry/blockbench_loader.h"
 
 DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals);
 typedef chunk_mesh_map_hashmap chunk_mesh_map;
@@ -54,45 +57,45 @@ block_data_t get_block_data(int x, int y, int z, chunk* c) {
     return c->blocks[x][y][z];
 }
 
-block_data_t get_adjacent_block_data(int x, int y, int z, short side, chunk* c, chunk* adj) {
+block_data_t get_adjacent_block_data(int x, int y, int z, short side, short lod_scale, chunk* c, chunk* adj) {
     switch(side) {
         case (int)UP:
-            if (y + 1 < CHUNK_HEIGHT) {
-                return c->blocks[x][y + 1][z];
+            if (y + lod_scale < CHUNK_HEIGHT) {
+                return c->blocks[x][y + lod_scale][z];
             }
             break;
         case (int)DOWN:
-            if (y - 1 >= 0) {
-                return c->blocks[x][y - 1][z];
+            if (y - lod_scale >= 0) {
+                return c->blocks[x][y - lod_scale][z];
             }
             break;
         case (int)WEST:
-            if (x + 1 < CHUNK_SIZE) {
-                return c->blocks[x + 1][y][z];
+            if (x + lod_scale < CHUNK_SIZE) {
+                return c->blocks[x + lod_scale][y][z];
             }
             else if (adj != NULL) {
                 return adj->blocks[0][y][z];
             }
             break;
         case (int)EAST:
-            if (x - 1 >= 0) {
-                return c->blocks[x - 1][y][z];
+            if (x - lod_scale >= 0) {
+                return c->blocks[x - lod_scale][y][z];
             }
             else if (adj != NULL) {
-                return adj->blocks[CHUNK_SIZE - 1][y][z];
+                return adj->blocks[CHUNK_SIZE - lod_scale][y][z];
             }
             break;
         case (int)NORTH:
-            if (z - 1 >= 0) {
-                return c->blocks[x][y][z - 1];
+            if (z - lod_scale >= 0) {
+                return c->blocks[x][y][z - lod_scale];
             }
             else if (adj != NULL) {
-                return adj->blocks[x][y][CHUNK_SIZE - 1];
+                return adj->blocks[x][y][CHUNK_SIZE - lod_scale];
             }
             break;
         case (int)SOUTH:
-            if (z + 1 < CHUNK_SIZE) {
-                return c->blocks[x][y][z + 1];
+            if (z + lod_scale < CHUNK_SIZE) {
+                return c->blocks[x][y][z + lod_scale];
             }
             else if (adj != NULL) {
                 return adj->blocks[x][y][0];
@@ -104,15 +107,14 @@ block_data_t get_adjacent_block_data(int x, int y, int z, short side, chunk* c, 
 }
 
 short get_adjacent_block_id(int x, int y, int z, short side, chunk* c, chunk* adj) {
-    block_data_t block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+    block_data_t block_data = get_adjacent_block_data(x, y, z, side, 1, c, adj); // use default LOD: 1
     short block_id = -1;
     get_block_info(block_data, &block_id, NULL, NULL, NULL);
     return block_id;
 }
 
-
-short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) {
-    block_data_t block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+short get_adjacent_block(int x, int y, int z, short side, short lod_scale, chunk* c, chunk* adj) {
+    block_data_t block_data = get_adjacent_block_data(x, y, z, side, lod_scale, c, adj);
     short block_id = 0;
     get_block_info(block_data, &block_id, NULL, NULL, NULL);
     return block_id;
@@ -122,6 +124,7 @@ short get_adjacent_block(int x, int y, int z, short side, chunk* c, chunk* adj) 
 void get_side_visible(
     int x, int y, int z,
     short side,
+    short lod_scale,
     chunk* c,
     chunk* adj,
     int* visible_out,
@@ -129,7 +132,7 @@ void get_side_visible(
     int* water_level_out
 ) {
     // calculate adjacent block
-    short adjacent_id = get_adjacent_block(x, y, z, side, c, adj);
+    short adjacent_id = get_adjacent_block(x, y, z, side, lod_scale, c, adj);
 
     short current_id = 0;
 
@@ -149,7 +152,7 @@ void get_side_visible(
     // get water level from adjacent block
     short adj_water_level = 0;
     if (adjacent_id == get_block_id("water")) {
-        block_data_t adj_block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+        block_data_t adj_block_data = get_adjacent_block_data(x, y, z, side, lod_scale, c, adj);
         get_block_info(adj_block_data, NULL, NULL, NULL, &adj_water_level);
         *water_level_out = (int)adj_water_level;
     } else {
@@ -343,7 +346,7 @@ void get_model_transformation(mat4 transform, block_type* block, short orientati
     glm_translate(transform, (vec3){-0.5f, -0.5f, -0.5f}); // translate back
 }
 
-void pack_side(int x_0, int y_0, int z_0, 
+void pack_side(int x_0, int y_0, int z_0,
         short side, 
         short orientation, 
         short rot, 
@@ -378,6 +381,7 @@ void pack_side(int x_0, int y_0, int z_0,
 // Generate water flow transition faces between blocks with different water levels
 void pack_water_transitions(
     int x, int y, int z,
+    short lod_scale,
     chunk* c,
     chunk* adj_chunks[4],
     short current_water_level,
@@ -395,12 +399,12 @@ void pack_water_transitions(
         chunk* adj = adj_chunks[side];
         
         // Get adjacent block's water level
-        short adj_block_id = get_adjacent_block(x, y, z, side, c, adj);
+        short adj_block_id = get_adjacent_block(x, y, z, side, lod_scale, c, adj);
         if (adj_block_id != water_id) {
             continue;  // Only care about water-to-water transitions
         }
         
-        block_data_t adj_block_data = get_adjacent_block_data(x, y, z, side, c, adj);
+        block_data_t adj_block_data = get_adjacent_block_data(x, y, z, side, lod_scale, c, adj);
         short adj_water_level = 0;
         get_block_info(adj_block_data, NULL, NULL, NULL, &adj_water_level);
         
@@ -462,6 +466,7 @@ void pack_water_transitions(
 
 void pack_block(
     int x, int y, int z,
+    short lod_scale,
     chunk* c,
     chunk* adj_chunks[4], // front, back, left, right
     side_instance** chunk_side_data,
@@ -486,7 +491,7 @@ void pack_block(
         int visible = 0;
         int underwater = 0;
         int adj_water_level = 0;
-        get_side_visible(x, y, z, side, c, adj, &visible, &underwater, &adj_water_level);
+        get_side_visible(x, y, z, side, lod_scale, c, adj, &visible, &underwater, &adj_water_level);
         if (!visible) {
             continue;
         }
@@ -593,7 +598,14 @@ void pack_model(
     *num_custom_verts = new_vert_count;
 }
 
-void pack_chunk(chunk* c, chunk* adj_chunks[4], 
+bool in_chunk_bounds(int x, int y, int z) {
+    return x < CHUNK_SIZE && x >= 0 
+        && y < CHUNK_HEIGHT && y >= 0 
+        && z < CHUNK_SIZE && z >= 0 ;
+}
+
+void pack_chunk(chunk* c, chunk* adj_chunks[4],
+    short lod_scale,
     side_instance** opaque_side_data, int* num_opaque_sides,
     side_instance** transparent_side_data, int* num_transparent_sides,
     side_instance** foliage_side_data, int* num_foliage_sides,
@@ -603,11 +615,15 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
         return;
     }
 
-    for (int i = 0; i < CHUNK_SIZE; i++) {
-        for (int j = 0; j < CHUNK_SIZE; j++) {
-            for (int k = 0; k < CHUNK_HEIGHT; k++) {
+    for (int i = 0; i < CHUNK_SIZE; i+=lod_scale) {
+        for (int j = 0; j < CHUNK_SIZE; j+=lod_scale) {
+            for (int k = 0; k < CHUNK_HEIGHT; k+=lod_scale) {
+                if (!in_chunk_bounds(i, k, j)) {
+                    continue;
+                }
+
                 short block_id = 0;
-                get_block_info(c->blocks[i][k][j], &block_id, NULL, NULL, NULL);
+                get_block_info(c->blocks[i][k][j], &block_id, NULL, NULL, NULL); // this may need to turn in to an average of a nxnxn box where n is lod_scale
                 if (block_id == get_block_id("air")) {
                     continue;
                 }
@@ -615,28 +631,31 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                 block_type* block = get_block_type(block_id);
                 if (block->liquid) {
                     // Pack normal liquid faces
-                    pack_block(i, k, j, c, adj_chunks, 
+                    pack_block(i, k, j, lod_scale, c, adj_chunks,
                         liquid_side_data, num_liquid_sides);
                     
                     // Pack water flow transitions
                     short current_water_level = 0;
                     get_block_info(c->blocks[i][k][j], NULL, NULL, NULL, &current_water_level);
-                    pack_water_transitions(i, k, j, c, adj_chunks, current_water_level,
+                    pack_water_transitions(i, k, j, lod_scale, c, adj_chunks, current_water_level,
                         liquid_side_data, num_liquid_sides);
                 }
                 else if (block->transparent && !block->is_foliage) {
-                    pack_block(i, k, j, c, adj_chunks, 
+                    pack_block(i, k, j, lod_scale,
+                        c, adj_chunks,
                         transparent_side_data, num_transparent_sides);
                 }
                 else if (block->transparent && block->is_foliage) {
-                    pack_block(i, k, j, c, adj_chunks, 
+                    pack_block(i, k, j, lod_scale,
+                        c, adj_chunks,
                         foliage_side_data, num_foliage_sides);
                 }
                 else if (block->is_custom_model) {
                     pack_model(i, k, j, c, custom_model_data, num_custom_verts);
                 }
                 else {
-                    pack_block(i, k, j, c, adj_chunks, 
+                    pack_block(i, k, j, lod_scale,
+                        c, adj_chunks,
                         opaque_side_data, num_opaque_sides);
                 }
             }
@@ -644,9 +663,32 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
     }
 }
 
-chunk_mesh* create_chunk_mesh(int x, int z) {
+short calculate_lod(int x, int z, float player_x, float player_z) {
+    // get distance from player to center of chunk
+    float dx = (float)(x + 0.5f) - player_x;
+    float dz = (float)(z + 0.5f) - player_z;
+    float dist = sqrtf(dx * dx + dz * dz);
+
+    int lod = 1;
+    
+    if (dist < CHUNK_RENDER_DISTANCE) {
+        return lod;
+    }
+
+    int check_dist = CHUNK_RENDER_DISTANCE;
+    while (lod < CHUNK_SIZE && check_dist < dist) {
+        check_dist *= LOD_SCALING_CONSTANT;
+        lod *= LOD_SCALING_CONSTANT;
+    }
+
+    return lod;
+}
+
+chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z) {
     chunk_mesh* packet = malloc(sizeof(chunk_mesh));
     assert(packet != NULL && "Failed to allocate memory for packet");
+
+    short lod_scale = calculate_lod(x, z, player_x, player_z);
 
     // get chunk and adjacent chunks
     chunk* c = get_chunk(x, z);
@@ -675,7 +717,8 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     assert(foliage_sides != NULL && "Failed to allocate memory for foliage packet sides");
     assert(custom_model_data != NULL && "Failed to allocate memory for custom model data");
 
-    pack_chunk(c, adj_chunks, 
+    pack_chunk(c, adj_chunks,
+        lod_scale,
         &opaque_sides, &opaque_side_count,
         &transparent_sides, &transparent_side_count,
         &foliage_sides, &foliage_side_count,
@@ -686,6 +729,7 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
 
     packet->x = x;
     packet->z = z;
+    packet->lod_scale = lod_scale;
     packet->num_opaque_sides = opaque_side_count;
     packet->num_transparent_sides = transparent_side_count;
     packet->num_liquid_sides = liquid_side_count;
@@ -704,7 +748,7 @@ chunk_mesh* create_chunk_mesh(int x, int z) {
     return packet;
 }
 
-chunk_mesh* update_chunk_mesh_at(int x, int z) {
+chunk_mesh* update_chunk_mesh_at(int x, int z, float player_x, float player_z) {
     chunk_coord coord = {x, z};
     chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, coord);
     if (packet == NULL) {
@@ -725,11 +769,14 @@ chunk_mesh* update_chunk_mesh_at(int x, int z) {
 
     chunk_mesh_map_remove(&chunk_packets, coord);
 
-    return create_chunk_mesh(x, z);
+    // short lod = calculate_lod(x, z, player_x, player_z);
+
+    return create_chunk_mesh(x, z, player_x, player_z);
 }
 
-chunk_mesh* update_chunk_mesh(int x, int z) {
-    chunk_coord coords[] = {
+chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z) {
+    
+    chunk_coord coords[5] = {
         {x+1, z}, {x-1, z}, {x, z+1}, {x, z-1}, {x, z}
     };
     
@@ -738,7 +785,7 @@ chunk_mesh* update_chunk_mesh(int x, int z) {
         chunk_coord coord = coords[i];
         int exists = chunk_mesh_map_get(&chunk_packets, coord) != NULL;
         if (exists) {
-            update_chunk_mesh_at(coord.x, coord.z);
+            update_chunk_mesh_at(coord.x, coord.z, player_x, player_z);
         }
     }
     
@@ -767,13 +814,16 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
     return NULL;
 }
 
-void load_chunk() {
+void load_chunk(float player_x, float player_z) {
     for (int i = 0; i < CHUNK_LOAD_PER_FRAME; i++) {
         chunk_coord* coord = (chunk_coord*)queue_pop(&chunk_load_queue);
         if (coord == NULL) {
             continue;
         }
-        create_chunk_mesh(coord->x, coord->z);
+
+        short lod = calculate_lod(coord->x, coord->z, player_x, player_z);
+        
+        create_chunk_mesh(coord->x, coord->z, player_x, player_z);
         free(coord);
     }
 }

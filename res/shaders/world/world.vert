@@ -7,6 +7,8 @@ layout (location = 3) in int aSide;
 layout (location = 4) in int aUnderwater;
 layout (location = 5) in int aOrientation;
 layout (location = 6) in int aWaterLevel;
+layout (location = 7) in int aWaterLevelTransition;
+layout (location = 8) in int aLodScale;
 
 out vec2 texCoord;
 out vec2 atlasCoord;
@@ -19,20 +21,22 @@ uniform mat4 proj;
 uniform float time;
 
 vec3 transformFace(vec3 pos, int face) {
+    vec3 side = pos;
     if(face == 1) { // west face (+X)
-        return vec3(1.0, pos.y, pos.x);
+        side = vec3(1.0, pos.y, pos.x);
     } else if(face == 3) { // east face (-X)
-        return vec3(0.0, pos.y, pos.x);
+        side = vec3(0.0, pos.y, pos.x);
     } else if(face == 0) { // north face (-Z)
-        return vec3(pos.x, pos.y, 0.0);
+        side = vec3(pos.x, pos.y, 0.0);
     } else if(face == 2) { // south face (+Z)
-        return vec3(pos.x, pos.y, 1.0);
+        side = vec3(pos.x, pos.y, 1.0);
     } else if(face == 4) { // up face (+Y)
-        return vec3(pos.x, 1.0, pos.y);
+        side = vec3(pos.x, 1.0, pos.y);
     } else if(face == 5) { // down face (-Y)
-        return vec3(pos.x, 0.0, pos.y);
+        side = vec3(pos.x, 0.0, pos.y);
     }
-    return pos;
+    side = float(aLodScale) * side;
+    return side;
 }
 
 vec2 transformUV(vec2 uv, int side, int orientation) {

@@ -362,7 +362,7 @@ static void update_modified_meshes(game_data* data) {
     for (int i = 0; i < num_modified; i++) {
         int chunk_x = DECODE_CHUNK_ID_X(modified_chunks[i]);
         int chunk_z = DECODE_CHUNK_ID_Z(modified_chunks[i]);
-        update_chunk_mesh(chunk_x, chunk_z);
+        update_chunk_mesh(chunk_x, chunk_z, data->player->position[0], data->player->position[2]);
     }
     // Signal that world mesh needs rebuilding
     data->mesh_requires_update = true;
