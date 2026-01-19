@@ -1,21 +1,21 @@
-#include <render.h>
+#include "render.h"
 
-#include <block_renderer.h>
-#include <blockbench_renderer.h>
-#include <liquid_renderer.h>
-#include <foliage_renderer.h>
-#include <skybox.h>
+#include "block_renderer.h"
+#include "blockbench_renderer.h"
+#include "liquid_renderer.h"
+#include "foliage_renderer.h"
+#include "skybox.h"
 #include <glad/glad.h>
-#include <chunk_mesh.h>
-#include <mesh.h>
-#include <sort.h>
-#include <world.h>
+#include "chunk_mesh.h"
+#include "mesh.h"
+#include "sort.h"
+#include "world.h"
 #include <util.h>
-#include <settings.h>
-#include <world_mesh.h>
-#include <fbo.h>
-#include <shadow_map.h>
-#include <reflection_map.h>
+#include "settings.h"
+#include "world_mesh.h"
+#include "fbo.h"
+#include "shadow_map.h"
+#include "reflection_map.h"
 #include <assert.h>
 
 renderer create_renderer(camera* camera) {

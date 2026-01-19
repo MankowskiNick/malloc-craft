@@ -4,7 +4,7 @@
 #include <block.h>
 #include <block_models.h>
 #include <cerialize/cerialize.h>
-#include <asset.h>
+#include <util.h>
 #include <glad/glad.h>
 #include <stdio.h>
 #include <stdlib.h>

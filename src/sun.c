@@ -1,6 +1,6 @@
-#include <sun.h>
-#include <skybox.h>
-#include <settings.h>
+#include "sun.h"
+#include "skybox.h"
+#include "settings.h"
 #include <math.h>
 #include <util.h>
 #include <glad/glad.h>

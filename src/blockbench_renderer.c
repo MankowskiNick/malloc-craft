@@ -1,13 +1,13 @@
 #include <blockbench_renderer.h>
-#include <block_renderer.h>
-#include <block.h>
-#include <world.h>
+#include "block_renderer.h"
+#include "block.h"
+#include "world.h"
 #include <util.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <sun.h>
-#include <settings.h>
-#include <mesh.h>
+#include "sun.h"
+#include "settings.h"
+#include "mesh.h"
 
 blockbench_renderer create_blockbench_renderer(camera* cam, char* atlas_path, char* bump_path) {
     texture atlas = t_init(atlas_path, ATLAS_TEXTURE_INDEX);

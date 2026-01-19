@@ -1,8 +1,8 @@
-#include <noise.h>
+#include "noise.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <settings.h>
+#include "settings.h"
 
 int permutation[256];
 

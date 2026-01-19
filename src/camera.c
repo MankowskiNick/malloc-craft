@@ -1,4 +1,4 @@
-#include <camera.h>
+#include "camera.h"
 
 void get_view_matrix(camera c, mat4* view) {
     vec3 dest = {

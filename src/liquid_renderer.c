@@ -1,10 +1,10 @@
-#include <liquid_renderer.h>
-#include <block.h>
+#include "liquid_renderer.h"
+#include "block.h"
 #include <string.h>
 #include <time.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <fbo.h>
+#include "fbo.h"
 
 block_renderer create_liquid_renderer(camera* cam, char* atlas_path, char* bump_path, char* caustic_path) {
     texture atlas = t_init(atlas_path, ATLAS_TEXTURE_INDEX);

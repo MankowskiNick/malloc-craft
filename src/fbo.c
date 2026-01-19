@@ -1,9 +1,9 @@
-#include <fbo.h>
+#include "fbo.h"
 
 #include <glad/glad.h>
-#include <vao.h>
-#include <vbo.h>
-#include <block.h>
+#include "vao.h"
+#include "vbo.h"
+#include "block.h"
 
 void FBO_cleanup(FBO* map) {
     glDeleteFramebuffers(1, &map->fbo);

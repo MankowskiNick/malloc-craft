@@ -1,10 +1,10 @@
-#include <world_mesh.h>
-#include <settings.h>
+#include "world_mesh.h"
+#include "settings.h"
 #include <assert.h>
 #include <string.h>
-#include <sort.h>
+#include "sort.h"
 #include <util.h>
-#include <mesh.h>
+#include "mesh.h"
 #include <pthread.h>
 #include <unistd.h>
 

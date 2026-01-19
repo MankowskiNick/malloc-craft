@@ -1,19 +1,19 @@
 #include <stdio.h>
-#include <window.h>
-#include <render.h>
-#include <block.h>
-#include <camera.h>
-#include <input.h>
-#include <settings.h>
-#include <player.h>
-#include <skybox.h>
-#include <chunk_mesh.h>
-#include <mesh.h>
-#include <world.h>
-#include <biome.h>
+#include "window.h"
+#include "render.h"
+#include "block.h"
+#include "camera.h"
+#include "input.h"
+#include "settings.h"
+#include "player.h"
+#include "skybox.h"
+#include "chunk_mesh.h"
+#include "mesh.h"
+#include "world.h"
+#include "biome.h"
 #include <pthread.h>
 #include <time.h>
-#include <game_data.h>
+#include "game_data.h"
 
 int main() {
     read_settings("res/settings.json");

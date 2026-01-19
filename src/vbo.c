@@ -1,4 +1,4 @@
-#include <vbo.h>
+#include "vbo.h"
 #include <glad/glad.h>
 #include <stdio.h>
 

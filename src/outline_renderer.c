@@ -1,5 +1,5 @@
-#include <outline_renderer.h>
-#include <settings.h>
+#include "outline_renderer.h"
+#include "settings.h"
 #include <glad/glad.h>
 #include <stdio.h>
 
