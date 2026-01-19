@@ -1,7 +1,7 @@
 #ifndef player_H
 #define player_H
 
-#include <camera.h>
+#include <player/core/camera.h>
 #include <cerialize/cerialize.h>
 
 typedef struct {

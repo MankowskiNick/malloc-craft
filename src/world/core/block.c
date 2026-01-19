@@ -2,7 +2,7 @@
 #include <mesh.h>
 #include "world.h"
 #include <util.h>
-#include "player.h"
+#include <player/core/player.h>
 #include "../physics/water.h"
 #include <cglm/cglm.h>
 #include <glad/glad.h>

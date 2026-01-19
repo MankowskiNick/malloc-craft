@@ -1,8 +1,8 @@
 #ifndef CHUNK_MESH_H
 #define CHUNK_MESH_H
 
-#include <camera.h>
-#include <player.h>
+#include <player/core/camera.h>
+#include <player/core/player.h>
 #include <game_data.h>
 #include <util.h>
 

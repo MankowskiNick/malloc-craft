@@ -1,5 +1,5 @@
 #include "blockbench_loader.h"
-#include "hashmap.h"
+#include <hashmap.h>
 #include <cerialize/cerialize.h>
 #include <util.h>
 #include <cglm/cglm.h>

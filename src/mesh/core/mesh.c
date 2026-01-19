@@ -2,7 +2,7 @@
 #include "settings.h"
 #include "../../world/core/block.h"
 #include "../../world/core/world.h"
-#include "camera.h"
+#include <player/core/camera.h>
 #include "chunk_mesh.h"
 #include "queue.h"
 #include <pthread.h>

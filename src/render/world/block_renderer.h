@@ -4,7 +4,7 @@
 #include <vao.h>
 #include <vbo.h>
 #include <shader.h>
-#include <camera.h>
+#include <player/core/camera.h>
 #include <texture.h>
 #include <chunk_mesh.h>
 #include <sun.h>

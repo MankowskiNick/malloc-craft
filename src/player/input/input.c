@@ -3,7 +3,7 @@
 #include <block_models.h>
 #include "world/core/block.h"
 #include "world/core/world.h"
-#include "camera.h"
+#include <player/core/camera.h>
 #include <chunk_mesh.h>
 #include "settings.h"
 #include <cglm/cglm.h>

@@ -1,7 +1,7 @@
 #ifndef GAME_DATA_H
 #define GAME_DATA_H
 
-#include <player.h>
+#include <player/core/player.h>
 
 typedef struct {
     int x, y, z;

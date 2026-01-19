@@ -6,7 +6,7 @@
 #include <util.h>
 #include <settings.h>
 #include <shader.h>
-#include <camera.h>
+#include <player/core/camera.h>
 #include <texture.h>
 
 typedef struct {

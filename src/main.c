@@ -2,10 +2,10 @@
 #include "window.h"
 #include "render.h"
 #include "world/core/block.h"
-#include "camera.h"
-#include "input.h"
+#include <player/core/camera.h>
+#include <player/input/input.h>
 #include "settings.h"
-#include "player.h"
+#include <player/core/player.h>
 #include "skybox.h"
 #include <chunk_mesh.h>
 #include <mesh.h>
