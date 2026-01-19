@@ -19,6 +19,6 @@ add_subdirectory(lib/cglm)
 file(GLOB_RECURSE SOURCES "src/*.c")
 add_executable(malloc-craft ${SOURCES})
 
-target_include_directories(malloc-craft PUBLIC include src)
+target_include_directories(malloc-craft PUBLIC include src src/render/core src/render/geometry src/render/effects src/render/world src/render/entities src/render/environment)
 target_link_libraries(malloc-craft glfw)
 target_link_libraries(malloc-craft cglm)
