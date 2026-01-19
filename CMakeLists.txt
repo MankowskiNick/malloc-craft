@@ -10,7 +10,7 @@ endif()
 
 # Set compiler flags for Debug and Release
 set(CMAKE_C_FLAGS_DEBUG "-g")
-set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 add_subdirectory(lib/GLFW)
 add_subdirectory(lib/cglm)

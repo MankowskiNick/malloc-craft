@@ -19,6 +19,14 @@ void w_init() {
 }
 
 void w_cleanup() {
+    // Free all chunks before freeing the map
+    for (size_t i = 0; i < chunks.capacity; ++i) {
+        chunk_map_entry* current = chunks.buckets[i];
+        while (current) {
+            free(current->value);  // Free the chunk pointer
+            current = current->next;
+        }
+    }
     chunk_map_free(&chunks);
 }
 

@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <util/settings.h>
 
-int permutation[256];
+// Permutation table extended to 512 to avoid bounds checking in perlin()
+// The table is duplicated to wrap around naturally
+int permutation[512];
 
 float smooth(float t) {
     return t * t * t * (t * (t * 6 - 15) + 10);
@@ -80,5 +82,10 @@ void n_init(uint seed) {
     for (int i = 0; i < 256; i++) {
         srand(i + seed);
         permutation[i] = permutation[rand() % 256];
+    }
+    
+    // Duplicate the permutation table for wrapping
+    for (int i = 0; i < 256; i++) {
+        permutation[256 + i] = permutation[i];
     }
 }
