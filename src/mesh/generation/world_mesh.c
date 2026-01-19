@@ -135,6 +135,9 @@ void free_world_mesh(world_mesh* mesh) {
     if (mesh->num_foliage_sides > 0) {
         free(mesh->foliage_data);
     }
+    if (mesh->num_custom_verts > 0) {
+        free(mesh->custom_model_data);
+    }
     free(mesh);
 }
 
