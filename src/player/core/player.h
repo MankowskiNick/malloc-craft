@@ -19,6 +19,12 @@ typedef struct {
     int coyote_counter;     // Frames since leaving ground (allows jumping within grace period)
     int jump_requested;     // 1 if jump input was triggered this frame
     int fly_mode;           // 1 if in fly mode, 0 if normal physics
+    bool is_crouching;      // true if player is crouching, false otherwise
+    float camera_height_offset;  // Current camera height offset (for smooth crouch transitions)
+    
+    bool is_sprinting;      // true if player is currently sprinting
+    int last_w_press;       // Timestamp of last W key press (in game ticks) for double-tap detection
+    int sprint_timeout;     // Frames since last movement input (to disable sprint when stopped)
 
     int selected_block;
     char** hotbar;

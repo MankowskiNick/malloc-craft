@@ -21,6 +21,10 @@ key_entry* key_stack;
 game_data* g_data;
 GLFWwindow* g_window;
 
+// Sprint double-tap tracking
+static int last_w_press_time = 0;
+static int w_press_count = 0;
+
 void update_pos(int key, vec3 front, vec3 right, int is_underwater) {
     // Calculate desired direction (not velocity, not acceleration directly)
     // This will be applied as acceleration in apply_physics()
@@ -165,6 +169,32 @@ void handle_keypress(int key) {
         return;
     }
 
+    /* Handle crouch input (Left Shift) - only when grounded */
+    if (key == GLFW_KEY_LEFT_SHIFT) {
+        if (g_data->player->is_grounded) {
+            g_data->player->is_crouching = true;
+        }
+        return;
+    }
+
+    /* Handle sprint double-tap on W key */
+    if (key == GLFW_KEY_W) {
+        int current_time = g_data->tick;
+        int time_since_last_press = current_time - last_w_press_time;
+        
+        // Check if this is within the double-tap window (in milliseconds)
+        if (time_since_last_press < SPRINT_DOUBLE_TAP_TIME && time_since_last_press > 0) {
+            // Double-tap detected! Start sprinting
+            g_data->player->is_sprinting = true;
+            w_press_count = 0;  // Reset counter
+        } else {
+            // Reset double-tap counter if too much time has passed
+            w_press_count = 1;
+        }
+        
+        last_w_press_time = current_time;
+    }
+
     /* avoid duplicate entries in the key stack */
     for (key_entry* cur = key_stack; cur != NULL; cur = cur->next) {
         if (cur->key == key) return;
@@ -178,6 +208,18 @@ void handle_keypress(int key) {
 }
 
 void handle_keyrelease(int key) {
+    /* Handle crouch release */
+    if (key == GLFW_KEY_LEFT_SHIFT) {
+        g_data->player->is_crouching = false;
+        return;
+    }
+
+    /* Handle sprint disable when W is released */
+    if (key == GLFW_KEY_W) {
+        g_data->player->is_sprinting = false;
+        w_press_count = 0;
+    }
+
     key_entry* cur = key_stack;
     key_entry* prev = NULL;
 

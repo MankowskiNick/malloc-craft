@@ -1,5 +1,4 @@
 # malloc-craft
-[GitHub Repository](https://github.com/MankowskiNick/malloc-craft)
 
 A Minecraft-like voxel game written in C using OpenGL. This project focuses on memory management and modern graphics programming techniques to create a block-based 3D world where players can build and explore.
 
