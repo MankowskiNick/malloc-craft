@@ -8,6 +8,13 @@
 
 #define VBO_WIDTH 11
 
+// Cache key that includes both chunk coordinate and LOD level
+// This allows caching multiple LOD versions of the same chunk
+typedef struct {
+    int x, z;
+    short lod;
+} chunk_mesh_key;
+
 // Work item for chunk mesh generation in worker pool
 typedef struct {
     int x, z;
@@ -15,6 +22,10 @@ typedef struct {
     chunk_mesh* result_mesh;
     int work_complete;
 } chunk_work_item;
+
+// Hash and equality functions for LOD-aware cache key
+uint chunk_mesh_key_hash(chunk_mesh_key k);
+int chunk_mesh_key_equals(chunk_mesh_key a, chunk_mesh_key b);
 
 void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);

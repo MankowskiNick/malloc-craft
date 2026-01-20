@@ -46,6 +46,22 @@ int chunk_work_item_equals(void* a, void* b) {
     return w1->x == w2->x && w1->z == w2->z;
 }
 
+// Hash function for LOD-aware cache key
+uint chunk_mesh_key_hash(chunk_mesh_key k) {
+    // Combine x, z, and lod into a single hash
+    // Use multiplicative hash for x and z, fold in lod
+    uint h = 2654435761u;  // FNV offset basis
+    h ^= ((uint)k.x * 2654435761u);
+    h ^= ((uint)k.z * 2246822519u);
+    h ^= ((uint)k.lod * 3735928559u);
+    return h;
+}
+
+// Equality function for LOD-aware cache key
+int chunk_mesh_key_equals(chunk_mesh_key a, chunk_mesh_key b) {
+    return a.x == b.x && a.z == b.z && a.lod == b.lod;
+}
+
 float distance_to_camera(const void* item) {
     side_instance* side = (side_instance*)item;
 
@@ -166,10 +182,15 @@ void get_chunk_meshes(game_data* args) {
             short new_lod = calculate_lod(x, z, args->x, args->z);
             
             if (new_lod != current_lod) {
-                // Regenerate with new LOD
+                // LOD changed - queue regeneration at new LOD
                 lock_mesh();
-                mesh = update_chunk_mesh(x, z, args->player->position[0], args->player->position[2]);
+                chunk_mesh* new_lod_mesh = update_chunk_mesh(x, z, args->player->position[0], args->player->position[2]);
                 unlock_mesh();
+                
+                // Use the new LOD mesh if available, otherwise keep using current one
+                if (new_lod_mesh != NULL) {
+                    mesh = new_lod_mesh;
+                }
                 
                 // Mark world mesh for regeneration
                 args->mesh_requires_update = TRUE;

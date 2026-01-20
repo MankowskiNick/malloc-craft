@@ -16,12 +16,13 @@
 #include "../geometry/blockbench_loader.h"
 #include "worker_pool.h"
 
-DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals);
-typedef chunk_mesh_map_hashmap chunk_mesh_map;
-chunk_mesh_map chunk_packets;
+// Hashmap keyed by (chunk_coordinate + LOD level) for efficient multi-LOD caching
+DEFINE_HASHMAP(chunk_mesh_lod_map, chunk_mesh_key, chunk_mesh, chunk_mesh_key_hash, chunk_mesh_key_equals);
+typedef chunk_mesh_lod_map_hashmap chunk_mesh_lod_map;
 
-// Double-buffered packet storage for reduced lock contention
-chunk_mesh_map chunk_packets_buffer;
+// Active and staging buffers for double-buffering
+chunk_mesh_lod_map chunk_packets;
+chunk_mesh_lod_map chunk_packets_buffer;
 pthread_mutex_t packet_swap_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t packet_update_signal = PTHREAD_COND_INITIALIZER;
 
@@ -37,8 +38,8 @@ queue_node* sort_queue = NULL;
 queue_node* chunk_load_queue = NULL;
 
 void m_init(camera* camera) {
-    chunk_packets = chunk_mesh_map_init(CHUNK_CACHE_SIZE);
-    chunk_packets_buffer = chunk_mesh_map_init(CHUNK_CACHE_SIZE);  // Initialize staging buffer
+    chunk_packets = chunk_mesh_lod_map_init(CHUNK_CACHE_SIZE);
+    chunk_packets_buffer = chunk_mesh_lod_map_init(CHUNK_CACHE_SIZE);  // Initialize staging buffer
     queue_init(&sort_queue);
     queue_init(&chunk_load_queue);
     chunk_mesh_init(camera);
@@ -62,8 +63,8 @@ void m_cleanup() {
         chunk_worker_pool = NULL;
     }
     
-    chunk_mesh_map_free(&chunk_packets);
-    chunk_mesh_map_free(&chunk_packets_buffer);  // Free staging buffer
+    chunk_mesh_lod_map_free(&chunk_packets);
+    chunk_mesh_lod_map_free(&chunk_packets_buffer);  // Free staging buffer
     queue_cleanup(&sort_queue);
     queue_cleanup(&chunk_load_queue);
 
@@ -832,72 +833,81 @@ chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z) {
     packet->foliage_sides = foliage_sides;
     packet->custom_model_data = custom_model_data;
 
-    chunk_coord coord = {x, z};
-    chunk_mesh_map_insert(&chunk_packets, coord, *packet);
+    // Cache by coordinate + LOD for efficient multi-LOD reuse
+    chunk_mesh_key key = {x, z, lod_scale};
+    chunk_mesh_lod_map_insert(&chunk_packets, key, *packet);
     
     return packet;
 }
 
 chunk_mesh* update_chunk_mesh_at(int x, int z, float player_x, float player_z) {
-    chunk_coord coord = {x, z};
-    chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, coord);
-    if (packet == NULL) {
-        assert(false && "Packet does not exist");
+    // When LOD changes, we generate a NEW mesh at the new LOD
+    // The old LOD mesh stays in cache as a fallback
+    // This prevents gaps when transitioning between LODs
+    
+    short new_lod = calculate_lod(x, z, player_x, player_z);
+    
+    // Check if we already have this new LOD cached
+    chunk_mesh_key new_key = {x, z, new_lod};
+    chunk_mesh* existing_new_lod = chunk_mesh_lod_map_get(&chunk_packets, new_key);
+    if (existing_new_lod != NULL) {
+        // Already have the new LOD, just return it
+        return existing_new_lod;
     }
-    queue_remove(&sort_queue, packet, chunk_mesh_equals);
-
-    free(packet->opaque_sides);
-    packet->opaque_sides = NULL;
-    free(packet->transparent_sides);
-    packet->transparent_sides = NULL;
-    free(packet->foliage_sides);
-    packet->foliage_sides = NULL;
-    free(packet->liquid_sides);
-    packet->liquid_sides = NULL;
-    free(packet->custom_model_data);
-    packet->custom_model_data = NULL;
-
-    chunk_mesh_map_remove(&chunk_packets, coord);
-
-    // short lod = calculate_lod(x, z, player_x, player_z);
-
+    
+    // Generate the new LOD mesh
+    // This will be cached with the new LOD key
     return create_chunk_mesh(x, z, player_x, player_z);
 }
 
 chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z) {
+    // Generate/update meshes at the new LOD for this chunk and all adjacent chunks
+    // This ensures LOD transitions happen smoothly as the player moves
     
     chunk_coord coords[5] = {
         {x+1, z}, {x-1, z}, {x, z+1}, {x, z-1}, {x, z}
     };
     
-    // Check which chunks exist first
+    // Update all adjacent chunks at their appropriate LOD
     for (int i = 0; i < 5; i++) {
         chunk_coord coord = coords[i];
-        int exists = chunk_mesh_map_get(&chunk_packets, coord) != NULL;
-        if (exists) {
-            update_chunk_mesh_at(coord.x, coord.z, player_x, player_z);
-        }
+        // This will generate or update to the correct LOD for this position
+        update_chunk_mesh_at(coord.x, coord.z, player_x, player_z);
     }
     
-    // Return the central chunk mesh
-    chunk_coord center = {x, z};
-    chunk_mesh* result = chunk_mesh_map_get(&chunk_packets, center);
+    // Return the central chunk mesh - try to find the newly generated one at current LOD
+    short current_lod = calculate_lod(x, z, player_x, player_z);
+    chunk_mesh_key center_key = {x, z, current_lod};
+    chunk_mesh* result = chunk_mesh_lod_map_get(&chunk_packets, center_key);
+    
+    // If not found at exact LOD, try other LODs
+    if (result == NULL) {
+        for (short lod = 1; lod <= CHUNK_SIZE; lod *= 2) {
+            if (lod == current_lod) continue;
+            chunk_mesh_key alt_key = {x, z, lod};
+            result = chunk_mesh_lod_map_get(&chunk_packets, alt_key);
+            if (result != NULL) break;
+        }
+    }
 
     return result;
-}
+}chunk_mesh* get_chunk_mesh(int x, int z) {
+    // Try to find any LOD version of this chunk in cache
+    // Start with LOD 1 (highest quality) and try progressively coarser LODs
+    // This allows reuse of previously generated lower-quality meshes
+    for (short lod = 1; lod <= CHUNK_SIZE; lod *= 2) {
+        chunk_mesh_key key = {x, z, lod};
+        chunk_mesh* packet = chunk_mesh_lod_map_get(&chunk_packets, key);
+        if (packet != NULL) {
+            return packet;
+        }
+    }
 
-chunk_mesh* get_chunk_mesh(int x, int z) {
+    // If not found at any LOD, queue for generation
     chunk_coord* coord = malloc(sizeof(chunk_coord));
     assert(coord != NULL && "Failed to allocate memory for chunk coord");
     coord->x = x;
     coord->z = z;
-
-    chunk_mesh* packet = chunk_mesh_map_get(&chunk_packets, *coord);
-
-    if (packet != NULL) {
-        free(coord);
-        return packet;
-    }
 
     queue_push(&chunk_load_queue, coord, chunk_coord_equals);
 
