@@ -40,6 +40,12 @@ int chunk_mesh_equals(void* a, void* b) {
     return c1->x == c2->x && c1->z == c2->z;
 }
 
+int chunk_work_item_equals(void* a, void* b) {
+    chunk_work_item* w1 = (chunk_work_item*)a;
+    chunk_work_item* w2 = (chunk_work_item*)b;
+    return w1->x == w2->x && w1->z == w2->z;
+}
+
 float distance_to_camera(const void* item) {
     side_instance* side = (side_instance*)item;
 

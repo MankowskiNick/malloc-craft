@@ -35,14 +35,8 @@ renderer create_renderer(game_data* data) {
     w_init();
     m_init(&(player->cam));
 
-    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
-            int x = (int)(player->position[0]) - TRUE_RENDER_DISTANCE + i;
-            int z = (int)(player->position[2]) - TRUE_RENDER_DISTANCE + j;
-            get_chunk_mesh(x, z);
-            load_chunk(player->position[0], player->position[2]);
-        }
-    }
+    // Preload initial chunks around the player
+    preload_initial_chunks(player->position[0], player->position[2]);
 
     block_renderer wr = create_block_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);

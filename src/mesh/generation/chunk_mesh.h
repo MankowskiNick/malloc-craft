@@ -8,8 +8,17 @@
 
 #define VBO_WIDTH 11
 
+// Work item for chunk mesh generation in worker pool
+typedef struct {
+    int x, z;
+    float player_x, player_z;
+    chunk_mesh* result_mesh;
+    int work_complete;
+} chunk_work_item;
+
 void chunk_mesh_init(camera* camera);
 int chunk_mesh_equals(void* a, void* b);
+int chunk_work_item_equals(void* a, void* b);
 void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides, int lod_scale);
 void custom_vert_to_buffer(float* head, float* custom_verts, int num_custom_verts);
 void sort_transparent_sides(chunk_mesh* packet);

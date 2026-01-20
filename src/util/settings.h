@@ -16,6 +16,9 @@ extern float TIME_SCALE;
 // Chunk size
 #define CHUNK_SIZE 16
 #define CHUNK_HEIGHT 256
+// Number of worker threads for chunk mesh generation
+// Valid range: 1-16
+extern int WORKER_THREADS;
 // How many chunks can be loaded per frame.  
 // Higher values will load chunks faster, but may cause stuttering.
 extern int CHUNK_LOAD_PER_FRAME;

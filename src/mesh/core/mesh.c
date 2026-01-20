@@ -3,6 +3,9 @@
 #include <pthread.h>
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "../../util/settings.h"
 #include "../../util/queue.h"
@@ -11,10 +14,14 @@
 #include "../../player/core/camera.h"
 #include "../generation/chunk_mesh.h"
 #include "../geometry/blockbench_loader.h"
+#include "worker_pool.h"
 
 DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals);
 typedef chunk_mesh_map_hashmap chunk_mesh_map;
 chunk_mesh_map chunk_packets;
+
+// Worker pool for chunk mesh generation
+worker_pool* chunk_worker_pool = NULL;
 
 // Mutexes for shared structures
 pthread_mutex_t chunk_packets_mutex;
@@ -33,9 +40,22 @@ void m_init(camera* camera) {
     pthread_mutex_init(&chunk_packets_mutex, NULL);
     pthread_mutex_init(&sort_queue_mutex, NULL);
     pthread_mutex_init(&chunk_load_queue_mutex, NULL);
+    
+    // Initialize worker pool for chunk mesh generation
+    chunk_worker_pool = pool_init(WORKER_THREADS, (work_processor_fn)process_chunk_work_item);
+    if (chunk_worker_pool == NULL) {
+        fprintf(stderr, "Failed to initialize worker pool with %d threads\n", WORKER_THREADS);
+        exit(EXIT_FAILURE);
+    }
 }
 
 void m_cleanup() {
+    // Shutdown worker pool
+    if (chunk_worker_pool != NULL) {
+        pool_shutdown(chunk_worker_pool);
+        chunk_worker_pool = NULL;
+    }
+    
     chunk_mesh_map_free(&chunk_packets);
     queue_cleanup(&sort_queue);
     queue_cleanup(&chunk_load_queue);
@@ -43,6 +63,48 @@ void m_cleanup() {
     pthread_mutex_destroy(&chunk_packets_mutex);
     pthread_mutex_destroy(&sort_queue_mutex);
     pthread_mutex_destroy(&chunk_load_queue_mutex);
+}
+
+void preload_initial_chunks(float player_x, float player_z) {
+    if (chunk_worker_pool == NULL) {
+        return;
+    }
+    
+    // Calculate how many chunks we need to load
+    int player_chunk_x = WORLD_POS_TO_CHUNK_POS(player_x);
+    int player_chunk_z = WORLD_POS_TO_CHUNK_POS(player_z);
+    
+    int chunks_queued = 0;
+    
+    // Queue all visible chunks
+    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
+            int x = player_chunk_x - TRUE_RENDER_DISTANCE + i;
+            int z = player_chunk_z - TRUE_RENDER_DISTANCE + j;
+            
+            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
+                continue;
+            }
+            
+            // Try to get/queue the chunk
+            chunk_mesh* existing = get_chunk_mesh(x, z);
+            if (existing == NULL) {
+                chunks_queued++;
+            }
+        }
+    }
+    
+    // Load all queued chunks
+    if (chunks_queued > 0) {
+        for (int i = 0; i < chunks_queued; i++) {
+            load_chunk(player_x, player_z);
+            // Give workers a small amount of time to process each batch
+            usleep(100); // 0.1ms
+        }
+        
+        // Wait for all work to complete
+        pool_wait_completion(chunk_worker_pool);
+    }
 }
 
 block_data_t get_block_data(int x, int y, int z, chunk* c) {
@@ -686,6 +748,23 @@ short calculate_lod(int x, int z, float player_x, float player_z) {
     return lod;
 }
 
+chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z);
+
+void process_chunk_work_item(chunk_work_item* work) {
+    if (work == NULL) {
+        return;
+    }
+    
+    // Create chunk mesh for this work item (this also stores it in chunk_packets)
+    chunk_mesh* mesh = create_chunk_mesh(work->x, work->z, work->player_x, work->player_z);
+    
+    work->result_mesh = mesh;
+    work->work_complete = 1;
+    
+    // Free the work item after processing
+    // free(work);
+}
+
 chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z) {
     chunk_mesh* packet = malloc(sizeof(chunk_mesh));
     assert(packet != NULL && "Failed to allocate memory for packet");
@@ -817,16 +896,44 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
 }
 
 void load_chunk(float player_x, float player_z) {
+    if (chunk_worker_pool == NULL) {
+        return;
+    }
+    
     for (int i = 0; i < CHUNK_LOAD_PER_FRAME; i++) {
         chunk_coord* coord = (chunk_coord*)queue_pop(&chunk_load_queue);
         if (coord == NULL) {
             continue;
         }
 
-        short lod = calculate_lod(coord->x, coord->z, player_x, player_z);
+        // Create work item for the worker pool
+        chunk_work_item* work = (chunk_work_item*)malloc(sizeof(chunk_work_item));
+        if (work == NULL) {
+            free(coord);
+            continue;
+        }
         
-        create_chunk_mesh(coord->x, coord->z, player_x, player_z);
+        work->x = coord->x;
+        work->z = coord->z;
+        work->player_x = player_x;
+        work->player_z = player_z;
+        work->result_mesh = NULL;
+        work->work_complete = 0;
+        
+        // Submit work to the worker pool
+        if (pool_submit_work(chunk_worker_pool, work) != 0) {
+            free(work);
+            free(coord);
+            continue;
+        }
+        
         free(coord);
+    }
+}
+
+void wait_chunk_loading(void) {
+    if (chunk_worker_pool != NULL) {
+        pool_wait_completion(chunk_worker_pool);
     }
 }
 

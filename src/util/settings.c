@@ -13,6 +13,7 @@ int HEIGHT = 900;
 char* TITLE = "malloc-craft";
 // 0.0001047 represents 2π / (60000 ms), giving a full day cycle in ~60 seconds
 float TIME_SCALE = 0.0001047f;
+int WORKER_THREADS = 4;
 int CHUNK_LOAD_PER_FRAME = 1;
 int CHUNK_CACHE_SIZE = 1024;
 int WIREFRAME = 0;
@@ -167,6 +168,15 @@ void parse_chunks_settings(json_object chunks_obj) {
     if (chunks_obj.type != JSON_OBJECT) {
         fprintf(stderr, "Error: chunks section is not an object in settings.json\n");
         exit(EXIT_FAILURE);
+    }
+
+    json_object worker_threads = json_get_property(chunks_obj, "worker_threads");
+    if (worker_threads.type == JSON_NUMBER) {
+        int threads = (int)worker_threads.value.number;
+        // Clamp to valid range 1-16
+        if (threads < 1) threads = 1;
+        if (threads > 16) threads = 16;
+        WORKER_THREADS = threads;
     }
 
     json_object chunk_load_per_frame = json_get_property(chunks_obj, "chunk_load_per_frame");

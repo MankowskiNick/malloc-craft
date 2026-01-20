@@ -5,6 +5,7 @@
 #include <hashmap.h>
 #include <chunk_mesh.h>
 #include <block_models.h>
+#include "worker_pool.h"
 
 #define SIDES_PER_CHUNK 1000
 #define MODEL_VERTICES_PER_CHUNK 1000
@@ -12,13 +13,16 @@
 
 void m_init(camera* camera);
 void m_cleanup();
+void preload_initial_chunks(float player_x, float player_z);
 chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z);
 chunk_mesh* get_chunk_mesh(int x, int z);
 void queue_chunk_for_sorting(chunk_mesh* packet);
 void sort_chunk();
 void load_chunk(float player_x, float player_z);
+void wait_chunk_loading(void);
 short get_adjacent_block_id(int x, int y, int z, short side, chunk* c, chunk* adj);
 block_data_t get_block_data(int x, int y, int z, chunk* c);
 short calculate_lod(int x, int z, float player_x, float player_z);
+void process_chunk_work_item(chunk_work_item* work);
 
 #endif
