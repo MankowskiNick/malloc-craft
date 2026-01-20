@@ -335,6 +335,9 @@ void break_block(game_data* data) {
 
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0, water_level);
     
+    // Invalidate all LOD versions of this chunk so it will be regenerated
+    invalidate_chunk_mesh_all_lods(c->x, c->z);
+    
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
     queue_chunk_for_sorting(new_mesh);
 }
@@ -406,6 +409,9 @@ void place_block(game_data* data) {
 
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, selected_block, hit_side, rot, water_level);
 
+    // Invalidate all LOD versions of this chunk so it will be regenerated
+    invalidate_chunk_mesh_all_lods(c->x, c->z);
+    
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
     queue_chunk_for_sorting(new_mesh);

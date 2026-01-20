@@ -1,11 +1,11 @@
 {
   "display": {
-    "width": 640,
-    "height": 480,
+    "width": 1920,
+    "height": 1080,
     "title": "malloc-craft",
     "vsync": true,
     "fov": 60.0,
-    "fullscreen": false
+    "fullscreen": true
   },
   "chunks": {
     "worker_threads": 8,

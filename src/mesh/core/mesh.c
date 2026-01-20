@@ -914,6 +914,26 @@ chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z) {
     return NULL;
 }
 
+void invalidate_chunk_mesh_all_lods(int x, int z) {
+    // Remove all LOD versions of a chunk from the cache
+    // This is called when a block is modified to force regeneration
+    for (short lod = 1; lod <= CHUNK_SIZE; lod *= LOD_SCALING_CONSTANT) {
+        chunk_mesh_key key = {x, z, lod};
+        chunk_mesh* mesh = chunk_mesh_lod_map_get(&chunk_packets, key);
+        if (mesh != NULL) {
+            // Free the mesh data
+            if (mesh->opaque_sides != NULL) free(mesh->opaque_sides);
+            if (mesh->transparent_sides != NULL) free(mesh->transparent_sides);
+            if (mesh->liquid_sides != NULL) free(mesh->liquid_sides);
+            if (mesh->foliage_sides != NULL) free(mesh->foliage_sides);
+            if (mesh->custom_model_data != NULL) free(mesh->custom_model_data);
+            
+            // Remove from cache
+            chunk_mesh_lod_map_remove(&chunk_packets, key);
+        }
+    }
+}
+
 void load_chunk(float player_x, float player_z) {
     if (chunk_worker_pool == NULL) {
         return;
