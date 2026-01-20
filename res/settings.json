@@ -16,7 +16,7 @@
   },
   "graphics": {
     "wireframe": false,
-    "render_distance": 768.0,
+    "render_distance": 8000000.0,
     "atlas_size": 32,
     "use_mipmap": true,
     "tick_rate": 32

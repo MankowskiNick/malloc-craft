@@ -741,7 +741,7 @@ short calculate_lod(int x, int z, float player_x, float player_z) {
 
     int check_dist = CHUNK_RENDER_DISTANCE;
     while (lod < CHUNK_SIZE && check_dist < dist) {
-        check_dist *= LOD_SCALING_CONSTANT;
+        check_dist += CHUNK_RENDER_DISTANCE;
         lod *= LOD_SCALING_CONSTANT;
     }
 
