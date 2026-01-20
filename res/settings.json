@@ -8,15 +8,15 @@
     "fullscreen": false
   },
   "chunks": {
-    "worker_threads": 2,
-    "chunk_load_per_frame": 1,
+    "worker_threads": 4,
+    "chunk_load_per_frame": 4,
     "chunk_cache_size": 1024,
-    "chunk_render_distance": 10,
+    "chunk_render_distance": 8,
     "lod_scaling_constant": 2
   },
   "graphics": {
     "wireframe": false,
-    "render_distance": 8000000.0,
+    "render_distance": 600.0,
     "atlas_size": 32,
     "use_mipmap": true,
     "tick_rate": 32

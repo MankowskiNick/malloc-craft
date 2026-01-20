@@ -9,6 +9,12 @@
 #include <unistd.h>
 
 static pthread_mutex_t wm_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t wm_swap_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t wm_update_signal = PTHREAD_COND_INITIALIZER;
+
+// Double-buffered world mesh buffers
+static world_mesh_buffer* wm_buffer_active = NULL;
+static world_mesh_buffer* wm_buffer_staging = NULL;
 
 camera_cache wm_camera_cache = {0, 0, 0};
 
@@ -17,6 +23,27 @@ void wm_init(camera* camera) {
     wm_camera_cache.y = camera->position[1];
     wm_camera_cache.z = camera->position[2];
     chunk_mesh_init(camera);
+    
+    // Initialize double-buffered world mesh buffers
+    // Start with capacity for chunks at render distance 8 (rough estimate: ~200 chunks)
+    // Each chunk can have up to 1000 sides * VBO_WIDTH ints + 1000 custom verts * 8 floats
+    int estimated_total_transparent = 1000000;   // ~1M ints
+    int estimated_total_opaque = 1000000;
+    int estimated_total_liquid = 500000;         // Typically fewer
+    int estimated_total_foliage = 500000;
+    int estimated_total_custom = 200000;         // Fewer custom models
+    
+    wm_buffer_active = wm_buffer_init(estimated_total_transparent, estimated_total_opaque,
+                                       estimated_total_liquid, estimated_total_foliage,
+                                       estimated_total_custom);
+    wm_buffer_staging = wm_buffer_init(estimated_total_transparent, estimated_total_opaque,
+                                        estimated_total_liquid, estimated_total_foliage,
+                                        estimated_total_custom);
+    
+    if (!wm_buffer_active || !wm_buffer_staging) {
+        fprintf(stderr, "Failed to initialize world mesh buffers\n");
+        exit(EXIT_FAILURE);
+    }
 }
 
 world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
@@ -199,4 +226,112 @@ void start_world_mesh_updater(game_data* data) {
     pthread_t updater_thread;
     pthread_create(&updater_thread, NULL, (void* (*)(void*))update_world_mesh, data);
     pthread_detach(updater_thread);
+}
+
+void wm_cleanup(void) {
+    if (wm_buffer_active != NULL) {
+        wm_buffer_free(wm_buffer_active);
+        wm_buffer_active = NULL;
+    }
+    if (wm_buffer_staging != NULL) {
+        wm_buffer_free(wm_buffer_staging);
+        wm_buffer_staging = NULL;
+    }
+    pthread_mutex_destroy(&wm_swap_mutex);
+    pthread_cond_destroy(&wm_update_signal);
+}
+
+/**
+ * Create world mesh into pre-allocated staging buffer
+ * Optimized for minimal lock contention - does all work in staging buffer
+ * then atomically swaps with active buffer
+ */
+world_mesh* create_world_mesh_into_buffer(chunk_mesh** packet, int count, world_mesh_buffer* buf) {
+    assert(packet != NULL && "Chunk mesh pointer is NULL\n");
+    assert(count > 0 && "Count must be greater than zero\n");
+    assert(buf != NULL && "Buffer pointer is NULL\n");
+    
+    // Single pass: Calculate size and ensure capacity
+    int total_transparent_sides = 0;
+    int total_foliage_sides = 0;
+    int total_opaque_sides = 0;
+    int total_liquid_sides = 0;
+    int total_custom_verts = 0;
+    
+    for (int i = 0; i < count; i++) {
+        chunk_mesh* mesh = packet[i];
+        if (mesh == NULL) continue;
+        
+        total_transparent_sides += mesh->num_transparent_sides;
+        total_opaque_sides += mesh->num_opaque_sides;
+        total_liquid_sides += mesh->num_liquid_sides;
+        total_foliage_sides += mesh->num_foliage_sides;
+        total_custom_verts += mesh->num_custom_verts;
+    }
+    
+    // Ensure buffer has enough capacity
+    wm_buffer_ensure_capacity(buf, total_transparent_sides * VBO_WIDTH,
+                              total_opaque_sides * VBO_WIDTH,
+                              total_liquid_sides * VBO_WIDTH,
+                              total_foliage_sides * VBO_WIDTH,
+                              total_custom_verts * FLOATS_PER_MODEL_VERT);
+    
+    // Reset counts
+    wm_buffer_reset_counts(buf);
+    
+    // Single pass: Copy data into buffer
+    int transparent_offset = 0;
+    int opaque_offset = 0;
+    int liquid_offset = 0;
+    int foliage_offset = 0;
+    int custom_model_offset = 0;
+    
+    for (int i = 0; i < count; i++) {
+        chunk_mesh* mesh = packet[i];
+        
+        if (mesh == NULL || mesh->opaque_sides == NULL || mesh->transparent_sides == NULL ||
+            mesh->liquid_sides == NULL || mesh->foliage_sides == NULL || 
+            mesh->custom_model_data == NULL) {
+            continue;
+        }
+        
+        if (mesh->num_transparent_sides > 0) {
+            chunk_mesh_to_buffer(buf->transparent_data + transparent_offset,
+                mesh->transparent_sides, mesh->num_transparent_sides, mesh->lod_scale);
+            transparent_offset += mesh->num_transparent_sides * VBO_WIDTH;
+        }
+        
+        if (mesh->num_opaque_sides > 0) {
+            chunk_mesh_to_buffer(buf->opaque_data + opaque_offset,
+                mesh->opaque_sides, mesh->num_opaque_sides, mesh->lod_scale);
+            opaque_offset += mesh->num_opaque_sides * VBO_WIDTH;
+        }
+        
+        if (mesh->num_liquid_sides > 0) {
+            chunk_mesh_to_buffer(buf->liquid_data + liquid_offset,
+                mesh->liquid_sides, mesh->num_liquid_sides, mesh->lod_scale);
+            liquid_offset += mesh->num_liquid_sides * VBO_WIDTH;
+        }
+        
+        if (mesh->num_foliage_sides > 0) {
+            chunk_mesh_to_buffer(buf->foliage_data + foliage_offset,
+                mesh->foliage_sides, mesh->num_foliage_sides, mesh->lod_scale);
+            foliage_offset += mesh->num_foliage_sides * VBO_WIDTH;
+        }
+        
+        if (mesh->num_custom_verts > 0) {
+            custom_vert_to_buffer(buf->custom_model_data + custom_model_offset,
+                mesh->custom_model_data, mesh->num_custom_verts);
+            custom_model_offset += mesh->num_custom_verts * FLOATS_PER_MODEL_VERT;
+        }
+    }
+    
+    // Update counts in buffer
+    buf->num_transparent_sides = transparent_offset / VBO_WIDTH;
+    buf->num_opaque_sides = opaque_offset / VBO_WIDTH;
+    buf->num_liquid_sides = liquid_offset / VBO_WIDTH;
+    buf->num_foliage_sides = foliage_offset / VBO_WIDTH;
+    buf->num_custom_verts = custom_model_offset / FLOATS_PER_MODEL_VERT;
+    
+    return NULL;  // Returns NULL - caller will swap buffers atomically
 }

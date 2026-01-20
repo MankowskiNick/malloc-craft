@@ -20,6 +20,11 @@ DEFINE_HASHMAP(chunk_mesh_map, chunk_coord, chunk_mesh, chunk_hash, chunk_equals
 typedef chunk_mesh_map_hashmap chunk_mesh_map;
 chunk_mesh_map chunk_packets;
 
+// Double-buffered packet storage for reduced lock contention
+chunk_mesh_map chunk_packets_buffer;
+pthread_mutex_t packet_swap_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t packet_update_signal = PTHREAD_COND_INITIALIZER;
+
 // Worker pool for chunk mesh generation
 worker_pool* chunk_worker_pool = NULL;
 
@@ -33,6 +38,7 @@ queue_node* chunk_load_queue = NULL;
 
 void m_init(camera* camera) {
     chunk_packets = chunk_mesh_map_init(CHUNK_CACHE_SIZE);
+    chunk_packets_buffer = chunk_mesh_map_init(CHUNK_CACHE_SIZE);  // Initialize staging buffer
     queue_init(&sort_queue);
     queue_init(&chunk_load_queue);
     chunk_mesh_init(camera);
@@ -57,12 +63,15 @@ void m_cleanup() {
     }
     
     chunk_mesh_map_free(&chunk_packets);
+    chunk_mesh_map_free(&chunk_packets_buffer);  // Free staging buffer
     queue_cleanup(&sort_queue);
     queue_cleanup(&chunk_load_queue);
 
     pthread_mutex_destroy(&chunk_packets_mutex);
     pthread_mutex_destroy(&sort_queue_mutex);
     pthread_mutex_destroy(&chunk_load_queue_mutex);
+    pthread_mutex_destroy(&packet_swap_mutex);
+    pthread_cond_destroy(&packet_update_signal);
 }
 
 void preload_initial_chunks(float player_x, float player_z) {
@@ -949,4 +958,165 @@ void sort_chunk() {
 
     sort_transparent_sides(packet);
     sort_liquid_sides(packet);
+}
+
+// ============================================================================
+// Chunk Mesh Builder Implementation
+// ============================================================================
+
+chunk_mesh_builder* builder_init(int initial_capacity) {
+    chunk_mesh_builder* builder = malloc(sizeof(chunk_mesh_builder));
+    if (builder == NULL) {
+        return NULL;
+    }
+    
+    builder->capacity = initial_capacity;
+    builder->count = 0;
+    builder->mesh_array = malloc(initial_capacity * sizeof(chunk_mesh*));
+    
+    if (builder->mesh_array == NULL) {
+        free(builder);
+        return NULL;
+    }
+    
+    return builder;
+}
+
+void builder_add_mesh(chunk_mesh_builder* b, chunk_mesh* mesh) {
+    if (b == NULL || mesh == NULL) {
+        return;
+    }
+    
+    // Expand if needed (1.5x growth factor)
+    if (b->count >= b->capacity) {
+        int new_capacity = (int)(b->capacity * 1.5f);
+        chunk_mesh** new_array = realloc(b->mesh_array, new_capacity * sizeof(chunk_mesh*));
+        if (new_array == NULL) {
+            return;
+        }
+        b->mesh_array = new_array;
+        b->capacity = new_capacity;
+    }
+    
+    b->mesh_array[b->count++] = mesh;
+}
+
+void builder_clear(chunk_mesh_builder* b) {
+    if (b == NULL) {
+        return;
+    }
+    b->count = 0;
+}
+
+void builder_cleanup(chunk_mesh_builder* b) {
+    if (b == NULL) {
+        return;
+    }
+    free(b->mesh_array);
+    free(b);
+}
+
+// ============================================================================
+// World Mesh Buffer Implementation
+// ============================================================================
+
+world_mesh_buffer* wm_buffer_init(int initial_transparent, int initial_opaque,
+                                   int initial_liquid, int initial_foliage,
+                                   int initial_custom) {
+    world_mesh_buffer* buf = malloc(sizeof(world_mesh_buffer));
+    if (buf == NULL) {
+        return NULL;
+    }
+    
+    // Allocate buffers
+    buf->transparent_data = malloc(initial_transparent * sizeof(int));
+    buf->opaque_data = malloc(initial_opaque * sizeof(int));
+    buf->liquid_data = malloc(initial_liquid * sizeof(int));
+    buf->foliage_data = malloc(initial_foliage * sizeof(int));
+    buf->custom_model_data = malloc(initial_custom * sizeof(float));
+    
+    if (!buf->transparent_data || !buf->opaque_data || !buf->liquid_data ||
+        !buf->foliage_data || !buf->custom_model_data) {
+        free(buf->transparent_data);
+        free(buf->opaque_data);
+        free(buf->liquid_data);
+        free(buf->foliage_data);
+        free(buf->custom_model_data);
+        free(buf);
+        return NULL;
+    }
+    
+    // Set capacities
+    buf->transparent_capacity = initial_transparent;
+    buf->opaque_capacity = initial_opaque;
+    buf->liquid_capacity = initial_liquid;
+    buf->foliage_capacity = initial_foliage;
+    buf->custom_capacity = initial_custom;
+    
+    // Initialize counts to zero
+    wm_buffer_reset_counts(buf);
+    
+    return buf;
+}
+
+void wm_buffer_ensure_capacity(world_mesh_buffer* buf, int transparent_needed,
+                                int opaque_needed, int liquid_needed,
+                                int foliage_needed, int custom_needed) {
+    if (buf == NULL) {
+        return;
+    }
+    
+    // Reallocate if needed (with 1.5x safety margin)
+    if (transparent_needed > buf->transparent_capacity) {
+        int new_cap = (int)(transparent_needed * 1.5f);
+        buf->transparent_data = realloc(buf->transparent_data, new_cap * sizeof(int));
+        buf->transparent_capacity = new_cap;
+    }
+    
+    if (opaque_needed > buf->opaque_capacity) {
+        int new_cap = (int)(opaque_needed * 1.5f);
+        buf->opaque_data = realloc(buf->opaque_data, new_cap * sizeof(int));
+        buf->opaque_capacity = new_cap;
+    }
+    
+    if (liquid_needed > buf->liquid_capacity) {
+        int new_cap = (int)(liquid_needed * 1.5f);
+        buf->liquid_data = realloc(buf->liquid_data, new_cap * sizeof(int));
+        buf->liquid_capacity = new_cap;
+    }
+    
+    if (foliage_needed > buf->foliage_capacity) {
+        int new_cap = (int)(foliage_needed * 1.5f);
+        buf->foliage_data = realloc(buf->foliage_data, new_cap * sizeof(int));
+        buf->foliage_capacity = new_cap;
+    }
+    
+    if (custom_needed > buf->custom_capacity) {
+        int new_cap = (int)(custom_needed * 1.5f);
+        buf->custom_model_data = realloc(buf->custom_model_data, new_cap * sizeof(float));
+        buf->custom_capacity = new_cap;
+    }
+}
+
+void wm_buffer_reset_counts(world_mesh_buffer* buf) {
+    if (buf == NULL) {
+        return;
+    }
+    buf->num_transparent_sides = 0;
+    buf->num_opaque_sides = 0;
+    buf->num_liquid_sides = 0;
+    buf->num_foliage_sides = 0;
+    buf->num_custom_verts = 0;
+}
+
+void wm_buffer_free(world_mesh_buffer* buf) {
+    if (buf == NULL) {
+        return;
+    }
+    free(buf->transparent_data);
+    free(buf->opaque_data);
+    free(buf->liquid_data);
+    free(buf->foliage_data);
+    free(buf->custom_model_data);
+    free(buf);
 }
