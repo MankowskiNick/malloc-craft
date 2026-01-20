@@ -19,5 +19,6 @@ void sort_chunk();
 void load_chunk(float player_x, float player_z);
 short get_adjacent_block_id(int x, int y, int z, short side, chunk* c, chunk* adj);
 block_data_t get_block_data(int x, int y, int z, chunk* c);
+short calculate_lod(int x, int z, float player_x, float player_z);
 
 #endif

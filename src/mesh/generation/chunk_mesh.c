@@ -155,6 +155,20 @@ void get_chunk_meshes(game_data* args) {
                 continue;
             }
 
+            // Check if LOD has changed for this chunk
+            short current_lod = mesh->lod_scale;
+            short new_lod = calculate_lod(x, z, args->x, args->z);
+            
+            if (new_lod != current_lod) {
+                // Regenerate with new LOD
+                lock_mesh();
+                mesh = update_chunk_mesh(x, z, args->player->position[0], args->player->position[2]);
+                unlock_mesh();
+                
+                // Mark world mesh for regeneration
+                args->mesh_requires_update = TRUE;
+            }
+
             packet = realloc(packet, (count + 1) * sizeof(chunk_mesh*));
             packet[count] = mesh;
             count++;
