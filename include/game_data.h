@@ -57,7 +57,7 @@ typedef struct {
     int* chunks_to_flow;
     int num_chunks_to_flow;
 
-    int tick;
+    float tick;
 
     // UI state
     bool show_fps;

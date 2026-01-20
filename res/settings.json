@@ -10,7 +10,7 @@
   "chunks": {
     "chunk_load_per_frame": 1,
     "chunk_cache_size": 1024,
-    "chunk_render_distance": 12,
+    "chunk_render_distance": 6,
     "lod_scaling_constant": 2
   },
   "graphics": {

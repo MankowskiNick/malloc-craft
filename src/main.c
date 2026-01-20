@@ -18,6 +18,7 @@
 int main() {
     read_settings("res/settings.json");
     read_biomes("res/biomes.json");
+    printf("RENDER DISTANCE: %i\n\n", TRUE_RENDER_DISTANCE);
 
     GLFWwindow* window = create_window(TITLE, WIDTH, HEIGHT);
     if (!window || !load_gl()) {
@@ -62,22 +63,20 @@ int main() {
     start_world_mesh_updater(&data);
 
     long start = (long)(glfwGetTime() * 1000.0);
-    int last_tick = 0;
-
-    printf("RENDER DISTANCE: %i\n\n", TRUE_RENDER_DISTANCE);
+    float last_tick = 0.0f;
 
     while (!glfwWindowShouldClose(window)) {
 
         data.x = data.player->cam.position[0];
         data.z = data.player->cam.position[2];
         data.tick = (int)(glfwGetTime() * 1000.0) - start; // 1 tick = 1 ms
-        int delta_ms = data.tick - last_tick;
+        float delta_ms = data.tick - last_tick;
         last_tick = data.tick;
 
         // Calculate rolling average FPS
         if (delta_ms > 0) {
             // Add current frame time to circular buffer
-            data.frame_time_buffer[data.frame_buffer_index] = (float)delta_ms;
+            data.frame_time_buffer[data.frame_buffer_index] = delta_ms;
             data.frame_buffer_index = (data.frame_buffer_index + 1) % data.fps_average_frames;
             
             // Calculate average frame time
@@ -89,7 +88,7 @@ int main() {
             
             // Convert to FPS
             data.average_fps = (int)(1000.0f / avg_delta_ms);
-            data.fps = 1000 / delta_ms; // Keep for backwards compatibility
+            data.fps = (int)(1000.0f / delta_ms); // Keep for backwards compatibility
         }
 
         update_camera(delta_ms);

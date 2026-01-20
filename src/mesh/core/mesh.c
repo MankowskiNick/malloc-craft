@@ -665,8 +665,10 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
 
 short calculate_lod(int x, int z, float player_x, float player_z) {
     // get distance from player to center of chunk
-    float dx = (float)(x + 0.5f) - player_x;
-    float dz = (float)(z + 0.5f) - player_z;
+    float px = F_WORLD_POS_TO_CHUNK_POS(player_x);
+    float pz = F_WORLD_POS_TO_CHUNK_POS(player_z);
+    float dx = (float)(x + 0.5f) - px;
+    float dz = (float)(z + 0.5f) - pz;
     float dist = sqrtf(dx * dx + dz * dz);
 
     int lod = 1;

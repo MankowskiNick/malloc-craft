@@ -190,8 +190,8 @@ void parse_chunks_settings(json_object chunks_obj) {
         
         int lod_steps = (int)(log(CHUNK_SIZE) / log(LOD_SCALING_CONSTANT));
         TRUE_RENDER_DISTANCE = CHUNK_RENDER_DISTANCE;
-        for (int i = 0; i < lod_steps; i++) {
-            TRUE_RENDER_DISTANCE += pow(LOD_SCALING_CONSTANT, i + 1);
+        for (int i = 1; i <= lod_steps; i++) {
+            TRUE_RENDER_DISTANCE += pow(LOD_SCALING_CONSTANT, i);
         }
     }
 }
