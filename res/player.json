@@ -9,15 +9,15 @@
     "radius": 0.25,
     "position": [1.0, 84.0, 0.0],
     "hotbar": [
+        "ice",
         "acacia_log",
-        "california_poppy",
-        "rose",
-        "weezer",
-        "oak_log",
-        "grass",
-        "dirt",
-        "stone",
-        "glass",
-        "torch"
+        "acacia_leaves",
+        "spruce_log",
+        "spruce_leaves",
+        "snow",
+        "snowy_grass",
+        "podzol",
+        "dried_grass",
+        "grass"
     ]
 }

@@ -94,5 +94,63 @@
             "density": 0.005
         }
     ]
+  },
+  {
+    "id": 4,
+    "name": "taiga",
+    "surface_type": "podzol",
+    "subsurface_type": "dirt",
+    "underground_type": "stone",
+    "underwater_type": "dirt",
+    "foliage": [
+        {
+            "type": "spruce_tree",
+            "density": 0.025
+        },
+        {
+            "type": "grass",
+            "density": 0.10
+        }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "savanna",
+    "surface_type": "dried_grass",
+    "subsurface_type": "dirt",
+    "underground_type": "stone",
+    "underwater_type": "sand",
+    "foliage": [
+        {
+            "type": "acacia_tree",
+            "density": 0.008
+        },
+        {
+            "type": "grass",
+            "density": 0.12
+        },
+        {
+            "type": "california_poppy",
+            "density": 0.10
+        }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "tundra",
+    "surface_type": "snowy_grass",
+    "subsurface_type": "dirt",
+    "underground_type": "stone",
+    "underwater_type": "ice",
+    "foliage": [
+        {
+            "type": "spruce_tree",
+            "density": 0.003
+        },
+        {
+            "type": "grass",
+            "density": 0.08
+        }
+    ]
   }
 ]
