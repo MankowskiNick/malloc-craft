@@ -13,7 +13,7 @@
     "chunk_cache_size": 1024,
     "chunk_render_distance": 12,
     "lod_scaling_constant": 2,
-    "max_lod_block_size": 8,
+    "max_lod_block_size": 4,
     "foliage_render_distance": 12,
     "transparent_render_distance": 32
   },
@@ -111,9 +111,6 @@
     }
   },
   "game_data": {
-    "biome_count": 4,
-    "tree_count": 2,
-    "block_count": 13,
     "block_file": "res/blocks.json",
     "player_file": "res/player.json",
     "time_scale": 0.000001047

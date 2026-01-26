@@ -338,6 +338,25 @@ void break_block(game_data* data) {
     // Invalidate all LOD versions of this chunk so it will be regenerated
     invalidate_chunk_mesh_all_lods(c->x, c->z);
     
+    // Also invalidate adjacent chunks if the broken block is at a chunk boundary
+    // This ensures sides that reference the broken block are properly updated
+    if (chunk_x == 0) {
+        // Block is at EAST boundary (x=0), invalidate chunk to the EAST (x-1)
+        invalidate_chunk_mesh_all_lods(c->x - 1, c->z);
+    }
+    if (chunk_x == CHUNK_SIZE - 1) {
+        // Block is at WEST boundary (x=CHUNK_SIZE-1), invalidate chunk to the WEST (x+1)
+        invalidate_chunk_mesh_all_lods(c->x + 1, c->z);
+    }
+    if (chunk_z == 0) {
+        // Block is at NORTH boundary (z=0), invalidate chunk to the NORTH (z-1)
+        invalidate_chunk_mesh_all_lods(c->x, c->z - 1);
+    }
+    if (chunk_z == CHUNK_SIZE - 1) {
+        // Block is at SOUTH boundary (z=CHUNK_SIZE-1), invalidate chunk to the SOUTH (z+1)
+        invalidate_chunk_mesh_all_lods(c->x, c->z + 1);
+    }
+    
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
     queue_chunk_for_sorting(new_mesh);
 }
@@ -411,6 +430,25 @@ void place_block(game_data* data) {
 
     // Invalidate all LOD versions of this chunk so it will be regenerated
     invalidate_chunk_mesh_all_lods(c->x, c->z);
+    
+    // Also invalidate adjacent chunks if the placed block is at a chunk boundary
+    // This ensures sides that reference the placed block are properly updated
+    if (chunk_x == 0) {
+        // Block is at EAST boundary (x=0), invalidate chunk to the EAST (x-1)
+        invalidate_chunk_mesh_all_lods(c->x - 1, c->z);
+    }
+    if (chunk_x == CHUNK_SIZE - 1) {
+        // Block is at WEST boundary (x=CHUNK_SIZE-1), invalidate chunk to the WEST (x+1)
+        invalidate_chunk_mesh_all_lods(c->x + 1, c->z);
+    }
+    if (chunk_z == 0) {
+        // Block is at NORTH boundary (z=0), invalidate chunk to the NORTH (z-1)
+        invalidate_chunk_mesh_all_lods(c->x, c->z - 1);
+    }
+    if (chunk_z == CHUNK_SIZE - 1) {
+        // Block is at SOUTH boundary (z=CHUNK_SIZE-1), invalidate chunk to the SOUTH (z+1)
+        invalidate_chunk_mesh_all_lods(c->x, c->z + 1);
+    }
     
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
