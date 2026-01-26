@@ -14,12 +14,12 @@
     "chunk_render_distance": 12,
     "lod_scaling_constant": 2,
     "max_lod_block_size": 8,
-    "foliage_render_distance": 10,
-    "transparent_render_distance": 20
+    "foliage_render_distance": 12,
+    "transparent_render_distance": 32
   },
   "graphics": {
     "wireframe": false,
-    "render_distance": 800.0,
+    "render_distance": 1000.0,
     "atlas_size": 32,
     "use_mipmap": true,
     "tick_rate": 32
@@ -102,12 +102,12 @@
       "octaves": 2
     },
     "terrain": {
-      "blockheight_modifier": 40.0,
+      "blockheight_modifier": 100.0,
       "base_terrain_height": 64,
-      "water_level": 64,
-      "blockheight_frequency": 0.25,
-      "blockheight_amplitude": 2.0,
-      "blockheight_octaves": 6
+      "water_level": 50,
+      "blockheight_frequency": 0.06,
+      "blockheight_amplitude": 3.0,
+      "blockheight_octaves": 8
     }
   },
   "game_data": {
