@@ -360,5 +360,28 @@
         "west": "blockbench/torch_side.json"
     },
     "face_atlas_coords": []
+  },
+  {
+    "id": 21,
+    "name": "acacia_log",
+    "liquid": false,
+    "transparent": false,
+    "is_foliage": false,
+    "model": null,
+    "oriented": true,
+    "orientations": [
+        "north",
+        "south",
+        "east",
+        "west"
+    ],
+    "face_atlas_coords": [
+      [7, 1],
+      [7, 1],
+      [7, 1],
+      [7, 1],
+      [8, 1],
+      [8, 1]
+    ]
   }
 ]

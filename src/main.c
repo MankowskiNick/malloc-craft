@@ -27,13 +27,13 @@ int main() {
 
     block_init();
 
-    player* player = malloc(sizeof(player));
-    *player = player_init(PLAYER_FILE);
+    player* pl = malloc(sizeof(*pl));
+    *pl = player_init(PLAYER_FILE);
 
     game_data data = {
-        .x = (int)player->cam.position[0],
-        .z = (int)player->cam.position[2],
-        .player = player,
+        .x = (int)pl->cam.position[0],
+        .z = (int)pl->cam.position[2],
+        .player = pl,
         .is_running = TRUE,
         .show_fps = false,
         .fps = 0,
@@ -50,7 +50,7 @@ int main() {
     
     renderer r = create_renderer(&data);
 
-    wm_init(&(data.player->cam));
+    wm_init(&(pl->cam));
 
     i_init(window, &data);
 
