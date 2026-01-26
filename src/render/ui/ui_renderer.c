@@ -268,6 +268,21 @@ void render_fps(ui_renderer* ui, int fps) {
 }
 
 void render_hotbar(ui_renderer* ui, char** hotbar, int hotbar_size, int selected_block) {
+    // Validate inputs
+    if (hotbar == NULL) {
+        fprintf(stderr, "ERROR: hotbar is NULL in render_hotbar\n");
+        return;
+    }
+    if (hotbar_size <= 0 || hotbar_size > 10) {
+        fprintf(stderr, "ERROR: hotbar_size %d is invalid (must be 1-10)\n", hotbar_size);
+        return;
+    }
+    if (selected_block < 0 || selected_block >= hotbar_size) {
+        fprintf(stderr, "ERROR: selected_block %d is out of bounds (hotbar_size: %d)\n", 
+                selected_block, hotbar_size);
+        return;
+    }
+    
     int screen_width = get_screen_width();
     int screen_height = get_screen_height();
     float slot_size = (float)(ui->hotbar.slot_size * ui->hotbar.scale);
@@ -294,7 +309,7 @@ void render_hotbar(ui_renderer* ui, char** hotbar, int hotbar_size, int selected
         render_ui_quad(ui, x, y, slot_size, slot_size, slot_coord[0], slot_coord[1]);
 
         // Render block top face inside the slot
-        if (hotbar[slot_index] != NULL && hotbar[slot_index][0] != '\0') {
+        if (slot_index < hotbar_size && hotbar[slot_index] != NULL && hotbar[slot_index][0] != '\0') {
             short block_id = get_block_id(hotbar[slot_index]);
             if (block_id >= 0) {
                 block_type* bt = get_block_type(block_id);

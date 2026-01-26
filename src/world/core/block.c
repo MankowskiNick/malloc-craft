@@ -395,6 +395,19 @@ bool check_block_foliage(short id) {
 }
 
 short get_selected_block(player player) {
+    // Validate selected_block index is within bounds
+    if (player.selected_block < 0 || player.selected_block >= player.hotbar_size) {
+        fprintf(stderr, "ERROR: selected_block index %d is out of bounds (hotbar_size: %d)\n", 
+                player.selected_block, player.hotbar_size);
+        return -1;
+    }
+    
+    // Validate hotbar pointer exists
+    if (player.hotbar == NULL) {
+        fprintf(stderr, "ERROR: player hotbar is NULL\n");
+        return -1;
+    }
+    
     char* block_id = player.hotbar[player.selected_block];
     return get_block_id(block_id);
 }
