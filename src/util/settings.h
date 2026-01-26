@@ -56,6 +56,10 @@ extern int CHUNK_RENDER_DISTANCE;
 extern int TRUE_RENDER_DISTANCE;
 extern int LOD_SCALING_CONSTANT;
 
+// Render distances for specific block types (in chunks)
+extern int FOLIAGE_RENDER_DISTANCE;
+extern int TRANSPARENT_RENDER_DISTANCE;
+
 // Shadow map settings
 extern int SHADOW_MAP_WIDTH;
 extern int SHADOW_MAP_HEIGHT;

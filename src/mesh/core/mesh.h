@@ -72,6 +72,8 @@ void wait_chunk_loading(void);
 short get_adjacent_block_id(int x, int y, int z, short side, chunk* c, chunk* adj);
 block_data_t get_block_data(int x, int y, int z, chunk* c);
 short calculate_lod(int x, int z, float player_x, float player_z);
+int is_chunk_in_foliage_distance(int chunk_x, int chunk_z, float player_x, float player_z);
+int is_chunk_in_transparent_distance(int chunk_x, int chunk_z, float player_x, float player_z);
 void process_chunk_work_item(chunk_work_item* work);
 
 #endif

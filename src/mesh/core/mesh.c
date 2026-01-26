@@ -682,7 +682,8 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
     side_instance** transparent_side_data, int* num_transparent_sides,
     side_instance** foliage_side_data, int* num_foliage_sides,
     side_instance** liquid_side_data, int* num_liquid_sides,
-    float** custom_model_data, int* num_custom_verts) {
+    float** custom_model_data, int* num_custom_verts,
+    int render_transparent, int render_foliage) {
     if (c == NULL) {
         return;
     }
@@ -713,14 +714,20 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                         liquid_side_data, num_liquid_sides);
                 }
                 else if (block->transparent && !block->is_foliage) {
-                    pack_block(i, k, j, lod_scale,
-                        c, adj_chunks,
-                        transparent_side_data, num_transparent_sides);
+                    // Only pack transparent blocks if within render distance
+                    if (render_transparent) {
+                        pack_block(i, k, j, lod_scale,
+                            c, adj_chunks,
+                            transparent_side_data, num_transparent_sides);
+                    }
                 }
                 else if (block->transparent && block->is_foliage) {
-                    pack_block(i, k, j, lod_scale,
-                        c, adj_chunks,
-                        foliage_side_data, num_foliage_sides);
+                    // Only pack foliage blocks if within render distance
+                    if (render_foliage) {
+                        pack_block(i, k, j, lod_scale,
+                            c, adj_chunks,
+                            foliage_side_data, num_foliage_sides);
+                    }
                 }
                 else if (block->is_custom_model) {
                     pack_model(i, k, j, c, custom_model_data, num_custom_verts);
@@ -758,6 +765,26 @@ short calculate_lod(int x, int z, float player_x, float player_z) {
     return lod;
 }
 
+// Check if chunk is within foliage render distance
+int is_chunk_in_foliage_distance(int chunk_x, int chunk_z, float player_x, float player_z) {
+    float px = F_WORLD_POS_TO_CHUNK_POS(player_x);
+    float pz = F_WORLD_POS_TO_CHUNK_POS(player_z);
+    float dx = (float)(chunk_x + 0.5f) - px;
+    float dz = (float)(chunk_z + 0.5f) - pz;
+    float dist = sqrtf(dx * dx + dz * dz);
+    return dist <= (float)FOLIAGE_RENDER_DISTANCE;
+}
+
+// Check if chunk is within transparent render distance
+int is_chunk_in_transparent_distance(int chunk_x, int chunk_z, float player_x, float player_z) {
+    float px = F_WORLD_POS_TO_CHUNK_POS(player_x);
+    float pz = F_WORLD_POS_TO_CHUNK_POS(player_z);
+    float dx = (float)(chunk_x + 0.5f) - px;
+    float dz = (float)(chunk_z + 0.5f) - pz;
+    float dist = sqrtf(dx * dx + dz * dz);
+    return dist <= (float)TRANSPARENT_RENDER_DISTANCE;
+}
+
 chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z);
 
 void process_chunk_work_item(chunk_work_item* work) {
@@ -781,6 +808,10 @@ chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z) {
 
     short lod_scale = calculate_lod(x, z, player_x, player_z);
 
+    // Check render distances for specific block types
+    int render_foliage = is_chunk_in_foliage_distance(x, z, player_x, player_z);
+    int render_transparent = is_chunk_in_transparent_distance(x, z, player_x, player_z);
+
     // get chunk and adjacent chunks
     chunk* c = get_chunk(x, z);
     chunk* adj_chunks[4] = {
@@ -797,10 +828,11 @@ chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z) {
     int liquid_side_count = 0;
     int custom_model_vert_count = 0;
 
+    // Allocate minimal memory for out-of-distance block types to prevent crashes
     side_instance* opaque_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
-    side_instance* transparent_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
+    side_instance* transparent_sides = malloc(render_transparent ? SIDES_PER_CHUNK * sizeof(side_instance) : sizeof(side_instance));
     side_instance* liquid_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
-    side_instance* foliage_sides = malloc(SIDES_PER_CHUNK * sizeof(side_instance));
+    side_instance* foliage_sides = malloc(render_foliage ? SIDES_PER_CHUNK * sizeof(side_instance) : sizeof(side_instance));
     float* custom_model_data = malloc(MODEL_VERTICES_PER_CHUNK * sizeof(float) * FLOATS_PER_MODEL_VERT); // 16 floats per model
     assert(opaque_sides != NULL && "Failed to allocate memory for opaque packet sides");
     assert(transparent_sides != NULL && "Failed to allocate memory for transparent packet sides");
@@ -814,7 +846,8 @@ chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z) {
         &transparent_sides, &transparent_side_count,
         &foliage_sides, &foliage_side_count,
         &liquid_sides, &liquid_side_count,
-        &custom_model_data, &custom_model_vert_count);
+        &custom_model_data, &custom_model_vert_count,
+        render_transparent, render_foliage);
 
     assert(packet != NULL && "Failed to allocate memory for packet");
 
