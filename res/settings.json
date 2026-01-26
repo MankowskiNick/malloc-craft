@@ -1,14 +1,14 @@
 {
   "display": {
-    "width": 1920,
-    "height": 1080,
+    "width": 1280,
+    "height": 720,
     "title": "malloc-craft",
     "vsync": true,
     "fov": 60.0,
-    "fullscreen": true
+    "fullscreen": false
   },
   "chunks": {
-    "worker_threads": 12,
+    "worker_threads": 4,
     "chunk_load_per_frame": 2,
     "chunk_cache_size": 1024,
     "chunk_render_distance": 12,

@@ -294,7 +294,7 @@ void render_hotbar(ui_renderer* ui, char** hotbar, int hotbar_size, int selected
         render_ui_quad(ui, x, y, slot_size, slot_size, slot_coord[0], slot_coord[1]);
 
         // Render block top face inside the slot
-        if (hotbar[slot_index] != NULL) {
+        if (hotbar[slot_index] != NULL && hotbar[slot_index][0] != '\0') {
             short block_id = get_block_id(hotbar[slot_index]);
             if (block_id >= 0) {
                 block_type* bt = get_block_type(block_id);

@@ -53,7 +53,15 @@ char** parse_hotbar(json_object hotbar_obj) {
             fprintf(stderr, "Error: hotbar item %d is not a string in player.json\n", i);
             exit(EXIT_FAILURE);
         }
+        if (item.value.string == NULL || item.value.string[0] == '\0') {
+            fprintf(stderr, "Error: hotbar item %d has invalid or empty string in player.json\n", i);
+            exit(EXIT_FAILURE);
+        }
         hotbar[i] = strdup(item.value.string);
+        if (hotbar[i] == NULL) {
+            fprintf(stderr, "Error: failed to allocate memory for hotbar item %d\n", i);
+            exit(EXIT_FAILURE);
+        }
     }
 
     return hotbar;

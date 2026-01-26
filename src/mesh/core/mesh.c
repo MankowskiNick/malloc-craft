@@ -238,10 +238,18 @@ void get_side_visible(
     short current_water_level = 0;
     get_block_info(c->blocks[x][y][z], &current_id, NULL, NULL, &current_water_level);
     block_type* current = get_block_type(current_id);
+    if (current == NULL) {
+        *visible_out = 0;
+        return;  // Invalid block, don't render
+    }
 
     // calculate visibility
     block_type* adjacent = get_block_type(adjacent_id);
-    uint visible = adjacent_id == get_block_id("air") || get_block_type(adjacent_id)->transparent != current->transparent;
+    if (adjacent == NULL) {
+        *visible_out = 0;
+        return;  // Invalid adjacent block, don't render
+    }
+    uint visible = adjacent_id == get_block_id("air") || adjacent->transparent != current->transparent;
 
     // check if we are underwater
     if (adjacent_id == get_block_id("water")) {
@@ -463,6 +471,9 @@ void pack_side(int x_0, int y_0, int z_0,
 
     // block specific data
     block_type* block = get_block_type(type);
+    if (block == NULL) {
+        return;  // Invalid block type, skip packing
+    }
     data->orientation = block->oriented ? orientation : (short)DOWN;
 
     short display_side = get_rotated_side(side, rot);
@@ -555,6 +566,9 @@ void pack_water_transitions(
         
         // Use water texture for transition
         block_type* water_block = get_block_type(water_id);
+        if (water_block == NULL) {
+            continue;  // Invalid water block type
+        }
         short display_side = side;  // Use the cardinal direction directly
         trans->atlas_x = water_block->face_atlas_coords[display_side][0];
         trans->atlas_y = water_block->face_atlas_coords[display_side][1];
@@ -607,6 +621,9 @@ void pack_block(
         // For liquid blocks, use the current block's water level
         // For non-liquid blocks, use the adjacent water level (for underwater effects)
         block_type* block = get_block_type(block_id);
+        if (block == NULL) {
+            continue;  // Invalid block type, skip this face
+        }
         short water_level_to_use = block->liquid ? current_water_level : (short)adj_water_level;
 
         pack_side(
@@ -729,6 +746,9 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                 }
 
                 block_type* block = get_block_type(block_id);
+                if (block == NULL) {
+                    continue;  // Invalid block type, skip
+                }
                 if (block->liquid) {
                     // Pack normal liquid faces
                     pack_block(i, k, j, lod_scale, c, adj_chunks,

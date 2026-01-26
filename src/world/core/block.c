@@ -362,13 +362,24 @@ void break_block(game_data* data) {
 }
 
 short get_block_id(char* block_type) {
+    if (block_type == NULL) {
+        fprintf(stderr, "ERROR: Block type is NULL\n");
+        return -1;
+    }
+    
+    // Validate block_type looks like valid string (basic check for corruption)
+    if (block_type[0] == '\0' || (unsigned char)block_type[0] > 127) {
+        fprintf(stderr, "ERROR: Block type appears to be corrupted or invalid\n");
+        return -1;
+    }
+    
     for (int i = 0; i < BLOCK_COUNT; i++) {
         if (strcmp(TYPES[i].name, block_type) == 0) {
             return TYPES[i].id;
         }
     }
 
-    printf("ERROR: Block type '%s' not found\n", block_type);
+    fprintf(stderr, "ERROR: Block type '%s' not found\n", block_type);
     return -1;
 }
 
@@ -457,11 +468,20 @@ void place_block(game_data* data) {
 
 // TODO: refactor to make more safe
 block_type* get_block_type(short id) {
+    // Validate ID is within reasonable range (block IDs should be small positive numbers)
+    // Extract only lower 10 bits to match block_data_t encoding
+    if (id < 0 || id >= 1024) {
+        fprintf(stderr, "ERROR: Invalid block type ID %d (out of valid range 0-1023)\n", id);
+        return NULL;
+    }
+    
     for (int i = 0; i < BLOCK_COUNT; i++) {
         if (TYPES[i].id == id) {
             return &TYPES[i];
         }
     }
+    
+    fprintf(stderr, "ERROR: Block type ID %d not found in registry\n", id);
     return NULL;
 }
 
