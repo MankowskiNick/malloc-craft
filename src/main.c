@@ -96,8 +96,12 @@ int main() {
         update_selected_block(data.player);
 
         lock_mesh();
-        render(&data, &r, data.world_mesh, *(data.num_packets));
+        world_mesh* render_mesh = copy_world_mesh(data.world_mesh);
+        int render_num_packets = *(data.num_packets);
         unlock_mesh();
+
+        render(&data, &r, render_mesh, render_num_packets);
+        free_world_mesh(render_mesh);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -109,8 +113,6 @@ int main() {
     w_cleanup();
     
     free_game_data(data);
-    // // Clean up frame time buffer
-    // free(data.frame_time_buffer);
 
     glfwDestroyWindow(window);
     glfwTerminate();

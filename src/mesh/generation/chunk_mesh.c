@@ -205,7 +205,7 @@ void get_chunk_meshes(game_data* args) {
                 && z >= player_chunk_z - 1
                 && z <= player_chunk_z + 1
                 && movedBlocks) {
-                queue_chunk_for_sorting(mesh);
+                queue_chunk_for_sorting(mesh, player_chunk_x, player_chunk_z);
             }
         }
     }
