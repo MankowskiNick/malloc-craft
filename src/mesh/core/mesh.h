@@ -65,7 +65,7 @@ void preload_initial_chunks(float player_x, float player_z);
 chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z);
 chunk_mesh* get_chunk_mesh(int x, int z);
 void invalidate_chunk_mesh_all_lods(int x, int z);
-void queue_chunk_for_sorting(chunk_mesh* packet);
+void queue_chunk_for_sorting(chunk_mesh* packet, int px, int py);
 void sort_chunk();
 void load_chunk(float player_x, float player_z);
 void wait_chunk_loading(void);

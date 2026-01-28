@@ -23,12 +23,13 @@ void c_init() {
 }
 
 int get_block_height(chunk* c, float x, float z, biome* b) {
-    float noise = (n_get(x, z, 
+    float noise = n_get(x, z, 
         WORLDGEN_BLOCKHEIGHT_FREQUENCY,
         WORLDGEN_BLOCKHEIGHT_AMPLITUDE,
-        WORLDGEN_BLOCKHEIGHT_OCTAVES) - 0.5f) * 2.0f;
+        WORLDGEN_BLOCKHEIGHT_OCTAVES);
 
-    float y_ = WORLDGEN_BASE_TERRAIN_HEIGHT + noise * WORLDGEN_BLOCKHEIGHT_MODIFIER;
+    float y_ = exp(noise) * WORLDGEN_BLOCKHEIGHT_MODIFIER;
+    // float y_ = WORLDGEN_BASE_TERRAIN_HEIGHT + offset;
     
     return (int)y_;
 }

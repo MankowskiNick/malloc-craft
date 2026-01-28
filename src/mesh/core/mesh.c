@@ -1056,7 +1056,16 @@ void wait_chunk_loading(void) {
     }
 }
 
-void queue_chunk_for_sorting(chunk_mesh* packet) {
+void queue_chunk_for_sorting(chunk_mesh* packet, int px, int pz) {
+    if (packet == NULL) {
+        return;
+    }
+
+    int dist_sq = (packet->x - px) * (packet->x - px) + (packet->z - pz) * (packet->z - pz);
+    if (dist_sq > TRANSPARENT_RENDER_DISTANCE * TRANSPARENT_RENDER_DISTANCE) {
+        return;
+    }
+
     queue_push(&sort_queue, packet, chunk_mesh_equals);
 }
 

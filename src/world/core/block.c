@@ -358,7 +358,10 @@ void break_block(game_data* data) {
     }
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
-    queue_chunk_for_sorting(new_mesh);
+    
+    int px = WORLD_POS_TO_CHUNK_POS(data->player->position[0]);
+    int pz = WORLD_POS_TO_CHUNK_POS(data->player->position[2]);
+    queue_chunk_for_sorting(new_mesh, px, pz);
 }
 
 short get_block_id(char* block_type) {
@@ -476,7 +479,10 @@ void place_block(game_data* data) {
     
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
-    queue_chunk_for_sorting(new_mesh);
+
+    int px = WORLD_POS_TO_CHUNK_POS(data->player->position[0]);
+    int pz = WORLD_POS_TO_CHUNK_POS(data->player->position[2]);
+    queue_chunk_for_sorting(new_mesh, px, pz);
 }
 
 // TODO: refactor to make more safe
