@@ -160,6 +160,7 @@ void chunk_create(chunk* c, int x, int z) {
 
     c->x = x;
     c->z = z;
+    c->modified = false;
 
     generate_blocks(c, x, z);
 }

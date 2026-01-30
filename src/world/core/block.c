@@ -335,6 +335,9 @@ void break_block(game_data* data) {
 
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0, water_level);
     
+    // Mark chunk as modified
+    c->modified = true;
+    
     // Invalidate all LOD versions of this chunk so it will be regenerated
     invalidate_chunk_mesh_all_lods(c->x, c->z);
     
@@ -455,6 +458,9 @@ void place_block(game_data* data) {
 
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, selected_block, hit_side, rot, water_level);
 
+    // Mark chunk as modified
+    c->modified = true;
+    
     // Invalidate all LOD versions of this chunk so it will be regenerated
     invalidate_chunk_mesh_all_lods(c->x, c->z);
     
