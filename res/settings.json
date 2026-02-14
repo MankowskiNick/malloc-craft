@@ -8,7 +8,7 @@
     "fullscreen": false
   },
   "chunks": {
-    "worker_threads": 4,
+    "worker_threads": 8,
     "chunk_load_per_frame": 2,
     "chunk_cache_size": 1024,
     "chunk_render_distance": 12,
@@ -19,7 +19,7 @@
   },
   "graphics": {
     "wireframe": false,
-    "render_distance": 1000.0,
+    "render_distance": 1000000.0,
     "atlas_size": 32,
     "use_mipmap": true,
     "tick_rate": 32
@@ -97,16 +97,16 @@
   "world_generation": {
     "seed": 42069,
     "biome_generation": {
-      "frequency": 0.2,
-      "amplitude": 1.0,
-      "octaves": 2
+      "frequency": 0.02,
+      "amplitude": 4.0,
+      "octaves": 8
     },
     "terrain": {
-      "blockheight_modifier": 100.0,
+      "blockheight_modifier": 96.0,
       "base_terrain_height": 64,
-      "water_level": 50,
-      "blockheight_frequency": 0.06,
-      "blockheight_amplitude": 3.0,
+      "water_level": 140,
+      "blockheight_frequency": 0.04,
+      "blockheight_amplitude": 10.0,
       "blockheight_octaves": 8
     }
   },

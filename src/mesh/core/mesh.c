@@ -805,8 +805,8 @@ short calculate_lod(int x, int z, float player_x, float player_z) {
 
     int check_dist = CHUNK_RENDER_DISTANCE;
     while (lod < MAX_LOD_BLOCK_SIZE && check_dist < dist) {
-        check_dist += CHUNK_RENDER_DISTANCE;
         lod *= LOD_SCALING_CONSTANT;
+        check_dist = lod * CHUNK_RENDER_DISTANCE;
     }
 
     return lod;
@@ -971,7 +971,9 @@ chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z) {
     }
 
     return result;
-}chunk_mesh* get_chunk_mesh(int x, int z) {
+}
+
+chunk_mesh* get_chunk_mesh(int x, int z) {
     // Try to find any LOD version of this chunk in cache
     // Start with LOD 1 (highest quality) and try progressively coarser LODs
     // This allows reuse of previously generated lower-quality meshes
@@ -1056,7 +1058,16 @@ void wait_chunk_loading(void) {
     }
 }
 
-void queue_chunk_for_sorting(chunk_mesh* packet) {
+void queue_chunk_for_sorting(chunk_mesh* packet, int px, int pz) {
+    if (packet == NULL) {
+        return;
+    }
+
+    int dist_sq = (packet->x - px) * (packet->x - px) + (packet->z - pz) * (packet->z - pz);
+    if (dist_sq > TRANSPARENT_RENDER_DISTANCE * TRANSPARENT_RENDER_DISTANCE) {
+        return;
+    }
+
     queue_push(&sort_queue, packet, chunk_mesh_equals);
 }
 

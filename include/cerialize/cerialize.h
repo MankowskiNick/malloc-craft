@@ -358,13 +358,20 @@ static inline json_list json_parse_list(const char* json_string, cereal_size_t l
             strcat(error_text, "cerialize ERROR: Failed to parse value in JSON list.\n");
             return (json_list){0, NULL};
         }
-        // add value to list
-        list = realloc(list, sizeof(json_object) * (count + 1));
-        if (list == NULL) {
+        json_object* temp = realloc(list, sizeof(json_object) * (count + 1));
+        if (temp == NULL) {
             strcat(error_text, "cerialize ERROR: Failed to allocate memory for JSON list.\n");
             *failure = TRUE;
+            if (list) {
+                for (cereal_size_t k = 0; k < count; k++) {
+                    json_object_free(&list[k]);
+                }
+                free(list);
+            }
+            json_object_free(&value);
             return (json_list){0, NULL};
         }
+        list = temp;
         list[count] = value;
         count++;
 
@@ -497,13 +504,23 @@ static inline json_object parse_json_object(const char* json_string, cereal_size
         new_node->value = value; // copy the value
 
         node_count++;
-        head = realloc(head, sizeof(json_node) * node_count);
-        if (head == NULL) {
+        json_node* temp = realloc(head, sizeof(json_node) * node_count);
+        if (temp == NULL) {
             strcat(error_text, "cerialize ERROR: Failed to allocate memory for JSON object.\n");
             *failure = TRUE;
-            free(key);
+            // Free the new node we just created
+            free(new_node);
+            // Free all previously allocated nodes
+            if (head) {
+                for (cereal_size_t j = 0; j < node_count - 1; j++) {
+                    free(head[j].key);
+                    json_object_free(&head[j].value);
+                }
+                free(head);
+            }
             return (json_object){0}; // return empty value on error
         }
+        head = temp;
         head[node_count - 1] = *new_node;
         free(new_node);
 
@@ -553,14 +570,16 @@ static inline json deserialize_json(const char* json_string, cereal_size_t lengt
     bool_t failure = FALSE;
     char* error_text = malloc(JSON_MAX_ERROR_LENGTH);
     if (error_text == NULL) {
+        // Return error without error_text pointer to avoid freeing static memory
         json result = {
-            .root = {0},
+            .root = {.type = JSON_NULL},
             .failure = TRUE,
-            .error_text = "cerialize ERROR: Failed to allocate memory for error text.\n",
-            .error_length = strlen("cerialize ERROR: Failed to allocate memory for error text.\n")
+            .error_text = NULL,
+            .error_length = 0
         };
         return result;
     }
+    strcpy(error_text, ""); // Initialize to empty
 
     // TODO: parse json object
     cereal_uint_t i = 0;

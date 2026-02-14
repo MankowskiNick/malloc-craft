@@ -27,13 +27,13 @@ int main() {
 
     block_init();
 
-    player* player = malloc(sizeof(player));
-    *player = player_init(PLAYER_FILE);
+    player* pl = malloc(sizeof(*pl));
+    *pl = player_init(PLAYER_FILE);
 
     game_data data = {
-        .x = (int)player->cam.position[0],
-        .z = (int)player->cam.position[2],
-        .player = player,
+        .x = (int)pl->cam.position[0],
+        .z = (int)pl->cam.position[2],
+        .player = pl,
         .is_running = TRUE,
         .show_fps = false,
         .fps = 0,
@@ -50,7 +50,7 @@ int main() {
     
     renderer r = create_renderer(&data);
 
-    wm_init(&(data.player->cam));
+    wm_init(&(pl->cam));
 
     i_init(window, &data);
 
@@ -96,8 +96,12 @@ int main() {
         update_selected_block(data.player);
 
         lock_mesh();
-        render(&data, &r, data.world_mesh, *(data.num_packets));
+        world_mesh* render_mesh = copy_world_mesh(data.world_mesh);
+        int render_num_packets = *(data.num_packets);
         unlock_mesh();
+
+        render(&data, &r, render_mesh, render_num_packets);
+        free_world_mesh(render_mesh);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -109,8 +113,6 @@ int main() {
     w_cleanup();
     
     free_game_data(data);
-    // // Clean up frame time buffer
-    // free(data.frame_time_buffer);
 
     glfwDestroyWindow(window);
     glfwTerminate();

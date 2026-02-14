@@ -7,17 +7,17 @@
     },
     "height": 1.8,
     "radius": 0.25,
-    "position": [1.0, 84.0, 0.0],
+    "position": [1.0, 256.0, 0.0],
     "hotbar": [
-        "water",
-        "california_poppy",
-        "rose",
-        "weezer",
-        "oak_log",
-        "grass",
-        "dirt",
-        "stone",
-        "glass",
-        "torch"
+        "ice",
+        "acacia_log",
+        "acacia_leaves",
+        "spruce_log",
+        "spruce_leaves",
+        "snow",
+        "snowy_grass",
+        "podzol",
+        "dried_grass",
+        "grass"
     ]
 }

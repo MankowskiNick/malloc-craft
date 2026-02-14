@@ -504,5 +504,9 @@ player player_init(char* player_file) {
     player.cam.position[1] = player.position[1] + height;
     player.cam.position[2] = player.position[2];
 
+    // Free the JSON object since we've extracted all the data we need
+    json_free(&obj);
+    free(player_json);
+
     return player;
 }

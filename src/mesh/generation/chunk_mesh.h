@@ -6,7 +6,6 @@
 #include <game_data.h>
 #include <util.h>
 
-#define VBO_WIDTH 11
 
 // Cache key that includes both chunk coordinate and LOD level
 // This allows caching multiple LOD versions of the same chunk
