@@ -12,6 +12,69 @@ static pthread_mutex_t wm_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 camera_cache wm_camera_cache = {0, 0, 0};
 
+// Deep copy a chunk_mesh and all its dynamically allocated data
+static chunk_mesh* copy_chunk_mesh(chunk_mesh* src) {
+    if (src == NULL) {
+        return NULL;
+    }
+    
+    chunk_mesh* dst = malloc(sizeof(chunk_mesh));
+    assert(dst != NULL && "ERROR: Could not allocate memory for chunk_mesh copy.\n");
+    
+    // Copy structure fields
+    dst->x = src->x;
+    dst->z = src->z;
+    dst->num_opaque_sides = src->num_opaque_sides;
+    dst->num_transparent_sides = src->num_transparent_sides;
+    dst->num_liquid_sides = src->num_liquid_sides;
+    dst->num_foliage_sides = src->num_foliage_sides;
+    dst->num_custom_verts = src->num_custom_verts;
+    dst->lod_scale = src->lod_scale;
+    
+    // Deep copy dynamic arrays
+    if (src->opaque_sides != NULL && src->num_opaque_sides > 0) {
+        dst->opaque_sides = malloc(src->num_opaque_sides * sizeof(side_instance));
+        assert(dst->opaque_sides != NULL && "ERROR: Could not allocate memory for opaque_sides copy.\n");
+        memcpy(dst->opaque_sides, src->opaque_sides, src->num_opaque_sides * sizeof(side_instance));
+    } else {
+        dst->opaque_sides = NULL;
+    }
+    
+    if (src->transparent_sides != NULL && src->num_transparent_sides > 0) {
+        dst->transparent_sides = malloc(src->num_transparent_sides * sizeof(side_instance));
+        assert(dst->transparent_sides != NULL && "ERROR: Could not allocate memory for transparent_sides copy.\n");
+        memcpy(dst->transparent_sides, src->transparent_sides, src->num_transparent_sides * sizeof(side_instance));
+    } else {
+        dst->transparent_sides = NULL;
+    }
+    
+    if (src->liquid_sides != NULL && src->num_liquid_sides > 0) {
+        dst->liquid_sides = malloc(src->num_liquid_sides * sizeof(side_instance));
+        assert(dst->liquid_sides != NULL && "ERROR: Could not allocate memory for liquid_sides copy.\n");
+        memcpy(dst->liquid_sides, src->liquid_sides, src->num_liquid_sides * sizeof(side_instance));
+    } else {
+        dst->liquid_sides = NULL;
+    }
+    
+    if (src->foliage_sides != NULL && src->num_foliage_sides > 0) {
+        dst->foliage_sides = malloc(src->num_foliage_sides * sizeof(side_instance));
+        assert(dst->foliage_sides != NULL && "ERROR: Could not allocate memory for foliage_sides copy.\n");
+        memcpy(dst->foliage_sides, src->foliage_sides, src->num_foliage_sides * sizeof(side_instance));
+    } else {
+        dst->foliage_sides = NULL;
+    }
+    
+    if (src->custom_model_data != NULL && src->num_custom_verts > 0) {
+        dst->custom_model_data = malloc(src->num_custom_verts * FLOATS_PER_MODEL_VERT * sizeof(float));
+        assert(dst->custom_model_data != NULL && "ERROR: Could not allocate memory for custom_model_data copy.\n");
+        memcpy(dst->custom_model_data, src->custom_model_data, src->num_custom_verts * FLOATS_PER_MODEL_VERT * sizeof(float));
+    } else {
+        dst->custom_model_data = NULL;
+    }
+    
+    return dst;
+}
+
 void wm_init(camera* camera) {
     wm_camera_cache.x = camera->position[0];
     wm_camera_cache.y = camera->position[1];
@@ -31,6 +94,9 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     int total_custom_verts = 0;
     for (int i = 0; i < count; i++) {
         chunk_mesh* mesh = packet[i];
+        if (mesh == NULL) {
+            continue;
+        }
         total_transparent_sides += mesh->num_transparent_sides;
         total_opaque_sides += mesh->num_opaque_sides;
         total_liquid_sides += mesh->num_liquid_sides;
@@ -64,32 +130,33 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     for (int i = 0; i < count; i++) {
         chunk_mesh* mesh = packet[i];
 
-        if (mesh == NULL // this is a temp fix for a what the fuck bug
-            || mesh->opaque_sides == NULL 
-            || mesh->transparent_sides == NULL 
-            || mesh->liquid_sides == NULL 
-            || mesh->foliage_sides == NULL
-            || mesh->custom_model_data == NULL) {
+        if (mesh == NULL) {
             continue;
         }
 
-        chunk_mesh_to_buffer(transparent_data + transparent_offset, 
-            mesh->transparent_sides, 
-            mesh->num_transparent_sides,
-            mesh->lod_scale);
-        transparent_offset += mesh->num_transparent_sides * VBO_WIDTH;
+        if (mesh->transparent_sides != NULL && mesh->num_transparent_sides > 0) {
+            chunk_mesh_to_buffer(transparent_data + transparent_offset, 
+                mesh->transparent_sides, 
+                mesh->num_transparent_sides,
+                mesh->lod_scale);
+            transparent_offset += mesh->num_transparent_sides * VBO_WIDTH;
+        }
         
-        chunk_mesh_to_buffer(opaque_data + opaque_offset, 
-            mesh->opaque_sides, 
-            mesh->num_opaque_sides,
-            mesh->lod_scale);
-        opaque_offset += mesh->num_opaque_sides * VBO_WIDTH;
+        if (mesh->opaque_sides != NULL && mesh->num_opaque_sides > 0) {
+            chunk_mesh_to_buffer(opaque_data + opaque_offset, 
+                mesh->opaque_sides, 
+                mesh->num_opaque_sides,
+                mesh->lod_scale);
+            opaque_offset += mesh->num_opaque_sides * VBO_WIDTH;
+        }
         
-        chunk_mesh_to_buffer(liquid_data + liquid_offset, 
-            mesh->liquid_sides, 
-            mesh->num_liquid_sides,
-            mesh->lod_scale);
-        liquid_offset += mesh->num_liquid_sides * VBO_WIDTH;
+        if (mesh->liquid_sides != NULL && mesh->num_liquid_sides > 0) {
+            chunk_mesh_to_buffer(liquid_data + liquid_offset, 
+                mesh->liquid_sides, 
+                mesh->num_liquid_sides,
+                mesh->lod_scale);
+            liquid_offset += mesh->num_liquid_sides * VBO_WIDTH;
+        }
 
         chunk_mesh_to_buffer(foliage_data + foliage_offset,
             mesh->foliage_sides,
@@ -165,9 +232,11 @@ void get_world_mesh(game_data* args) {
 
     lock_mesh();
     
-    // Quick copy of packet list while holding lock
-    memcpy(packet, args->packet, *(args->num_packets) * sizeof(chunk_mesh*));
+    // Deep copy packet list while holding lock to avoid data races
     int packet_count = *(args->num_packets);
+    for (int i = 0; i < packet_count; i++) {
+        packet[i] = copy_chunk_mesh(args->packet[i]);
+    }
 
     unlock_mesh();
 
@@ -189,6 +258,18 @@ void get_world_mesh(game_data* args) {
 
     unlock_mesh();
     
+    // Free copied chunk_mesh structures and their data
+    for (int i = 0; i < packet_count; i++) {
+        if (packet[i] != NULL) {
+            chunk_mesh* p = packet[i];
+            free(p->opaque_sides);
+            free(p->transparent_sides);
+            free(p->liquid_sides);
+            free(p->foliage_sides);
+            free(p->custom_model_data);
+            free(p);
+        }
+    }
     free(packet);
 }
 

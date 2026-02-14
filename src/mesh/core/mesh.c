@@ -971,7 +971,9 @@ chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z) {
     }
 
     return result;
-}chunk_mesh* get_chunk_mesh(int x, int z) {
+}
+
+chunk_mesh* get_chunk_mesh(int x, int z) {
     // Try to find any LOD version of this chunk in cache
     // Start with LOD 1 (highest quality) and try progressively coarser LODs
     // This allows reuse of previously generated lower-quality meshes

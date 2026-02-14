@@ -1,5 +1,6 @@
 #include "world.h"
 #include "chunk.h"
+#include "chunk_io.h"
 #include <hashmap.h>
 
 
@@ -8,22 +9,40 @@
 
 #define mod(x, y) fmod(x, y) < 0 ? fmod(x, y) + (y) : fmod(x,y)
 
+#define WORLDS_DIR "./worlds/"
+
 DEFINE_HASHMAP(chunk_map, chunk_coord, chunk*, chunk_hash, chunk_equals);
 typedef chunk_map_hashmap chunk_map;
 chunk_map chunks;
+
+const char* get_worlds_dir(void) {
+    return WORLDS_DIR;
+}
 
 void w_init() {
     c_init();
 
     chunks = chunk_map_init(CHUNK_CACHE_SIZE);
+    
+    // Initialize the worlds directory
+    if (init_worlds_directory(WORLDS_DIR) == -1) {
+        fprintf(stderr, "Warning: Failed to initialize worlds directory\n");
+    }
 }
 
 void w_cleanup() {
-    // Free all chunks before freeing the map
     for (size_t i = 0; i < chunks.capacity; ++i) {
         chunk_map_entry* current = chunks.buckets[i];
         while (current) {
-            free(current->value);  // Free the chunk pointer
+            chunk* c = current->value;
+            
+            if (c->modified) {
+                if (chunk_save_to_disk(c, WORLDS_DIR) == -1) {
+                    fprintf(stderr, "Warning: Failed to save chunk at (%d, %d)\n", c->x, c->z);
+                }
+            }
+            
+            free(c);  // Free the chunk pointer
             current = current->next;
         }
     }
@@ -36,7 +55,13 @@ chunk* get_chunk(int x, int z) {
     chunk* c = found ? *found : NULL;
     if (c == NULL) {
         c = malloc(sizeof(chunk));
-        chunk_create(c, x, z);
+        
+        c->x = x;
+        c->z = z;
+        if (chunk_load_from_disk(c, WORLDS_DIR) == -1) {
+            chunk_create(c, x, z);
+        }
+        
         chunk_map_insert(&chunks, coord, c);
     }
     return c;
