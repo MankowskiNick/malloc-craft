@@ -335,6 +335,9 @@ void break_block(game_data* data) {
 
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0, water_level);
     
+    // Mark chunk as modified
+    c->modified = true;
+    
     // Invalidate all LOD versions of this chunk so it will be regenerated
     invalidate_chunk_mesh_all_lods(c->x, c->z);
     
@@ -358,7 +361,10 @@ void break_block(game_data* data) {
     }
     
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
-    queue_chunk_for_sorting(new_mesh);
+    
+    int px = WORLD_POS_TO_CHUNK_POS(data->player->position[0]);
+    int pz = WORLD_POS_TO_CHUNK_POS(data->player->position[2]);
+    queue_chunk_for_sorting(new_mesh, px, pz);
 }
 
 short get_block_id(char* block_type) {
@@ -452,6 +458,9 @@ void place_block(game_data* data) {
 
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, selected_block, hit_side, rot, water_level);
 
+    // Mark chunk as modified
+    c->modified = true;
+    
     // Invalidate all LOD versions of this chunk so it will be regenerated
     invalidate_chunk_mesh_all_lods(c->x, c->z);
     
@@ -476,7 +485,10 @@ void place_block(game_data* data) {
     
     // update chunk and adjacent chunks
     chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
-    queue_chunk_for_sorting(new_mesh);
+
+    int px = WORLD_POS_TO_CHUNK_POS(data->player->position[0]);
+    int pz = WORLD_POS_TO_CHUNK_POS(data->player->position[2]);
+    queue_chunk_for_sorting(new_mesh, px, pz);
 }
 
 // TODO: refactor to make more safe

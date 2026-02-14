@@ -383,5 +383,147 @@
       [8, 1],
       [8, 1]
     ]
+  },
+  {
+    "id": 22,
+    "name": "acacia_leaves",
+    "liquid": false,
+    "transparent": true,
+    "is_foliage": false,
+    "model": null,
+    "oriented": false,
+    "face_atlas_coords": [
+      [9, 1],
+      [9, 1],
+      [9, 1],
+      [9, 1],
+      [9, 1],
+      [9, 1]
+    ]
+  },
+  {
+    "id": 23,
+    "name": "spruce_log",
+    "liquid": false,
+    "transparent": false,
+    "is_foliage": false,
+    "model": null,
+    "oriented": true,
+    "orientations": [
+        "north",
+        "south",
+        "east",
+        "west"
+    ],
+    "face_atlas_coords": [
+      [4, 1],
+      [4, 1],
+      [4, 1],
+      [4, 1],
+      [5, 1],
+      [5, 1]
+    ]
+  },
+  {
+    "id": 24,
+    "name": "spruce_leaves",
+    "liquid": false,
+    "transparent": true,
+    "is_foliage": false,
+    "model": null,
+    "oriented": false,
+    "face_atlas_coords": [
+      [6, 1],
+      [6, 1],
+      [6, 1],
+      [6, 1],
+      [6, 1],
+      [6, 1]
+    ]
+  },
+  {
+    "id": 25,
+    "name": "snow",
+    "liquid": false,
+    "transparent": false,
+    "is_foliage": false,
+    "model": null,
+    "oriented": false,
+    "face_atlas_coords": [
+      [0, 1],
+      [0, 1],
+      [0, 1],
+      [0, 1],
+      [0, 1],
+      [0, 1]
+    ]
+  },
+  {
+    "id": 26,
+    "name": "snowy_grass",
+    "liquid": false,
+    "transparent": false,
+    "is_foliage": false,
+    "model": null,
+    "oriented": false,
+    "face_atlas_coords": [
+      [1, 1],
+      [1, 1],
+      [1, 1],
+      [1, 1],
+      [0, 1],
+      [2, 0]
+    ]
+  },
+  {
+    "id": 27,
+    "name": "podzol",
+    "liquid": false,
+    "transparent": false,
+    "is_foliage": false,
+    "model": null,
+    "oriented": false,
+    "face_atlas_coords": [
+      [1, 2],
+      [1, 2],
+      [1, 2],
+      [1, 2],
+      [0, 2],
+      [2, 0]
+    ]
+  },
+  {
+    "id": 28,
+    "name": "dried_grass",
+    "liquid": false,
+    "transparent": false,
+    "is_foliage": false,
+    "model": null,
+    "oriented": false,
+    "face_atlas_coords": [
+      [1, 3],
+      [1, 3],
+      [1, 3],
+      [1, 3],
+      [0, 3],
+      [2, 0]
+    ]
+  },
+  {
+    "id": 29,
+    "name": "ice",
+    "liquid": false,
+    "transparent": true,
+    "is_foliage": false,
+    "model": null,
+    "oriented": false,
+    "face_atlas_coords": [
+      [2, 1],
+      [2, 1],
+      [2, 1],
+      [2, 1],
+      [2, 1],
+      [2, 1]
+    ]
   }
 ]

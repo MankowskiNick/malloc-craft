@@ -211,7 +211,7 @@ void parse_chunks_settings(json_object chunks_obj) {
         CHUNK_RENDER_DISTANCE = (int)chunk_render_distance.value.number;    
         
         int lod_steps = (int)(log(MAX_LOD_BLOCK_SIZE) / log(LOD_SCALING_CONSTANT));
-        TRUE_RENDER_DISTANCE = CHUNK_RENDER_DISTANCE * (lod_steps + 1);
+        TRUE_RENDER_DISTANCE = (int)pow((double)LOD_SCALING_CONSTANT, (double)lod_steps) * CHUNK_RENDER_DISTANCE;
     }
 
     json_object foliage_render_distance = json_get_property(chunks_obj, "foliage_render_distance");

@@ -8,6 +8,8 @@
 
 #define PI 3.141592653
 
+#define VBO_WIDTH 11
+
 #define RADS(deg) ((deg) * (PI / 180.0f))
 
 #define WORLD_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1

@@ -130,12 +130,7 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     for (int i = 0; i < count; i++) {
         chunk_mesh* mesh = packet[i];
 
-        if (mesh == NULL // this is a temp fix for a what the fuck bug
-            || mesh->opaque_sides == NULL 
-            || mesh->transparent_sides == NULL 
-            || mesh->liquid_sides == NULL 
-            || mesh->foliage_sides == NULL
-            || mesh->custom_model_data == NULL) {
+        if (mesh == NULL) {
             continue;
         }
 
