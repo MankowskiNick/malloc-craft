@@ -107,6 +107,9 @@ int main() {
         glfwPollEvents();
     }
 
+    kill_chunk_mesh_updater();
+    kill_world_mesh_updater();
+
     destroy_renderer(&r);
     i_cleanup();
     m_cleanup();

@@ -5,6 +5,7 @@ in vec2 texCoord; // coordinate of the quad [0, 1]
 in vec2 atlasCoord; // coordinate of the texture in the atlas [0, 32]
 in float dist; // distance from the camera
 in vec3 normal;
+in float aoFactor; // ambient occlusion factor (0.4 - 1.0)
 
 out vec4 FragColor;
 
@@ -66,9 +67,12 @@ void main() {
     vec3 shadowFactor = getShadowIntensity(texCoord);
     vec3 lightIntensity = ambientLight + (sunColor * intensity * shadowFactor);
 
+    // Apply ambient occlusion
+    lightIntensity *= aoFactor;
+
     vec4 textureColor = texture(atlas, coord);
     vec4 baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
-    FragColor = mix(baseColor, 
-        vec4(1.0, 1.0, 1.0, 1.0), 
+    FragColor = mix(baseColor,
+        vec4(1.0, 1.0, 1.0, 1.0),
         clamp(dist / fogDistance, 0.0, 1.0));
 }

@@ -15,6 +15,7 @@ typedef struct {
     short water_level;  // 0 = dry, 1-7 = flowing water (7=strongest), 8 = source
     short orientation;
     short water_level_transition;  // For water flow: adjacent water level (height we're transitioning FROM)
+    int ao;  // Packed AO values for 4 vertices (2 bits each, values 0-3)
 } side_instance;
 
 typedef struct {

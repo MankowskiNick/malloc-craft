@@ -9,12 +9,14 @@ layout (location = 5) in int aOrientation;
 layout (location = 6) in int aWaterLevel;
 layout (location = 7) in int aWaterLevelTransition;
 layout (location = 8) in int aLodScale;
+layout (location = 9) in int aAO;
 
 out vec2 texCoord;
 out vec2 atlasCoord;
 out float dist;
 out vec3 normal;
 out vec3 fragPos;
+out float aoFactor;
 
 uniform mat4 view;
 uniform mat4 proj;
@@ -87,17 +89,45 @@ vec3 getNormal(vec3 pos, int face) {
     return vec3(0.0, 0.0, 0.0);
 }
 
+// AO constants
+const int AO_MAX = 3;
+const int AO_BITS_PER_VERTEX = 2;
+const int AO_MASK = 3;  // 0b11 - mask for 2 bits
+const float AO_MIN_LIGHT = 0.4;
+const float AO_CURVE = 1.0 - AO_MIN_LIGHT;
+
+// Unpack AO value for the current vertex based on position in quad
+// aPos.xy represents position in quad: (0,0), (1,0), (1,1), (0,1)
+float getVertexAO(int packedAO, vec2 pos) {
+    // Determine vertex index from quad position
+    // Vertices: v0(0,0), v1(1,0), v2(1,1), v3(0,1)
+    int vertexIndex = int(pos.x + 0.5) + int(pos.y + 0.5) * 2;
+    // Remap: (0,0)->0, (1,0)->1, (0,1)->2, (1,1)->3
+    // But we want: (0,0)->0, (1,0)->1, (1,1)->2, (0,1)->3
+    if (vertexIndex == 2) vertexIndex = 3;
+    else if (vertexIndex == 3) vertexIndex = 2;
+
+    // Extract 2-bit AO value for this vertex
+    int ao = (packedAO >> (vertexIndex * AO_BITS_PER_VERTEX)) & AO_MASK;
+
+    // Convert to lighting factor: 0 -> AO_MIN_LIGHT (dark), 3 -> 1.0 (full bright)
+    return AO_MIN_LIGHT + AO_CURVE * (float(ao) / float(AO_MAX));
+}
+
 void main() {
     vec3 instancePos = vec3(aInstancePos);
     vec3 worldPos = transformFace(aPos, aSide) + instancePos;
-    
+
     vec4 viewPos = view * vec4(worldPos, 1.0);
     gl_Position = proj * viewPos;
-    
+
     texCoord = transformUV(aPos.xy, aSide, aOrientation);
     atlasCoord = vec2(aAtlasCoord.x, aAtlasCoord.y);
-    
+
     dist = length(viewPos.xyz);
     normal = getNormal(aPos, aSide);
     fragPos = worldPos;
+
+    // Calculate AO factor for this vertex
+    aoFactor = getVertexAO(aAO, aPos.xy);
 }

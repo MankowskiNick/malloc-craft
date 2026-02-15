@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 static pthread_mutex_t wm_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_t wm_updater_thread = 0;
 
 camera_cache wm_camera_cache = {0, 0, 0};
 
@@ -285,11 +286,12 @@ void update_world_mesh(game_data* data) {
 }
 
 void start_world_mesh_updater(game_data* data) {
-    pthread_t updater_thread;
-    pthread_create(&updater_thread, NULL, (void* (*)(void*))update_world_mesh, data);
-    pthread_detach(updater_thread);
+    pthread_create(&wm_updater_thread, NULL, (void* (*)(void*))update_world_mesh, data);
 }
 
-void wm_cleanup(void) {
+void kill_world_mesh_updater(void) {
+    pthread_join(wm_updater_thread, NULL);
+    pthread_join(wm_updater_thread, NULL);
     pthread_mutex_destroy(&wm_mutex);
+
 }

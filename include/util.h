@@ -8,7 +8,7 @@
 
 #define PI 3.141592653
 
-#define VBO_WIDTH 11
+#define VBO_WIDTH 12
 
 #define RADS(deg) ((deg) * (PI / 180.0f))
 

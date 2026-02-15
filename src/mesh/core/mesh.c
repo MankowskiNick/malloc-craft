@@ -453,13 +453,213 @@ void get_model_transformation(mat4 transform, block_type* block, short orientati
     glm_translate(transform, (vec3){-0.5f, -0.5f, -0.5f}); // translate back
 }
 
+static bool is_ao_solid(int x, int y, int z, chunk* c, chunk* adj_chunks[4]) {
+    if (y < 0 || y >= CHUNK_HEIGHT) {
+        return false;
+    }
+
+    // Handle cross-chunk boundaries
+    chunk* target_chunk = c;
+    int local_x = x;
+    int local_z = z;
+
+    if (x < 0) {
+        target_chunk = adj_chunks[3]; // EAST (-X)
+        local_x = CHUNK_SIZE + x;
+    } else if (x >= CHUNK_SIZE) {
+        target_chunk = adj_chunks[1]; // WEST (+X)
+        local_x = x - CHUNK_SIZE;
+    }
+
+    if (z < 0) {
+        target_chunk = adj_chunks[0]; // NORTH (-Z)
+        local_z = CHUNK_SIZE + z;
+    } else if (z >= CHUNK_SIZE) {
+        target_chunk = adj_chunks[2]; // SOUTH (+Z)
+        local_z = z - CHUNK_SIZE;
+    }
+
+    if (target_chunk == NULL) {
+        return false;
+    }
+
+    if (local_x < 0 
+            || local_x >= CHUNK_SIZE 
+            || local_z < 0 
+            || local_z >= CHUNK_SIZE) {
+        return false;
+    }
+
+    short block_id = 0;
+    get_block_info(target_chunk->blocks[local_x][y][local_z], &block_id, NULL, NULL, NULL);
+
+    if (block_id == get_block_id("air")) {
+        return false;
+    }
+
+    block_type* block = get_block_type(block_id);
+
+    // Model blocks don't contribute to AO
+    if (block == NULL 
+            || block->is_custom_model
+            || block->transparent
+            || block->liquid) {
+        return false;
+    }
+
+    return true;
+}
+
+// Calculate vertex AO value (0-3) based on edge and corner neighbors
+static int vertex_ao(int side1, int side2, int corner) {
+    if (side1 && side2) {
+        return 0;  // Fully occluded
+    }
+    return 3 - (side1 + side2 + corner);
+}
+
+// Calculate AO for all 4 vertices of a face
+// Returns packed int with 4 AO values (2 bits each): v0 | (v1 << 2) | (v2 << 4) | (v3 << 6)
+int calculate_face_ao(int x, int y, int z, int face, chunk* c, chunk* adj_chunks[4]) {
+    int ao[4];
+
+    // Neighbor offsets for each face's 4 vertices
+    // For each vertex, we need side1, side2, and corner neighbors
+    // The vertex order matches the quad rendering order in the shader
+
+    switch (face) {
+        case 4: // UP (+Y)
+            // Vertex 0 (0,0), Vertex 1 (1,0), Vertex 2 (1,1), Vertex 3 (0,1)
+            ao[0] = vertex_ao(
+                is_ao_solid(x-1, y+1, z, c, adj_chunks),
+                is_ao_solid(x, y+1, z-1, c, adj_chunks),
+                is_ao_solid(x-1, y+1, z-1, c, adj_chunks));
+            ao[1] = vertex_ao(
+                is_ao_solid(x+1, y+1, z, c, adj_chunks),
+                is_ao_solid(x, y+1, z-1, c, adj_chunks),
+                is_ao_solid(x+1, y+1, z-1, c, adj_chunks));
+            ao[2] = vertex_ao(
+                is_ao_solid(x+1, y+1, z, c, adj_chunks),
+                is_ao_solid(x, y+1, z+1, c, adj_chunks),
+                is_ao_solid(x+1, y+1, z+1, c, adj_chunks));
+            ao[3] = vertex_ao(
+                is_ao_solid(x-1, y+1, z, c, adj_chunks),
+                is_ao_solid(x, y+1, z+1, c, adj_chunks),
+                is_ao_solid(x-1, y+1, z+1, c, adj_chunks));
+            break;
+
+        case 5: // DOWN (-Y)
+            ao[0] = vertex_ao(
+                is_ao_solid(x-1, y-1, z, c, adj_chunks),
+                is_ao_solid(x, y-1, z-1, c, adj_chunks),
+                is_ao_solid(x-1, y-1, z-1, c, adj_chunks));
+            ao[1] = vertex_ao(
+                is_ao_solid(x+1, y-1, z, c, adj_chunks),
+                is_ao_solid(x, y-1, z-1, c, adj_chunks),
+                is_ao_solid(x+1, y-1, z-1, c, adj_chunks));
+            ao[2] = vertex_ao(
+                is_ao_solid(x+1, y-1, z, c, adj_chunks),
+                is_ao_solid(x, y-1, z+1, c, adj_chunks),
+                is_ao_solid(x+1, y-1, z+1, c, adj_chunks));
+            ao[3] = vertex_ao(
+                is_ao_solid(x-1, y-1, z, c, adj_chunks),
+                is_ao_solid(x, y-1, z+1, c, adj_chunks),
+                is_ao_solid(x-1, y-1, z+1, c, adj_chunks));
+            break;
+
+        case 0: // NORTH (-Z)
+            ao[0] = vertex_ao(
+                is_ao_solid(x-1, y, z-1, c, adj_chunks),
+                is_ao_solid(x, y-1, z-1, c, adj_chunks),
+                is_ao_solid(x-1, y-1, z-1, c, adj_chunks));
+            ao[1] = vertex_ao(
+                is_ao_solid(x+1, y, z-1, c, adj_chunks),
+                is_ao_solid(x, y-1, z-1, c, adj_chunks),
+                is_ao_solid(x+1, y-1, z-1, c, adj_chunks));
+            ao[2] = vertex_ao(
+                is_ao_solid(x+1, y, z-1, c, adj_chunks),
+                is_ao_solid(x, y+1, z-1, c, adj_chunks),
+                is_ao_solid(x+1, y+1, z-1, c, adj_chunks));
+            ao[3] = vertex_ao(
+                is_ao_solid(x-1, y, z-1, c, adj_chunks),
+                is_ao_solid(x, y+1, z-1, c, adj_chunks),
+                is_ao_solid(x-1, y+1, z-1, c, adj_chunks));
+            break;
+
+        case 2: // SOUTH (+Z)
+            ao[0] = vertex_ao(
+                is_ao_solid(x-1, y, z+1, c, adj_chunks),
+                is_ao_solid(x, y-1, z+1, c, adj_chunks),
+                is_ao_solid(x-1, y-1, z+1, c, adj_chunks));
+            ao[1] = vertex_ao(
+                is_ao_solid(x+1, y, z+1, c, adj_chunks),
+                is_ao_solid(x, y-1, z+1, c, adj_chunks),
+                is_ao_solid(x+1, y-1, z+1, c, adj_chunks));
+            ao[2] = vertex_ao(
+                is_ao_solid(x+1, y, z+1, c, adj_chunks),
+                is_ao_solid(x, y+1, z+1, c, adj_chunks),
+                is_ao_solid(x+1, y+1, z+1, c, adj_chunks));
+            ao[3] = vertex_ao(
+                is_ao_solid(x-1, y, z+1, c, adj_chunks),
+                is_ao_solid(x, y+1, z+1, c, adj_chunks),
+                is_ao_solid(x-1, y+1, z+1, c, adj_chunks));
+            break;
+
+        case 1: // WEST (+X)
+            ao[0] = vertex_ao(
+                is_ao_solid(x+1, y, z-1, c, adj_chunks),
+                is_ao_solid(x+1, y-1, z, c, adj_chunks),
+                is_ao_solid(x+1, y-1, z-1, c, adj_chunks));
+            ao[1] = vertex_ao(
+                is_ao_solid(x+1, y, z+1, c, adj_chunks),
+                is_ao_solid(x+1, y-1, z, c, adj_chunks),
+                is_ao_solid(x+1, y-1, z+1, c, adj_chunks));
+            ao[2] = vertex_ao(
+                is_ao_solid(x+1, y, z+1, c, adj_chunks),
+                is_ao_solid(x+1, y+1, z, c, adj_chunks),
+                is_ao_solid(x+1, y+1, z+1, c, adj_chunks));
+            ao[3] = vertex_ao(
+                is_ao_solid(x+1, y, z-1, c, adj_chunks),
+                is_ao_solid(x+1, y+1, z, c, adj_chunks),
+                is_ao_solid(x+1, y+1, z-1, c, adj_chunks));
+            break;
+
+        case 3: // EAST (-X)
+            ao[0] = vertex_ao(
+                is_ao_solid(x-1, y, z-1, c, adj_chunks),
+                is_ao_solid(x-1, y-1, z, c, adj_chunks),
+                is_ao_solid(x-1, y-1, z-1, c, adj_chunks));
+            ao[1] = vertex_ao(
+                is_ao_solid(x-1, y, z+1, c, adj_chunks),
+                is_ao_solid(x-1, y-1, z, c, adj_chunks),
+                is_ao_solid(x-1, y-1, z+1, c, adj_chunks));
+            ao[2] = vertex_ao(
+                is_ao_solid(x-1, y, z+1, c, adj_chunks),
+                is_ao_solid(x-1, y+1, z, c, adj_chunks),
+                is_ao_solid(x-1, y+1, z+1, c, adj_chunks));
+            ao[3] = vertex_ao(
+                is_ao_solid(x-1, y, z-1, c, adj_chunks),
+                is_ao_solid(x-1, y+1, z, c, adj_chunks),
+                is_ao_solid(x-1, y+1, z-1, c, adj_chunks));
+            break;
+
+        default:
+            ao[0] = ao[1] = ao[2] = ao[3] = 3;  // No occlusion
+            break;
+    }
+
+    // Pack 4 AO values into single int (2 bits each)
+    return ao[0] | (ao[1] << 2) | (ao[2] << 4) | (ao[3] << 6);
+}
+
 void pack_side(int x_0, int y_0, int z_0,
-        short side, 
-        short orientation, 
-        short rot, 
-        short type, 
-        short water_level, 
-        bool underwater, 
+        short side,
+        short orientation,
+        short rot,
+        short type,
+        short water_level,
+        bool underwater,
+        int ao,
         side_instance* data) {
     data->x = x_0;
     data->y = y_0;
@@ -468,6 +668,7 @@ void pack_side(int x_0, int y_0, int z_0,
     data->water_level = water_level;
     data->water_level_transition = 0;  // Initialize transition field
     data->underwater = underwater ? 1 : 0;
+    data->ao = ao;
 
     // block specific data
     block_type* block = get_block_type(type);
@@ -563,7 +764,8 @@ void pack_water_transitions(
         trans->water_level_transition = from_level;  // Lower level (source)
         trans->underwater = 0;
         trans->orientation = (short)DOWN;
-        
+        trans->ao = 0xFF;  // No AO for water transitions (all vertices = 3)
+
         // Use water texture for transition
         block_type* water_block = get_block_type(water_id);
         if (water_block == NULL) {
@@ -572,7 +774,7 @@ void pack_water_transitions(
         short display_side = side;  // Use the cardinal direction directly
         trans->atlas_x = water_block->face_atlas_coords[display_side][0];
         trans->atlas_y = water_block->face_atlas_coords[display_side][1];
-        
+
         (*num_sides)++;
     }
 }
@@ -626,6 +828,9 @@ void pack_block(
         }
         short water_level_to_use = block->liquid ? current_water_level : (short)adj_water_level;
 
+        // Calculate AO for this face
+        int ao = calculate_face_ao(x, y, z, side, c, adj_chunks);
+
         pack_side(
             world_x, world_y, world_z,
             side,
@@ -633,6 +838,7 @@ void pack_block(
             block_id,
             water_level_to_use,
             underwater,
+            ao,
             &((*chunk_side_data)[*num_sides])
         );
         (*num_sides)++;

@@ -11,6 +11,8 @@
 
 pthread_mutex_t cm_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+pthread_t cm_updater_thread = 0;
+
 camera_cache cm_camera_cache = {0, 0, 0};
 
 void lock_mesh() {
@@ -122,6 +124,7 @@ void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides, int lo
         head[index + 8] = side.water_level;
         head[index + 9] = side.water_level_transition;
         head[index + 10] = lod_scale;
+        head[index + 11] = side.ao;
     }
 }
 
@@ -240,10 +243,13 @@ void update_chunk_meshes(game_data* data) {
 }
 
 void start_chunk_mesh_updater(game_data* data) {
-    pthread_t updater_thread;
     if (data == NULL) {
         assert(false && "game_data pointer is NULL\n");
     }
-    pthread_create(&updater_thread, NULL, (void* (*)(void*))update_chunk_meshes, data);
-    pthread_detach(updater_thread);
+    pthread_create(&cm_updater_thread, NULL, (void* (*)(void*))update_chunk_meshes, data);
+}
+
+void kill_chunk_mesh_updater(void) {
+    pthread_join(cm_updater_thread, NULL);
+    pthread_mutex_destroy(&cm_mutex);
 }

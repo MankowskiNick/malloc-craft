@@ -35,6 +35,7 @@ void sort_transparent_sides(chunk_mesh* packet);
 void sort_liquid_sides(chunk_mesh* packet);
 void get_chunk_meshes(game_data* args);
 void start_chunk_mesh_updater(game_data* args);
+void kill_chunk_mesh_updater(void);
 
 void lock_mesh();
 void unlock_mesh();
