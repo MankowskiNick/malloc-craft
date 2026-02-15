@@ -99,7 +99,7 @@ int main() {
         world_mesh* render_mesh = copy_world_mesh(data.world_mesh);
         int render_num_packets = *(data.num_packets);
         unlock_mesh();
-
+        
         render(&data, &r, render_mesh, render_num_packets);
         free_world_mesh(render_mesh);
 

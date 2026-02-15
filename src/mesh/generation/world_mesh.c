@@ -98,6 +98,8 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
         if (mesh == NULL) {
             continue;
         }
+        if (mesh->num_custom_verts > 786432)
+            printf("sus!\n");
         total_transparent_sides += mesh->num_transparent_sides;
         total_opaque_sides += mesh->num_opaque_sides;
         total_liquid_sides += mesh->num_liquid_sides;
@@ -207,6 +209,31 @@ void free_world_mesh(world_mesh* mesh) {
     free(mesh);
 }
 
+void free_packets(chunk_mesh** packet, int packet_count) {
+    if (packet == NULL) {
+        printf("ERROR: Cannot free NULL world mesh packet.");
+        return;
+    }
+    for (int i = 0; i < packet_count; i++) {
+        if (packet[i] != NULL) {
+            chunk_mesh* p = packet[i];
+            if (p->opaque_sides)
+                free(p->opaque_sides);
+            if (p->transparent_sides)
+                free(p->transparent_sides);
+            if (p->liquid_sides)
+                free(p->liquid_sides);
+            if (p->foliage_sides)
+                free(p->foliage_sides);
+            if (p->custom_model_data)
+                free(p->custom_model_data);
+            free(p);
+            packet[i] = NULL;
+        }
+    }
+    free(packet);
+}
+
 void get_world_mesh(game_data* args) {
     int x = args->x;
     int z = args->z;
@@ -222,13 +249,13 @@ void get_world_mesh(game_data* args) {
         }
     }
 
-    chunk_mesh** packet = malloc(*(args->num_packets) * sizeof(chunk_mesh*));
+    int packet_count = *(args->num_packets);
+    chunk_mesh** packet = malloc(packet_count * sizeof(chunk_mesh*));
     assert(packet != NULL && "ERROR: Could not allocate memory for chunk_mesh double buffer in world_mesh generation.\n");
 
     lock_mesh();
-    
+                                  
     // Deep copy packet list while holding lock to avoid data races
-    int packet_count = *(args->num_packets);
     for (int i = 0; i < packet_count; i++) {
         packet[i] = copy_chunk_mesh(args->packet[i]);
     }
@@ -243,29 +270,14 @@ void get_world_mesh(game_data* args) {
     }
 
     lock_mesh();
-    
-    // Free the original chunk meshes
     if (args->world_mesh != NULL) {
         free_world_mesh(args->world_mesh);
     }
     args->world_mesh = world;
     args->mesh_requires_update = FALSE;
-
     unlock_mesh();
-    
-    // Free copied chunk_mesh structures and their data
-    for (int i = 0; i < packet_count; i++) {
-        if (packet[i] != NULL) {
-            chunk_mesh* p = packet[i];
-            free(p->opaque_sides);
-            free(p->transparent_sides);
-            free(p->liquid_sides);
-            free(p->foliage_sides);
-            free(p->custom_model_data);
-            free(p);
-        }
-    }
-    free(packet);
+
+    free_packets(packet, packet_count);
 }
 
 void update_world_mesh(game_data* data) {
