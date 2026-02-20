@@ -82,21 +82,7 @@ void destroy_renderer(renderer* r) {
 
 void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
     assert(r != NULL && "Renderer is NULL\n");
-    assert(packet != NULL && "World mesh is NULL\n");
 
-    if (num_packets <= 0) {
-        return; // No packets to render
-    }
-
-    render_shadow_map(&(r->shadow_map), &(r->s), packet);
-    render_reflection_map(&(r->reflection_map), r->cam, (float)WORLDGEN_WATER_LEVEL, packet);
-    
-    glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
-    glBindTexture(GL_TEXTURE_2D, r->shadow_map.texture);
-    
-    glActiveTexture(GL_TEXTURE0 + REFLECTION_MAP_TEXTURE_INDEX);
-    glBindTexture(GL_TEXTURE_2D, r->reflection_map.texture);
-    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glDisable(GL_DEPTH_TEST);
@@ -105,35 +91,39 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
 
     render_sun(&(r->s), args->tick);
 
-    glClear(GL_DEPTH_BUFFER_BIT);
-    
-    render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
-    render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
-    if (args->player->is_underwater) {
-        render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
-        render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
-        render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
-    } else {
-        render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
-        render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
-        render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
+    if (packet != NULL && num_packets > 0) {
+        render_shadow_map(&(r->shadow_map), &(r->s), packet);
+        render_reflection_map(&(r->reflection_map), r->cam, (float)WORLDGEN_WATER_LEVEL, packet);
+
+        glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
+        glBindTexture(GL_TEXTURE_2D, r->shadow_map.texture);
+
+        glActiveTexture(GL_TEXTURE0 + REFLECTION_MAP_TEXTURE_INDEX);
+        glBindTexture(GL_TEXTURE_2D, r->reflection_map.texture);
+
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
+        render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
+        if (args->player->is_underwater) {
+            render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
+            render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
+            render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
+        } else {
+            render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
+            render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
+            render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
+        }
+
+        if (args->player->has_selected_block) {
+            render_outline(&(r->or), args->player->selected_block_pos[0], args->player->selected_block_pos[1], args->player->selected_block_pos[2]);
+        }
     }
 
-    // Render block outline if player is looking at a valid block
-    if (args->player->has_selected_block) {
-        render_outline(&(r->or), args->player->selected_block_pos[0], args->player->selected_block_pos[1], args->player->selected_block_pos[2]);
-    }
-
-    // Render UI (disable depth test for 2D overlay)
     glDisable(GL_DEPTH_TEST);
-
-    // Always render hotbar
     render_hotbar(&(r->ui), args->player->hotbar, args->player->hotbar_size, args->player->selected_block);
-
-    // Render FPS counter if enabled
     if (args->show_fps) {
         render_fps(&(r->ui), args->average_fps);
     }
-
     glEnable(GL_DEPTH_TEST);
 }

@@ -9,42 +9,61 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <poll.h>
+#include <pthread.h>
 
+static int listen_fd = -1;
 
-int listen_fd = 0;
-struct pollfd fds[MAX_CLIENTS + 1];
-int num_fds = 0;
+static void* handle_client(void* arg) {
+    int client_fd = *(int*)arg;
+    free(arg);
 
-void check_new_connections(void) {
-    if (!(fds[0].revents & POLLIN)) {
-        return;
+    printf("Client connected (fd %d)\n", client_fd);
+
+    while (1) {
+        chunk_request req;
+        int n = recv(client_fd, &req, sizeof(chunk_request), MSG_WAITALL);
+        if (n <= 0) {
+            printf("Client disconnected (fd %d)\n", client_fd);
+            break;
+        }
+
+        chunk* c = malloc(sizeof(chunk));
+        c->x = req.x;
+        c->z = req.z;
+
+        if (chunk_load_from_disk(c, WORLDS_DIR) == -1) {
+            chunk_create(c, req.x, req.z);
+            chunk_save_to_disk(c, WORLDS_DIR);
+        }
+
+        int packet_size = 0;
+        byte* c_comp = compress_chunk(c, &packet_size);
+        printf("Sending %i bytes to client...\n", packet_size);
+        if (send(client_fd, &packet_size, sizeof(int), MSG_NOSIGNAL) < 0 ||
+            send(client_fd, c_comp, packet_size, MSG_NOSIGNAL) < 0) {
+            printf("ERROR: Failed to send chunk to client (fd %d)\n", client_fd);
+        }
+
+        free(c_comp);
+        free(c);
     }
 
-    int client_fd = accept(listen_fd, NULL, NULL);
-
-    if (num_fds < MAX_CLIENTS + 1) {
-        fds[num_fds].fd = client_fd;
-        fds[num_fds].events = POLLIN;
-        num_fds++;
-        printf("Client connected (fd %d)\n", client_fd);
-    }
-    else {
-        printf("Closing connection: server full (fd %d)\n", client_fd);
-        close(client_fd);
-    }
+    close(client_fd);
+    return NULL;
 }
 
 void start_server(void) {
     listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-    fds[0].fd = listen_fd;
-    fds[0].events = POLLIN;
+    if (listen_fd < 0) {
+        printf("ERROR: Failed to create server socket\n");
+        return;
+    }
 
-    num_fds++;
+    int opt = 1;
+    setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
@@ -52,56 +71,32 @@ void start_server(void) {
         .sin_addr.s_addr = INADDR_ANY
     };
 
-    bind(listen_fd, (struct sockaddr *)&addr, sizeof(addr));
-    listen(listen_fd, 1);
+    bind(listen_fd, (struct sockaddr*)&addr, sizeof(addr));
+    listen(listen_fd, MAX_CLIENTS);
 
-    printf("Waiting for connection on port 8080...\n");
+    printf("Waiting for connections on port %d...\n", PORT);
 
-    int running = 1;
-
-    while (running) {
-        int ready = poll(fds, num_fds, 16);
-
-        if (ready < 0) {
-            printf("ERROR: Error polling connections...\n");
-            return;
+    while (1) {
+        int client_fd = accept(listen_fd, NULL, NULL);
+        if (client_fd < 0) {
+            printf("ERROR: Failed to accept connection\n");
+            continue;
         }
 
-        check_new_connections();
-
-        for (int i = 1; i < num_fds; i++) {
-            if (!(fds[i].revents & POLLIN)) {
-                continue;
-            }
-
-            chunk_request* req = (chunk_request*)malloc(sizeof(chunk_request));
-
-            int n = recv(fds[i].fd, req, sizeof(chunk_request), 0);
-
-            if (n <= 0) {
-                printf("Client disconnected (fd %s)\n", fds[i].fd);
-                close(fds[i].fd);
-                fds[i] = fds[num_fds - 1];
-                num_fds--;
-                i--;
-            } else {
-                printf("Server received request for chunk (%d, %d)\n", req->x, req->z);
-                
-                chunk* c = malloc(sizeof(chunk));
-
-                if (chunk_load_from_disk(c, WORLDS_DIR) == -1) {
-                    chunk_create(c, req->x, req->z);
-                }
-
-                int packet_size = 0;
-                byte* c_comp = compress_chunk(c, &packet_size);
-                send(fds[i].fd, &packet_size, sizeof(int), 0);
-                send(fds[i].fd, &c_comp, packet_size, 0);
-
-                // TODO: cache chunk
-
-                free(c);
-            }
+        int* fd_ptr = malloc(sizeof(int));
+        if (fd_ptr == NULL) {
+            close(client_fd);
+            continue;
         }
+        *fd_ptr = client_fd;
+
+        pthread_t thread;
+        if (pthread_create(&thread, NULL, handle_client, fd_ptr) != 0) {
+            printf("ERROR: Failed to create client thread\n");
+            free(fd_ptr);
+            close(client_fd);
+            continue;
+        }
+        pthread_detach(thread);
     }
 }

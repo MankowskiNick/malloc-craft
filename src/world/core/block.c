@@ -543,6 +543,11 @@ void update_selected_block(player* p) {
 
     chunk* c = get_chunk_at(position[0], position[2], &chunk_x, &chunk_z);
 
+    if (c == NULL) {
+        printf("ERROR: Could not fetch chunk.\n");
+        return;
+    }
+
     short hit = false;
     short water_id = get_block_id("water");
 

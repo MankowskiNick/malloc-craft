@@ -250,6 +250,10 @@ void get_world_mesh(game_data* args) {
     }
 
     int packet_count = *(args->num_packets);
+    if (packet_count == 0) {
+        return;
+    }
+
     chunk_mesh** packet = malloc(packet_count * sizeof(chunk_mesh*));
     assert(packet != NULL && "ERROR: Could not allocate memory for chunk_mesh double buffer in world_mesh generation.\n");
 
