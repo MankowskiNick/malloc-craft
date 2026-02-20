@@ -11,11 +11,15 @@
 #include <mesh.h>
 #include "world/core/world.h"
 #include "world/generation/biome.h"
+#include "server/server.h"
 #include <pthread.h>
 #include <time.h>
 #include <game_data.h>
 
 int main() {
+    pthread_t server_thread = 0;
+    pthread_create(&server_thread, NULL, (void* (*)(void*))start_server, NULL);
+
     read_settings("res/settings.json");
     read_biomes("res/biomes.json");
     printf("RENDER DISTANCE: %i\n\n", TRUE_RENDER_DISTANCE);

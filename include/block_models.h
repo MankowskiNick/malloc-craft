@@ -4,6 +4,8 @@
 #include <util/settings.h>
 #include <util.h>
 
+#include <stdbool.h>
+
 #define NORTH   0.0f
 #define WEST    1.0f
 #define SOUTH   2.0f

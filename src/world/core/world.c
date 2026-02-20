@@ -1,15 +1,20 @@
 #include "world.h"
 #include "chunk.h"
 #include "chunk_io.h"
+#include "../../server/server.h"
+#include "../../server/compression/compression.h"
 #include <hashmap.h>
 
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 #define mod(x, y) fmod(x, y) < 0 ? fmod(x, y) + (y) : fmod(x,y)
 
-#define WORLDS_DIR "./worlds/"
+int server_fd = 0;
 
 DEFINE_HASHMAP(chunk_map, chunk_coord, chunk*, chunk_hash, chunk_equals);
 typedef chunk_map_hashmap chunk_map;
@@ -28,6 +33,14 @@ void w_init() {
     if (init_worlds_directory(WORLDS_DIR) == -1) {
         fprintf(stderr, "Warning: Failed to initialize worlds directory\n");
     }
+
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in addr = {
+        .sin_family = AF_INET,
+        .sin_port = htons(PORT)
+    };
+    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
+    connect(server_fd, (struct sockaddr*)&addr, sizeof(addr));
 }
 
 void w_cleanup() {
@@ -47,6 +60,7 @@ void w_cleanup() {
         }
     }
     chunk_map_free(&chunks);
+    // close connection? probably.
 }
 
 chunk* get_chunk(int x, int z) {
@@ -62,6 +76,20 @@ chunk* get_chunk(int x, int z) {
             chunk_create(c, x, z);
         }
         
+        chunk_request req = {
+            .x = x,
+            .z = z
+        };
+        send(server_fd, &req, sizeof(req), 0);
+
+        int packet_size = 0;
+        int n1 = recv(server_fd, &packet_size, sizeof(int), 0);
+        byte* c_comp = malloc(packet_size);
+
+        c = malloc(sizeof(chunk));
+        int n2 = recv(server_fd, &c_comp, packet_size, 0);
+        c = decompress_chunk(c_comp, packet_size);
+
         chunk_map_insert(&chunks, coord, c);
     }
     return c;

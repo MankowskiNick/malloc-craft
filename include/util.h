@@ -16,6 +16,7 @@
 #define F_WORLD_POS_TO_CHUNK_POS(x) x >= 0 ? (x / (float)CHUNK_SIZE) : (x / (float)CHUNK_SIZE) - 1.0f
 
 typedef unsigned int uint;
+typedef unsigned char byte;
 
 static inline char* read_file_to_string(const char* filename) {
     FILE* file = fopen(filename, "rb");

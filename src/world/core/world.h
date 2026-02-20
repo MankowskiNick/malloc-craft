@@ -4,6 +4,8 @@
 #include <block_models.h>
 #include <util/settings.h>
 
+#define WORLDS_DIR "./worlds/"
+
 void w_init();
 void w_cleanup();
 
