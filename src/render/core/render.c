@@ -35,8 +35,8 @@ renderer create_renderer(game_data* data) {
     w_init();
     m_init(&(player->cam));
 
-    // Preload initial chunks around the player
-    preload_initial_chunks(player->position[0], player->position[2]);
+    // Queue initial chunks for async loading - progress bar will show while they load
+    preload_initial_chunks(data);
 
     block_renderer wr = create_block_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);

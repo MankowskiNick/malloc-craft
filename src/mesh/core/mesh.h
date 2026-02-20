@@ -5,6 +5,7 @@
 #include <hashmap.h>
 #include <chunk_mesh.h>
 #include <block_models.h>
+#include <game_data.h>
 #include "worker_pool.h"
 #include <pthread.h>
 
@@ -61,7 +62,7 @@ void wm_buffer_free(world_mesh_buffer* buf);
 
 void m_init(camera* camera);
 void m_cleanup();
-void preload_initial_chunks(float player_x, float player_z);
+void preload_initial_chunks(game_data* data);
 chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z);
 chunk_mesh* get_chunk_mesh(int x, int z);
 void invalidate_chunk_mesh_all_lods(int x, int z);

@@ -289,12 +289,11 @@ void update_world_mesh(game_data* data) {
         assert(false && "game_data pointer is NULL\n");
     }
 
-    if (data->packet == NULL) {
-        return;
-    }
-
     while (data->is_running) {
-        get_world_mesh(data);
+        // Skip update if no chunks are available yet
+        if (data->packet != NULL) {
+            get_world_mesh(data);
+        }
         usleep(TICK_RATE);
     }
 

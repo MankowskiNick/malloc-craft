@@ -34,6 +34,10 @@ int main() {
     player* pl = malloc(sizeof(*pl));
     *pl = player_init(PLAYER_FILE);
 
+    // Initialize num_packets on heap so background threads can update it
+    int* num_packets_ptr = malloc(sizeof(int));
+    *num_packets_ptr = 0;
+
     game_data data = {
         .x = (int)pl->cam.position[0],
         .z = (int)pl->cam.position[2],
@@ -43,7 +47,11 @@ int main() {
         .fps = 0,
         .fps_average_frames = FPS_AVERAGE_FRAMES,
         .frame_buffer_index = 0,
-        .average_fps = 0
+        .average_fps = 0,
+        .num_packets = num_packets_ptr,
+        .packet = NULL,
+        .world_mesh = NULL,
+        .mesh_requires_update = FALSE,
     };
     
     // Initialize frame time buffer for rolling average
@@ -57,12 +65,6 @@ int main() {
     wm_init(&(pl->cam));
 
     i_init(window, &data);
-
-    int num_packets = 0;
-
-    get_chunk_meshes(&data);
-    get_world_mesh(&data);
-
     start_chunk_mesh_updater(&data);
     start_world_mesh_updater(&data);
 
@@ -103,7 +105,7 @@ int main() {
         world_mesh* render_mesh = copy_world_mesh(data.world_mesh);
         int render_num_packets = *(data.num_packets);
         unlock_mesh();
-        
+
         render(&data, &r, render_mesh, render_num_packets);
         free_world_mesh(render_mesh);
 

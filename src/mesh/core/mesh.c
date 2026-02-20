@@ -75,45 +75,55 @@ void m_cleanup() {
     pthread_cond_destroy(&packet_update_signal);
 }
 
-void preload_initial_chunks(float player_x, float player_z) {
-    if (chunk_worker_pool == NULL) {
+void preload_initial_chunks(game_data* data) {
+    if (chunk_worker_pool == NULL || data == NULL) {
         return;
     }
-    
+
+    float player_x = data->player->position[0];
+    float player_z = data->player->position[2];
+
     // Calculate how many chunks we need to load
     int player_chunk_x = WORLD_POS_TO_CHUNK_POS(player_x);
     int player_chunk_z = WORLD_POS_TO_CHUNK_POS(player_z);
-    
+
     int chunks_queued = 0;
-    
-    // Queue all visible chunks
-    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
-            int x = player_chunk_x - TRUE_RENDER_DISTANCE + i;
-            int z = player_chunk_z - TRUE_RENDER_DISTANCE + j;
-            
-            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
-                continue;
-            }
-            
-            // Try to get/queue the chunk
-            chunk_mesh* existing = get_chunk_mesh(x, z);
+
+    // Spiral outward from the player so nearest chunks are queued first.
+    // Uses the standard square-spiral: right, down, left, up with increasing segment lengths.
+    int sx = player_chunk_x;
+    int sz = player_chunk_z;
+    // dx/dz pairs: right (+x), down (+z), left (-x), up (-z)
+    int dir_dx[] = {1, 0, -1, 0};
+    int dir_dz[] = {0, 1, 0, -1};
+    int dir = 0, seg_len = 1, seg_pos = 0, segs_done = 0;
+    int max_side = 2 * TRUE_RENDER_DISTANCE + 1;
+    int max_iter = max_side * max_side;
+
+    for (int i = 0; i < max_iter; i++) {
+        if (sqrt(pow(sx - player_chunk_x, 2) + pow(sz - player_chunk_z, 2)) <= TRUE_RENDER_DISTANCE) {
+            chunk_mesh* existing = get_chunk_mesh(sx, sz);
             if (existing == NULL) {
                 chunks_queued++;
             }
         }
+
+        sx += dir_dx[dir];
+        sz += dir_dz[dir];
+        if (++seg_pos == seg_len) {
+            seg_pos = 0;
+            dir = (dir + 1) % 4;
+            if (++segs_done % 2 == 0) {
+                seg_len++;
+            }
+        }
     }
-    
-    // Load all queued chunks
+
+    // Submit all queued chunks to workers - they will be processed in the background
     if (chunks_queued > 0) {
         for (int i = 0; i < chunks_queued; i++) {
             load_chunk(player_x, player_z);
-            // Give workers a small amount of time to process each batch
-            usleep(100); // 0.1ms
         }
-        
-        // Wait for all work to complete
-        pool_wait_completion(chunk_worker_pool);
     }
 }
 
