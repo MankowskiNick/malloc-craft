@@ -7,6 +7,8 @@
 #include <stddef.h>
 #include <util.h>
 
+#pragma region buffer_management
+
 void pack_int_to_buffer(byte* dest, int value) {
     if (dest == NULL) {
         printf("ERROR: Cannot pack to NULL chunk data buffer.\n");
@@ -28,35 +30,6 @@ void pack_block_to_buffer(byte* dest, block_data_t value) {
     for (int i = 0; i < BLOCK_DATA_BYTES; i++) {
         dest[i] = value.bytes[i];
     }
-}
-
-// Encode compressed chunk to buffer
-byte* to_buffer(compressed_chunk* c_comp, int* out_size) {
-    if (c_comp == NULL) {
-        return NULL;
-    }
-
-    int size = 3 * INT_BYTES + (BLOCK_DATA_BYTES + INT_BYTES) * c_comp->packet_count;
-    byte* out = malloc(size);
-    for (int i = 0; i < size; i++) {
-        out[i] = 0;
-    }
-
-    pack_int_to_buffer(out, c_comp->x);
-    pack_int_to_buffer(out + INT_BYTES, c_comp->z);
-    pack_int_to_buffer(out + 2 * INT_BYTES, c_comp->packet_count);
-
-    int buffer_idx = 3 * INT_BYTES;
-    for (int i = 0; i < c_comp->packet_count; i++) {
-        pack_block_to_buffer(out + buffer_idx, c_comp->packets[i].data);
-        buffer_idx += BLOCK_DATA_BYTES;
-
-        pack_int_to_buffer(out + buffer_idx, c_comp->packets[i].count);
-        buffer_idx += INT_BYTES;
-    }
-
-    *out_size = size;
-    return out;
 }
 
 int pull_int_from_buffer(byte* source) {
@@ -109,6 +82,35 @@ packet pull_packet_from_buffer(byte* source) {
     return out;
 }
 
+// Encode compressed chunk to buffer
+byte* to_buffer(compressed_chunk* c_comp, int* out_size) {
+    if (c_comp == NULL) {
+        return NULL;
+    }
+
+    int size = 3 * INT_BYTES + (BLOCK_DATA_BYTES + INT_BYTES) * c_comp->packet_count;
+    byte* out = malloc(size);
+    for (int i = 0; i < size; i++) {
+        out[i] = 0;
+    }
+
+    pack_int_to_buffer(out, c_comp->x);
+    pack_int_to_buffer(out + INT_BYTES, c_comp->z);
+    pack_int_to_buffer(out + 2 * INT_BYTES, c_comp->packet_count);
+
+    int buffer_idx = 3 * INT_BYTES;
+    for (int i = 0; i < c_comp->packet_count; i++) {
+        pack_block_to_buffer(out + buffer_idx, c_comp->packets[i].data);
+        buffer_idx += BLOCK_DATA_BYTES;
+
+        pack_int_to_buffer(out + buffer_idx, c_comp->packets[i].count);
+        buffer_idx += INT_BYTES;
+    }
+
+    *out_size = size;
+    return out;
+}
+
 // Extract compressed_chunk encoded in bytes
 compressed_chunk* from_buffer(byte* source, int size) {
     if (source == NULL) {
@@ -141,6 +143,10 @@ compressed_chunk* from_buffer(byte* source, int size) {
     out->packets = packets;
     return out;
 }
+
+#pragma endregion
+
+#pragma region helper_functions
 
 // Check equality for block_data_t
 bool block_data_equals(block_data_t a, block_data_t b) {
@@ -177,7 +183,6 @@ void populate_chunk_blocks(chunk* c, block_data_t blocks[CHUNK_SIZE * CHUNK_SIZE
     }
 }
 
-
 // A block "segment" is a maximal set of n sequentially arranged blocks.  
 // For example, "aaaabbc" has 3 segments. 
 //   1. Block 'a', size 4
@@ -200,6 +205,8 @@ packet compress_block_segment(block_data_t blocks[CHUNK_SIZE * CHUNK_SIZE * CHUN
     };
     return p;
 }
+
+#pragma endregion
 
 byte* compress_chunk(chunk* c, int* out_size) {
 

@@ -312,12 +312,12 @@ void render_hotbar(ui_renderer* ui, char** hotbar, int hotbar_size, int selected
         if (slot_index < hotbar_size && hotbar[slot_index] != NULL && hotbar[slot_index][0] != '\0') {
             short block_id = get_block_id(hotbar[slot_index]);
             if (block_id >= 0) {
-                block_type* bt = get_block_type(block_id);
-                if (bt != NULL && !bt->is_custom_model) {
+                block_type bt = get_block_type(block_id);
+                if (bt.id != -1 && !bt.is_custom_model) {
                     // Get atlas coords - use face 0 for foliage, UP face (4) for others
-                    int face_index = bt->is_foliage ? 0 : 4;
-                    int atlas_x = bt->face_atlas_coords[face_index][0];
-                    int atlas_y = bt->face_atlas_coords[face_index][1];
+                    int face_index = bt.is_foliage ? 0 : 4;
+                    int atlas_x = bt.face_atlas_coords[face_index][0];
+                    int atlas_y = bt.face_atlas_coords[face_index][1];
 
                     // Only render if valid coords
                     if (atlas_x >= 0 && atlas_y >= 0) {

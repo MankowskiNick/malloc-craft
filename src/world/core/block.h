@@ -26,6 +26,6 @@ bool check_block_foliage(short id);
 
 void send_cube_vbo(VAO vao, VBO vbo);
 
-block_type* get_block_type(short id);
+block_type get_block_type(short id);
 
 #endif

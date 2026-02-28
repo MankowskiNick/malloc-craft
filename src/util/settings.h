@@ -151,6 +151,10 @@ extern float MAX_REACH;
 extern float RAY_STEP;
 
 
+// SERVER SETTINGS
+extern int SERVER_PORT;
+extern char* SERVER_HOST;
+
 // WORLD GENERATION SETTINGS
 
 // World generation seed

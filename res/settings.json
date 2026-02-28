@@ -141,5 +141,9 @@
     "fps_average_frames": 60,
     "ui_scale": 1.0,
     "fps_counter_scale": 0.5
+  },
+  "server": {
+    "port": 8085,
+    "host": "127.0.0.1"
   }
 }

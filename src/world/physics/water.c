@@ -110,14 +110,17 @@ static void mark_chunk_modified(int chunk_x, int chunk_z) {
 static bool is_water_destroyable(short block_id) {
     if (block_id == air_id || block_id == water_id) return false;
 
-    block_type* type = get_block_type(block_id);
-    if (!type) return false;
+    block_type type = get_block_type(block_id);
+    if (type.id == -1) 
+        return false;
 
     // Foliage blocks are destroyed by water
-    if (type->is_foliage) return true;
+    if (type.is_foliage) 
+        return true;
 
     // Torches are destroyed by water
-    if (block_id == torch_id) return true;
+    if (block_id == torch_id) 
+        return true;
 
     return false;
 }

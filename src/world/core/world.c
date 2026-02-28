@@ -3,7 +3,9 @@
 #include "chunk_io.h"
 #include "../../server/server.h"
 #include "../../server/compression/compression.h"
+#include "../../util/settings.h"
 #include <hashmap.h>
+#include <server/models.h>
 
 
 #include <stdlib.h>
@@ -15,11 +17,16 @@
 
 #define mod(x, y) fmod(x, y) < 0 ? fmod(x, y) + (y) : fmod(x,y)
 
+DEFINE_HASHMAP(chunk_map, chunk_coord, chunk*, chunk_hash, chunk_equals);
+typedef chunk_map_hashmap chunk_map;
+chunk_map chunks;
+
 // Per-thread socket: each thread gets its own connection to the chunk server.
 // This eliminates lock contention — threads send/recv independently in parallel.
 static pthread_key_t  thread_socket_key;
 static pthread_once_t thread_socket_key_once = PTHREAD_ONCE_INIT;
 
+#pragma region thread_management
 static void close_thread_socket(void* ptr) {
     int* fd_ptr = (int*)ptr;
     if (fd_ptr) {
@@ -57,9 +64,9 @@ static int get_thread_socket(void) {
 
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
-        .sin_port   = htons(PORT)
+        .sin_port   = htons(SERVER_PORT)
     };
-    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
+    inet_pton(AF_INET, SERVER_HOST, &addr.sin_addr);
 
     if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         fprintf(stderr, "ERROR: Failed to connect to chunk server\n");
@@ -80,9 +87,8 @@ static void reset_thread_socket(void) {
     }
 }
 
-DEFINE_HASHMAP(chunk_map, chunk_coord, chunk*, chunk_hash, chunk_equals);
-typedef chunk_map_hashmap chunk_map;
-chunk_map chunks;
+#pragma endregion
+
 
 const char* get_worlds_dir(void) {
     return WORLDS_DIR;
@@ -129,55 +135,61 @@ void w_cleanup() {
     }
 }
 
+// TODO: maybe move to server.h?
+byte* request_chunk(int x, int z, int* size) {
+    int fd = get_thread_socket();
+    if (fd < 0) {
+        fprintf(stderr, "ERROR: No server connection\n");
+        return NULL;
+    }
+
+    chunk_request req = {
+        .x = x,
+        .z = z
+    };
+    
+    if (send(fd, &req, sizeof(req), MSG_NOSIGNAL) < 0) {
+        fprintf(stderr, "ERROR: Failed to send chunk request to server\n");
+        reset_thread_socket();
+        return NULL;
+    }
+
+    int packet_size = 0;
+    int n1 = recv(fd, &packet_size, sizeof(int), MSG_WAITALL);
+    if (n1 <= 0) {
+        fprintf(stderr, "ERROR: Failed to receive chunk size from server\n");
+        reset_thread_socket();
+        return NULL;
+    }
+
+    byte* c_comp = malloc(packet_size);
+    int n2 = recv(fd, c_comp, packet_size, MSG_WAITALL);
+    if (n2 <= 0) {
+        fprintf(stderr, "ERROR: Failed to receive chunk data from server\n");
+        free(c_comp);
+        reset_thread_socket();
+        return NULL;
+    }
+
+    *size = packet_size;
+    return c_comp;
+}
+
 chunk* get_chunk(int x, int z) {
     chunk_coord coord = {x, z};
     chunk** found = chunk_map_get(&chunks, coord);
     chunk* c = found ? *found : NULL;
     if (c == NULL) {
-        // c = malloc(sizeof(chunk));
+        int packet_size = -1;
+        byte* compressed_chunk = request_chunk(x, z, &packet_size);
 
-        // c->x = x;
-        // c->z = z;
-        // if (chunk_load_from_disk(c, WORLDS_DIR) == -1) {
-        //     chunk_create(c, x, z);
-        // }
-
-        int fd = get_thread_socket();
-        if (fd < 0) {
-            fprintf(stderr, "ERROR: No server connection\n");
+        if (!compressed_chunk || packet_size == -1) {
+            printf("ERROR: Unable to received chunk data from server: chunk (%i, %i)", x, z);
             return NULL;
         }
 
-        chunk_request req = {
-            .x = x,
-            .z = z
-        };
-
-        if (send(fd, &req, sizeof(req), MSG_NOSIGNAL) < 0) {
-            fprintf(stderr, "ERROR: Failed to send chunk request to server\n");
-            reset_thread_socket();
-            return NULL;
-        }
-
-        int packet_size = 0;
-        int n1 = recv(fd, &packet_size, sizeof(int), MSG_WAITALL);
-        if (n1 <= 0) {
-            fprintf(stderr, "ERROR: Failed to receive chunk size from server\n");
-            reset_thread_socket();
-            return NULL;
-        }
-
-        byte* c_comp = malloc(packet_size);
-        int n2 = recv(fd, c_comp, packet_size, MSG_WAITALL);
-        if (n2 <= 0) {
-            fprintf(stderr, "ERROR: Failed to receive chunk data from server\n");
-            free(c_comp);
-            reset_thread_socket();
-            return NULL;
-        }
-
-        c = decompress_chunk(c_comp, packet_size);
-        free(c_comp);
+        c = decompress_chunk(compressed_chunk, packet_size);
+        free(compressed_chunk);
 
         chunk_map_insert(&chunks, coord, c);
     }

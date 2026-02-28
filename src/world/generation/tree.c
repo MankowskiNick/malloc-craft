@@ -163,7 +163,6 @@ tree* get_tree_type(char* id) {
     return NULL;
 }
 
-
 void generate_tree(int x, int y, int z, char* id, chunk* c) {
     tree* t = get_tree_type(id);
     int height = (int)(t->base_height + (rand() / (float)RAND_MAX) * t->height_variance);

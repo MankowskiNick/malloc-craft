@@ -252,19 +252,19 @@ void get_side_visible(
 
     short current_water_level = 0;
     get_block_info(c->blocks[x][y][z], &current_id, NULL, NULL, &current_water_level);
-    block_type* current = get_block_type(current_id);
-    if (current == NULL) {
+    block_type current = get_block_type(current_id);
+    if (current.id == -1) {
         *visible_out = 0;
         return;  // Invalid block, don't render
     }
 
     // calculate visibility
-    block_type* adjacent = get_block_type(adjacent_id);
-    if (adjacent == NULL) {
+    block_type adjacent = get_block_type(adjacent_id);
+    if (adjacent.id == -1) {
         *visible_out = 0;
         return;  // Invalid adjacent block, don't render
     }
-    uint visible = adjacent_id == get_block_id("air") || adjacent->transparent != current->transparent;
+    uint visible = adjacent_id == get_block_id("air") || adjacent.transparent != current.transparent;
 
     // check if we are underwater
     if (adjacent_id == get_block_id("water")) {
@@ -283,9 +283,9 @@ void get_side_visible(
 
     // For liquid blocks: show face at any boundary where we can see the water volume
     // This includes: water-to-air, water-to-solid, but NOT water-to-water
-    if (current->liquid) {
+    if (current.liquid) {
         // Hide face if adjacent is also liquid (same type)
-        if (adjacent != NULL && adjacent->liquid) {
+        if (adjacent.id != -1 && adjacent.liquid) {
             visible = 0;
         }
         // Show face if adjacent is not water (air, solid blocks, etc.)
@@ -295,21 +295,21 @@ void get_side_visible(
     }
 
     // make sure transparent neighbors are visible
-    if (adjacent != NULL && adjacent->transparent != current->transparent) {
+    if (adjacent.id == -1 && adjacent.transparent != current.transparent) {
         visible = 1;
     }
 
-    if (adjacent->is_custom_model) {
+    if (adjacent.is_custom_model) {
         visible = 1;
     }
 
-    if (adjacent != NULL
-        && (adjacent->transparent && current->transparent)
-        && adjacent->id != current->id) {
+    if (adjacent.id != -1
+        && (adjacent.transparent && current.transparent)
+        && adjacent.id != current.id) {
         visible = 1;
     }
 
-    if (current->is_foliage) {
+    if (current.is_foliage) {
         visible = 1; // foliage is always visible
     }
 
@@ -512,13 +512,13 @@ static bool is_ao_solid(int x, int y, int z, chunk* c, chunk* adj_chunks[4]) {
         return false;
     }
 
-    block_type* block = get_block_type(block_id);
+    block_type block = get_block_type(block_id);
 
     // Model blocks don't contribute to AO
-    if (block == NULL 
-            || block->is_custom_model
-            || block->transparent
-            || block->liquid) {
+    if (block.id == -1
+            || block.is_custom_model
+            || block.transparent
+            || block.liquid) {
         return false;
     }
 
@@ -686,22 +686,22 @@ void pack_side(int x_0, int y_0, int z_0,
     data->ao = ao;
 
     // block specific data
-    block_type* block = get_block_type(type);
-    if (block == NULL) {
+    block_type block = get_block_type(type);
+    if (block.id == -1) {
         return;  // Invalid block type, skip packing
     }
-    data->orientation = block->oriented ? orientation : (short)DOWN;
+    data->orientation = block.oriented ? orientation : (short)DOWN;
 
     short display_side = get_rotated_side(side, rot);
-    if (!block->is_custom_model && !block->is_foliage && block->oriented) {
+    if (!block.is_custom_model && !block.is_foliage && block.oriented) {
         display_side = get_converted_side(side, orientation);
     }
     // Foliage only uses sides 0 and 1, clamp to valid range
-    if (block->is_foliage && display_side > 1) {
+    if (block.is_foliage && display_side > 1) {
         display_side = side % 2;
     }
-    data->atlas_x = block->face_atlas_coords[display_side][0];
-    data->atlas_y = block->face_atlas_coords[display_side][1];
+    data->atlas_x = block.face_atlas_coords[display_side][0];
+    data->atlas_y = block.face_atlas_coords[display_side][1];
 }
 
 // Generate water flow transition faces between blocks with different water levels
@@ -782,13 +782,13 @@ void pack_water_transitions(
         trans->ao = 0xFF;  // No AO for water transitions (all vertices = 3)
 
         // Use water texture for transition
-        block_type* water_block = get_block_type(water_id);
-        if (water_block == NULL) {
+        block_type water_block = get_block_type(water_id);
+        if (water_block.id != -1) {
             continue;  // Invalid water block type
         }
         short display_side = side;  // Use the cardinal direction directly
-        trans->atlas_x = water_block->face_atlas_coords[display_side][0];
-        trans->atlas_y = water_block->face_atlas_coords[display_side][1];
+        trans->atlas_x = water_block.face_atlas_coords[display_side][0];
+        trans->atlas_y = water_block.face_atlas_coords[display_side][1];
 
         (*num_sides)++;
     }
@@ -837,11 +837,11 @@ void pack_block(
 
         // For liquid blocks, use the current block's water level
         // For non-liquid blocks, use the adjacent water level (for underwater effects)
-        block_type* block = get_block_type(block_id);
-        if (block == NULL) {
+        block_type block = get_block_type(block_id);
+        if (block.id == -1) {
             continue;  // Invalid block type, skip this face
         }
-        short water_level_to_use = block->liquid ? current_water_level : (short)adj_water_level;
+        short water_level_to_use = block.liquid ? current_water_level : (short)adj_water_level;
 
         // Calculate AO for this face
         int ao = calculate_face_ao(x, y, z, side, c, adj_chunks);
@@ -871,19 +871,19 @@ void pack_model(
     short rot = 0;
     short water_level = 0;
     get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot, &water_level);
-    block_type* block = get_block_type(block_id);
-    if (block == NULL || !block->is_custom_model || block->model == NULL) {
+    block_type block = get_block_type(block_id);
+    if (block.id == -1 || !block.is_custom_model || block.model == NULL) {
         return;
     }
 
     // reference blockbench model data hashmap based on model name
     blockbench_model* model = NULL;
 
-    if (block->oriented) {
-        model = get_blockbench_model(block->models[orientation]);
+    if (block.oriented) {
+        model = get_blockbench_model(block.models[orientation]);
     }
     else {
-        model = get_blockbench_model(block->model);
+        model = get_blockbench_model(block.model);
     }
 
     if (model == NULL) {
@@ -898,7 +898,7 @@ void pack_model(
     }
 
     mat4 transformation;
-    get_model_transformation(transformation, block, orientation, rot);
+    get_model_transformation(transformation, &block, orientation, rot);
 
     // copy model data into chunk mesh data
     for (int i = 0; i < model->index_count; i++) {
@@ -966,11 +966,11 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                     continue;
                 }
 
-                block_type* block = get_block_type(block_id);
-                if (block == NULL) {
+                block_type block = get_block_type(block_id);
+                if (block.id == -1) {
                     continue;  // Invalid block type, skip
                 }
-                if (block->liquid) {
+                if (block.liquid) {
                     // Pack normal liquid faces
                     pack_block(i, k, j, lod_scale, c, adj_chunks,
                         liquid_side_data, num_liquid_sides);
@@ -981,7 +981,7 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                     pack_water_transitions(i, k, j, lod_scale, c, adj_chunks, current_water_level,
                         liquid_side_data, num_liquid_sides);
                 }
-                else if (block->transparent && !block->is_foliage) {
+                else if (block.transparent && !block.is_foliage) {
                     // Only pack transparent blocks if within render distance
                     if (render_transparent) {
                         pack_block(i, k, j, lod_scale,
@@ -989,7 +989,7 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                             transparent_side_data, num_transparent_sides);
                     }
                 }
-                else if (block->transparent && block->is_foliage) {
+                else if (block.transparent && block.is_foliage) {
                     // Only pack foliage blocks if within render distance
                     if (render_foliage) {
                         pack_block(i, k, j, lod_scale,
@@ -997,7 +997,7 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                             foliage_side_data, num_foliage_sides);
                     }
                 }
-                else if (block->is_custom_model) {
+                else if (block.is_custom_model) {
                     pack_model(i, k, j, c, custom_model_data, num_custom_verts);
                 }
                 else {
@@ -1166,7 +1166,11 @@ chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z) {
     // This ensures LOD transitions happen smoothly as the player moves
     
     chunk_coord coords[5] = {
-        {x+1, z}, {x-1, z}, {x, z+1}, {x, z-1}, {x, z}
+        {x+1, z}, 
+        {x-1, z}, 
+        {x, z+1}, 
+        {x, z-1}, 
+        {x, z}
     };
     
     // Update all adjacent chunks at their appropriate LOD

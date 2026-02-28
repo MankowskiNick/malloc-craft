@@ -90,6 +90,9 @@ float SPRINT_MAX_SPEED_MULTIPLIER = 1.5f; // 50% faster max speed when sprinting
 int SPRINT_DOUBLE_TAP_TIME = 200;         // 200 ms to double-tap W
 int SPRINT_TIMEOUT = 500;                 // 500 ms without movement to disable sprint
 
+int SERVER_PORT = 8085;
+char* SERVER_HOST = "127.0.0.1";
+
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
 float WORLDGEN_BIOME_AMPLITUDE = 1.0f;
@@ -802,6 +805,23 @@ void parse_shader_settings(json_object shader_obj) {
     }
 }
 
+void parse_server_settings(json_object server_obj) {
+    if (server_obj.type != JSON_OBJECT) {
+        fprintf(stderr, "Error: server section is not an object in settings.json\n");
+        exit(EXIT_FAILURE);
+    }
+
+    json_object port = json_get_property(server_obj, "port");
+    if (port.type == JSON_NUMBER) {
+        SERVER_PORT = (int)port.value.number;
+    }
+
+    json_object host = json_get_property(server_obj, "host");
+    if (host.type == JSON_STRING) {
+        SERVER_HOST = strdup(host.value.string);
+    }
+}
+
 void read_settings(const char* filename) {
     // Read the JSON file to string
     char* settings_json = read_file_to_string(filename);
@@ -895,6 +915,11 @@ void read_settings(const char* filename) {
     json_object ui_obj = json_get_property(obj.root, "ui");
     if (ui_obj.type != JSON_NULL) {
         parse_ui_settings(ui_obj);
+    }
+
+    json_object server_obj = json_get_property(obj.root, "server");
+    if (server_obj.type != JSON_NULL) {
+        parse_server_settings(server_obj);
     }
 
     // Clean up memory
