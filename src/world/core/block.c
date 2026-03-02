@@ -1,13 +1,17 @@
 #include "block.h"
-#include <mesh.h>
-#include "world.h"
+
+#include <server/client.h>
+#include <cerialize/cerialize.h>
 #include <util.h>
-#include <player/core/player.h>
+
+#include "../../player/core/player.h"
+#include "../../mesh/geometry/blockbench_loader.h"
 #include "../physics/water.h"
+#include "mesh.h"
+#include "world.h"
+
 #include <cglm/cglm.h>
 #include <glad/glad.h>
-#include <cerialize/cerialize.h>
-#include <blockbench_loader.h>
 
 block_type* TYPES;
 int BLOCK_COUNT = 0;
@@ -378,6 +382,8 @@ void modify_block(game_data* data, short block_id, float t_offset) {
     int px = WORLD_POS_TO_CHUNK_POS(data->player->position[0]);
     int pz = WORLD_POS_TO_CHUNK_POS(data->player->position[2]);
     queue_chunk_for_sorting(new_mesh, px, pz);
+
+    send_chunk_to_server(c);
 }
 
 

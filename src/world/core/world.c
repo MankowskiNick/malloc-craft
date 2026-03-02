@@ -1,6 +1,5 @@
 #include "world.h"
 #include "chunk.h"
-#include "chunk_io.h"
 #include "../../server/compression/compression.h"
 #include "../../util/settings.h"
 #include <hashmap.h>
@@ -30,12 +29,6 @@ void w_init() {
     c_init();
 
     chunks = chunk_map_init(CHUNK_CACHE_SIZE);
-
-    // Initialize the worlds directory
-    // TODO: this should probably be moved to the server...
-    if (init_worlds_directory(WORLDS_DIR) == -1) {
-        fprintf(stderr, "Warning: Failed to initialize worlds directory\n");
-    }
 }
 
 void w_cleanup() {

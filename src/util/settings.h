@@ -154,6 +154,7 @@ extern float RAY_STEP;
 // SERVER SETTINGS
 extern int SERVER_PORT;
 extern char* SERVER_HOST;
+extern char* WORLDS_DIR;
 
 // WORLD GENERATION SETTINGS
 

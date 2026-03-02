@@ -1,11 +1,7 @@
 
 #include <server/server.h>
 
-#include "../world/core/chunk.h"
-#include "../world/core/chunk_io.h"
-#include "../world/core/world.h"
 #include "../util/settings.h"
-#include "compression/compression.h"
 #include "threads/listen.h"
 #include "threads/broadcast.h"
 

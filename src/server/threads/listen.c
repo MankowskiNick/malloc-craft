@@ -5,25 +5,15 @@
 #include <util.h>
 
 #include "../../world/core/chunk.h"
-#include "../../world/core/chunk_io.h"
 #include "../../world/core/world.h"
 #include "../../util/settings.h"
 #include "../compression/compression.h"
+#include "../world/world_state.h"
+#include "../world/chunk_io.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-
-static bool send_all(int fd, const void* buf, int len) {
-    const byte* ptr = (const byte*)buf;
-    while (len > 0) {
-        int sent = send(fd, ptr, len, MSG_NOSIGNAL);
-        if (sent <= 0) return false;
-        ptr += sent;
-        len -= sent;
-    }
-    return true;
-}
 
 void handle_disconnect(client_connection* c) {
     printf("Client disconnected(fd %d)\n", c->fd);
@@ -37,37 +27,63 @@ void process_chunk_request(client_connection* client) {
         handle_disconnect(client);
         return;
     } 
-        
-    chunk* c = malloc(sizeof(chunk));
-    c->x = req.x;
-    c->z = req.z;
 
-    pthread_mutex_lock(&(client->parent->disk_lock));
-    int chunk_read = chunk_load_from_disk(c, WORLDS_DIR);
-    pthread_mutex_unlock(&(client->parent->disk_lock));
-
-    if (chunk_read == -1) {
-        chunk_create(c, req.x, req.z);
-    }
-
+    chunk* c = load_chunk_state(&(client->parent->disk_lock), req.x, req.z);
 
     int packet_size = 0;
-    byte* c_comp = compress_chunk(c, &packet_size);
+    byte* compressed_chunk = compress_chunk(c, &packet_size);
 
-    if (!send_all(client->fd, &packet_size, sizeof(int)) ||
-        !send_all(client->fd, c_comp, packet_size)) {
+    if (!send_data(client->fd, &packet_size, sizeof(int)) ||
+        !send_data(client->fd, compressed_chunk, packet_size)) {
         printf("ERROR: Failed to send chunk to client (fd %d)\n", client->fd);
     }
-    free(c_comp);
+    free(compressed_chunk);
     free(c);
 }
 
-void process_chunk_update(void) {
+void process_chunk_update(client_connection* client) {
+    int packet_size = -1;
+    if (recv(client->fd, &packet_size, sizeof(int), MSG_WAITALL) <= 0) {
+        handle_disconnect(client);
+        return;
+    }
 
+    if (packet_size < 0) {
+        printf("ERROR: Packet size cannot be negative(packet_size = %i)\n", packet_size);
+        handle_disconnect(client);
+        return;
+    }
+
+    byte* compressed_chunk = malloc(packet_size);
+    if (compressed_chunk == NULL || recv(client->fd, compressed_chunk, packet_size, MSG_WAITALL) <= 0) {
+        printf("ERROR: Failed to allocate/receive chunk from client(fd = %i).\n", client->fd);
+        handle_disconnect(client);
+        return;
+    }
+
+    // TODO: add to broadcast queue
+
+    chunk* c = decompress_chunk(compressed_chunk, packet_size);
+    free(compressed_chunk);
+
+    if (c == NULL) {
+        printf("ERROR: Failed to decompress chunk\n");
+        return;
+    }
+
+    save_chunk_state(c);
+
+    // TODO: freeing c will occur after broadcast is complete
+    free(c);
 }
 
 void* run_listen_thread(void* args) {
     client_connection* client = (client_connection*)args;
+
+    // Initialize the worlds directory
+    if (init_worlds_directory(WORLDS_DIR) == -1) {
+        fprintf(stderr, "Warning: Failed to initialize worlds directory\n");
+    }
 
     while (1) {
         chunk_msg_type msg_type = UNKNOWN;
@@ -81,7 +97,7 @@ void* run_listen_thread(void* args) {
                 process_chunk_request(client);
                 break;
             case CHUNK_UPDATE:
-                process_chunk_update();
+                process_chunk_update(client);
                 break;
             default:
                 printf("ERROR: Unknown message header incoming from client %i(header=%i)", client->fd, msg_type);

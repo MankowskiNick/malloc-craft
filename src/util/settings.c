@@ -92,6 +92,7 @@ int SPRINT_TIMEOUT = 500;                 // 500 ms without movement to disable 
 
 int SERVER_PORT = 8085;
 char* SERVER_HOST = "127.0.0.1";
+char* WORLDS_DIR = "./worlds/";
 
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
@@ -819,6 +820,11 @@ void parse_server_settings(json_object server_obj) {
     json_object host = json_get_property(server_obj, "host");
     if (host.type == JSON_STRING) {
         SERVER_HOST = strdup(host.value.string);
+    }
+
+    json_object worlds_dir = json_get_property(server_obj, "worlds_dir");
+    if (worlds_dir.type == JSON_STRING) {
+        WORLDS_DIR = strdup(worlds_dir.value.string);
     }
 }
 
