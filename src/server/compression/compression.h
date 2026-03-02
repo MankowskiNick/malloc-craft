@@ -2,6 +2,7 @@
 #define COMPRESS_H
 
 #include <block_models.h>
+#include <util.h>
 
 // Data layout:
 //  1. 4 bytes - x

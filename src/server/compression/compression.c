@@ -131,6 +131,11 @@ compressed_chunk* from_buffer(byte* source, int size) {
     int idx = 3 * INT_BYTES;
     packet* packets = malloc(packet_count * sizeof(packet));
     for (int i = 0; i < packet_count; i++) {
+        if (idx + BLOCK_DATA_BYTES + INT_BYTES > size) {
+            printf("ERROR: Chunk buffer truncated at packet %d of %d.\n", i, packet_count);
+            free(packets);
+            return NULL;
+        }
         packets[i] = pull_packet_from_buffer(source + idx);
         idx += BLOCK_DATA_BYTES + INT_BYTES;
     }
@@ -245,6 +250,10 @@ byte* compress_chunk(chunk* c, int* out_size) {
 
 chunk* decompress_chunk(byte* bytes, int size) {
     compressed_chunk* c_comp = from_buffer(bytes, size);
+    if (c_comp == NULL) {
+        printf("ERROR: Failed to decompress chunk from buffer.\n");
+        return NULL;
+    }
 
     block_data_t blocks[CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT] = {0};
 
