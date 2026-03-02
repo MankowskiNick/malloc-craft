@@ -10,6 +10,7 @@
 #include "../compression/compression.h"
 #include "../world/world_state.h"
 #include "../world/chunk_io.h"
+#include "broadcast.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -61,10 +62,8 @@ void process_chunk_update(client_connection* client) {
         return;
     }
 
-    // TODO: add to broadcast queue
-
+    add_to_broadcast_queue(compressed_chunk, packet_size);
     chunk* c = decompress_chunk(compressed_chunk, packet_size);
-    free(compressed_chunk);
 
     if (c == NULL) {
         printf("ERROR: Failed to decompress chunk\n");
@@ -72,8 +71,8 @@ void process_chunk_update(client_connection* client) {
     }
 
     save_chunk_state(c);
-
-    // TODO: freeing c will occur after broadcast is complete
+    
+    free(compressed_chunk);
     free(c);
 }
 

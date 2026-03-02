@@ -65,6 +65,12 @@ server_t* create_server() {
     server->client_count = 0;
     pthread_mutex_init(&server->disk_lock, NULL);
 
+    if (pthread_create(&server->broadcast_thread, NULL, run_broadcast_thread, server) != 0) {
+        printf("ERROR: Failed to create broadcast thread.\n");
+        close(server->listen_fd);
+        return NULL;
+    }
+
     for (int i = 0; i < MAX_CLIENTS; i++) {
         server->clients[i].fd = -1;
         server->clients[i].parent = server;
