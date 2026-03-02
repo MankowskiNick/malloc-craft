@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "render/core/window.h"
 #include "render.h"
 #include "world/core/block.h"
@@ -17,14 +18,30 @@
 #include <time.h>
 #include <game_data.h>
 
-int main() {
+int main(int argc, char** argv) {
+    int server_mode = 0;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--server") == 0) {
+            server_mode = 1;
+            break;
+        }
+    }
+
+    read_settings("res/settings.json");
+
+    if (server_mode) {
+        start_server();
+        return 0;
+    }
+
     pthread_t server_thread = 0;
-    pthread_create(&server_thread, NULL, (void* (*)(void*))start_server, NULL);
+    if (strcmp(SERVER_HOST, "127.0.0.1") == 0) {
+        pthread_create(&server_thread, NULL, (void* (*)(void*))start_server, NULL);
+    }
 
     pthread_t recv_thread = 0;
     pthread_create(&recv_thread, NULL, run_client_recv_thread, NULL);
 
-    read_settings("res/settings.json");
     read_biomes("res/biomes.json");
     printf("RENDER DISTANCE: %i\n\n", TRUE_RENDER_DISTANCE);
 
