@@ -20,6 +20,7 @@
 DEFINE_HASHMAP(chunk_map, chunk_coord, chunk*, chunk_hash, chunk_equals);
 typedef chunk_map_hashmap chunk_map;
 chunk_map chunks;
+static pthread_mutex_t chunk_map_lock;
 
 const char* get_worlds_dir(void) {
     return WORLDS_DIR;
@@ -29,6 +30,7 @@ void w_init() {
     c_init();
 
     chunks = chunk_map_init(CHUNK_CACHE_SIZE);
+    pthread_mutex_init(&chunk_map_lock, NULL);
 }
 
 void w_cleanup() {
@@ -47,13 +49,29 @@ void w_cleanup() {
 
 chunk* get_chunk(int x, int z) {
     chunk_coord coord = {x, z};
+
+    pthread_mutex_lock(&chunk_map_lock);
     chunk** found = chunk_map_get(&chunks, coord);
     chunk* c = found ? *found : NULL;
+    pthread_mutex_unlock(&chunk_map_lock);
+
     if (c == NULL) {
         c = request_chunk(x, z);
+        pthread_mutex_lock(&chunk_map_lock);
         chunk_map_insert(&chunks, coord, c);
+        pthread_mutex_unlock(&chunk_map_lock);
     }
     return c;
+}
+
+void update_chunk(chunk* c) {
+    chunk_coord coord = {c->x, c->z};
+
+    pthread_mutex_lock(&chunk_map_lock);
+    chunk** existing = chunk_map_get(&chunks, coord);
+    if (existing) free(*existing);
+    chunk_map_insert(&chunks, coord, c);
+    pthread_mutex_unlock(&chunk_map_lock);
 }
 
 chunk* get_chunk_at(float x, float z, int* chunk_x, int* chunk_z) {

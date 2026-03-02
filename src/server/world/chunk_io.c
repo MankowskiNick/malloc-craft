@@ -137,6 +137,5 @@ int chunk_load_from_disk(chunk* c, const char* worlds_dir) {
     memcpy(c->blocks, loaded->blocks, sizeof(c->blocks));
     free(loaded);
 
-    c->modified = false;
     return 0;
 }

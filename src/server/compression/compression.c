@@ -272,7 +272,6 @@ chunk* decompress_chunk(byte* bytes, int size) {
     chunk* c = malloc(sizeof(chunk));
     c->x = c_comp->x;
     c->z = c_comp->z;
-    c->modified = false;
     populate_chunk_blocks(c, blocks);
     return c;
 }

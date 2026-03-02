@@ -79,6 +79,10 @@ static void reset_thread_socket(void) {
 
 #pragma endregion
 
+int acquire_server_fd(void) {
+    return get_thread_socket();
+}
+
 // TODO: convert this to use send_data
 void send_chunk_request(int fd, int x, int z) {\
     if (!send_msg_header(CHUNK_REQ, fd)) {

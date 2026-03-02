@@ -350,10 +350,6 @@ void modify_block(game_data* data, short block_id, float t_offset) {
     short water_level = type.liquid ? 7 : 0;
 
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, block_id, hit_side, rot, water_level);
-    // send update to server
-    
-    // Mark chunk as modified
-    c->modified = true;
     
     // Invalidate all LOD versions of this chunk so it will be regenerated
     invalidate_chunk_mesh_all_lods(c->x, c->z);

@@ -9,5 +9,6 @@ void w_cleanup();
 
 chunk* get_chunk(int x, int z);
 chunk* get_chunk_at(float x, float z, int* chunk_x, int* chunk_z);
+void update_chunk(chunk* c);
 
 #endif

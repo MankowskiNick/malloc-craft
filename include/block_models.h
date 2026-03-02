@@ -54,7 +54,6 @@ typedef struct {
 
 typedef struct {
     int x, z;
-    bool modified;
     block_data_t blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
 } chunk;
 

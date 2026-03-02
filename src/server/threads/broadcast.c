@@ -14,11 +14,11 @@ struct broadcast_queue_node {
     int size;
 };
 
-// TODO: add listener on client to wait for chunk updates
 bool send_to_client(int fd, byte* data, int size) {
-    if (!send_data(fd, &size, sizeof(int)) ||
+    if (!send_msg_header(CHUNK_BROADCAST, fd) ||
+        !send_data(fd, &size, sizeof(int)) ||
         !send_data(fd, data, size)) {
-        printf("ERROR: Failed to send chunk to server (fd %d)\n", fd);
+        printf("ERROR: Failed to send chunk to client (fd %d)\n", fd);
         return false;
     }
     return true;

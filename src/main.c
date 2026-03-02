@@ -12,6 +12,7 @@
 #include "world/core/world.h"
 #include "world/generation/biome.h"
 #include "server/server.h"
+#include "server/threads/client_recv.h"
 #include <pthread.h>
 #include <time.h>
 #include <game_data.h>
@@ -19,6 +20,9 @@
 int main() {
     pthread_t server_thread = 0;
     pthread_create(&server_thread, NULL, (void* (*)(void*))start_server, NULL);
+
+    pthread_t recv_thread = 0;
+    pthread_create(&recv_thread, NULL, run_client_recv_thread, NULL);
 
     read_settings("res/settings.json");
     read_biomes("res/biomes.json");
