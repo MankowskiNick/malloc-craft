@@ -5,8 +5,9 @@
 #include <unistd.h>
 #include <string.h>
 
-pthread_mutex_t broadcast_queue_lock;
-struct broadcast_queue_node* queue = NULL;
+pthread_mutex_t broadcast_queue_lock = PTHREAD_MUTEX_INITIALIZER;
+struct broadcast_queue_node* queue_head = NULL;
+struct broadcast_queue_node* queue_tail = NULL;
 
 struct broadcast_queue_node {
     struct broadcast_queue_node* next;
@@ -45,25 +46,18 @@ void add_to_broadcast_queue(byte* data, int size) {
     node->next = NULL;
 
     pthread_mutex_lock(&broadcast_queue_lock);
-    if (queue == NULL) {
-        queue = node;
-        pthread_mutex_unlock(&broadcast_queue_lock);
-        return;
+    if (queue_tail == NULL) {
+        queue_head = node;
+        queue_tail = node;
+    } else {
+        queue_tail->next = node;
+        queue_tail = node;
     }
-    struct broadcast_queue_node* cur = queue;
     pthread_mutex_unlock(&broadcast_queue_lock);
-    
-
-    while (cur->next != NULL) {
-        cur = cur->next;
-    }
-    cur->next = node;
 }
 
 void* run_broadcast_thread(void* args) {
     server_t* server = (server_t*)args;
-
-    pthread_mutex_init(&broadcast_queue_lock, NULL);
 
     if (server == NULL) {
         printf("ERROR: No server parameter passed to broadcast thread.\n");
@@ -71,15 +65,20 @@ void* run_broadcast_thread(void* args) {
     }
 
     while (1) {
-        if (queue == NULL) {
+        pthread_mutex_lock(&broadcast_queue_lock);
+        struct broadcast_queue_node* cur = queue_head;
+        if (cur != NULL) {
+            queue_head = cur->next;
+            if (queue_head == NULL) {
+                queue_tail = NULL;
+            }
+        }
+        pthread_mutex_unlock(&broadcast_queue_lock);
+
+        if (cur == NULL) {
             usleep(100); // TODO: this should be configurable
             continue;
         }
-
-        pthread_mutex_lock(&broadcast_queue_lock);
-        struct broadcast_queue_node* cur = queue;
-        queue = queue->next;
-        pthread_mutex_unlock(&broadcast_queue_lock);
 
         broadcast_data(server, cur->data, cur->size);
 

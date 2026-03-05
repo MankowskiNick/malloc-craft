@@ -83,20 +83,6 @@
   },
   {
     "id": 3,
-    "name": "mountains",
-    "surface_type": "stone",
-    "subsurface_type": "stone",
-    "underground_type": "stone",
-    "underwater_type": "stone",
-    "foliage": [
-        {
-            "type": "oak_tree",
-            "density": 0.005
-        }
-    ]
-  },
-  {
-    "id": 4,
     "name": "taiga",
     "surface_type": "podzol",
     "subsurface_type": "dirt",
@@ -114,7 +100,7 @@
     ]
   },
   {
-    "id": 5,
+    "id": 4,
     "name": "savanna",
     "surface_type": "dried_grass",
     "subsurface_type": "dirt",
@@ -136,7 +122,7 @@
     ]
   },
   {
-    "id": 6,
+    "id": 5,
     "name": "tundra",
     "surface_type": "snowy_grass",
     "subsurface_type": "dirt",
