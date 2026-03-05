@@ -29,6 +29,12 @@ int main(int argc, char** argv) {
 
     read_settings("res/settings.json");
 
+    read_biomes("res/biomes.json");
+    printf("RENDER DISTANCE: %i\n\n", TRUE_RENDER_DISTANCE);
+
+    block_init();
+    w_init();
+
     if (server_mode) {
         start_server();
         return 0;
@@ -42,15 +48,11 @@ int main(int argc, char** argv) {
     pthread_t recv_thread = 0;
     pthread_create(&recv_thread, NULL, run_client_recv_thread, NULL);
 
-    read_biomes("res/biomes.json");
-    printf("RENDER DISTANCE: %i\n\n", TRUE_RENDER_DISTANCE);
-
     GLFWwindow* window = create_window(TITLE, WIDTH, HEIGHT);
     if (!window || !load_gl()) {
         return -1;
     }
 
-    block_init();
 
     player* pl = malloc(sizeof(*pl));
     *pl = player_init(PLAYER_FILE);

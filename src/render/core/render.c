@@ -32,7 +32,6 @@ renderer create_renderer(game_data* data) {
 
     glViewport(0, 0, WIDTH, HEIGHT);
 
-    w_init();
     m_init(&(player->cam));
 
     // Queue initial chunks for async loading - progress bar will show while they load
