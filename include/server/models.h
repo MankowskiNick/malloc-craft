@@ -9,13 +9,14 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#define MAX_CLIENTS 32
+#define MAX_CLIENTS 640
 
 typedef enum chunk_msg_type {
     UNKNOWN,
     CHUNK_REQ,
     CHUNK_UPDATE,
-    CHUNK_BROADCAST
+    CHUNK_BROADCAST,
+    SUBSCRIBE_BROADCAST
 } chunk_msg_type;
 
 typedef struct chunk_request {
@@ -31,6 +32,7 @@ typedef struct chunk_packet {
 struct server_t;
 typedef struct client_connection {
     int fd;
+    bool is_broadcast_subscriber;
     pthread_t recv_thread;
     struct server_t* parent;
 } client_connection;

@@ -76,5 +76,7 @@ short calculate_lod(int x, int z, float player_x, float player_z);
 int is_chunk_in_foliage_distance(int chunk_x, int chunk_z, float player_x, float player_z);
 int is_chunk_in_transparent_distance(int chunk_x, int chunk_z, float player_x, float player_z);
 void process_chunk_work_item(chunk_work_item* work);
+chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z);
+void get_mesh_player_pos(float* out_x, float* out_z);
 
 #endif

@@ -98,6 +98,9 @@ void* run_listen_thread(void* args) {
             case CHUNK_UPDATE:
                 process_chunk_update(client);
                 break;
+            case SUBSCRIBE_BROADCAST:
+                client->is_broadcast_subscriber = true;
+                break;
             default:
                 printf("ERROR: Unknown message header incoming from client %i(header=%i)", client->fd, msg_type);
                 break;

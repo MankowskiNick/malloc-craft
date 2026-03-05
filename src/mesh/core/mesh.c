@@ -29,6 +29,15 @@ pthread_cond_t packet_update_signal = PTHREAD_COND_INITIALIZER;
 // Worker pool for chunk mesh generation
 worker_pool* chunk_worker_pool = NULL;
 
+// Last-known player position, updated each frame via load_chunk
+static float g_player_x = 0.0f;
+static float g_player_z = 0.0f;
+
+void get_mesh_player_pos(float* out_x, float* out_z) {
+    *out_x = g_player_x;
+    *out_z = g_player_z;
+}
+
 // Mutexes for shared structures
 pthread_mutex_t chunk_packets_mutex;
 pthread_mutex_t sort_queue_mutex;
@@ -1053,8 +1062,6 @@ int is_chunk_in_transparent_distance(int chunk_x, int chunk_z, float player_x, f
     return dist <= (float)TRANSPARENT_RENDER_DISTANCE;
 }
 
-chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z);
-
 void process_chunk_work_item(chunk_work_item* work) {
     if (work == NULL) {
         return;
@@ -1223,29 +1230,34 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
 
 void invalidate_chunk_mesh_all_lods(int x, int z) {
     // Remove all LOD versions of a chunk from the cache
-    // This is called when a block is modified to force regeneration
     for (short lod = 1; lod <= CHUNK_SIZE; lod *= LOD_SCALING_CONSTANT) {
         chunk_mesh_key key = {x, z, lod};
         chunk_mesh* mesh = chunk_mesh_lod_map_get(&chunk_packets, key);
         if (mesh != NULL) {
-            // Free the mesh data
             if (mesh->opaque_sides != NULL) free(mesh->opaque_sides);
             if (mesh->transparent_sides != NULL) free(mesh->transparent_sides);
             if (mesh->liquid_sides != NULL) free(mesh->liquid_sides);
             if (mesh->foliage_sides != NULL) free(mesh->foliage_sides);
             if (mesh->custom_model_data != NULL) free(mesh->custom_model_data);
-            
-            // Remove from cache
             chunk_mesh_lod_map_remove(&chunk_packets, key);
         }
     }
+
+    // Regenerate synchronously on this thread, bypassing the worker pool.
+    // create_chunk_mesh inserts the new entry into chunk_packets by value;
+    // free the returned outer struct since the cache owns the data arrays.
+    // chunk_mesh* mesh = create_chunk_mesh(x, z, g_player_x, g_player_z);
+    // free(mesh);
 }
 
 void load_chunk(float player_x, float player_z) {
     if (chunk_worker_pool == NULL) {
         return;
     }
-    
+
+    g_player_x = player_x;
+    g_player_z = player_z;
+
     for (int i = 0; i < CHUNK_LOAD_PER_FRAME; i++) {
         chunk_coord* coord = (chunk_coord*)queue_pop(&chunk_load_queue);
         if (coord == NULL) {

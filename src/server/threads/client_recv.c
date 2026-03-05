@@ -7,6 +7,7 @@
 
 #include "../../world/core/world.h"
 #include "../compression/compression.h"
+#include "../../mesh/core/mesh.h"
 
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -38,7 +39,12 @@ static void process_chunk_broadcast(int fd) {
         return;
     }
 
+    int x = c->x, z = c->z;
     update_chunk(c);
+    float player_x, player_z;
+    get_mesh_player_pos(&player_x, &player_z);
+    chunk_mesh* mesh = create_chunk_mesh(x, z, player_x, player_z);
+    free(mesh);
 }
 
 void* run_client_recv_thread(void* args) {
@@ -47,6 +53,11 @@ void* run_client_recv_thread(void* args) {
     int fd = acquire_server_fd();
     if (fd < 0) {
         printf("ERROR: Client recv thread could not connect to server\n");
+        return NULL;
+    }
+
+    if (!send_msg_header(SUBSCRIBE_BROADCAST, fd)) {
+        printf("ERROR: Client recv thread could not subscribe to broadcasts\n");
         return NULL;
     }
 

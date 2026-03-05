@@ -32,6 +32,7 @@ void broadcast_data(server_t* server, byte* data, int size) {
     }
 
     for (int i = 0; i < server->client_count; i++) {
+        if (!server->clients[i].is_broadcast_subscriber) continue;
         send_to_client(server->clients[i].fd, data, size);
     }
 }
