@@ -234,7 +234,6 @@ void update_chunk_meshes(game_data* data) {
 
     while(data->is_running) {
         get_chunk_meshes(data);
-        // flood_chunks(data);
         usleep(TICK_RATE);
     }
 
