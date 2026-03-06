@@ -11,7 +11,7 @@
 static pthread_mutex_t wm_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_t wm_updater_thread = 0;
 
-camera_cache wm_camera_cache = {0, 0, 0};
+static camera_cache wm_camera_cache = {0, 0, 0};
 
 // Deep copy a chunk_mesh and all its dynamically allocated data
 static chunk_mesh* copy_chunk_mesh(chunk_mesh* src) {
@@ -76,11 +76,11 @@ static chunk_mesh* copy_chunk_mesh(chunk_mesh* src) {
     return dst;
 }
 
-void wm_init(camera* camera) {
+void init_world_mesh(camera* camera) {
     wm_camera_cache.x = camera->position[0];
     wm_camera_cache.y = camera->position[1];
     wm_camera_cache.z = camera->position[2];
-    chunk_mesh_init(camera);
+    init_chunk_mesh(camera);
 }
 
 world_mesh* create_world_mesh(chunk_mesh** packet, int count) {

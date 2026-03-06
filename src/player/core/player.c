@@ -438,7 +438,7 @@ void apply_physics(player* player, float delta_ms) {
     player->cam.position[1] = player->position[1] + player->camera_height_offset;
 }
 
-player player_init(char* player_file) {
+player create_player(char* player_file) {
 
     char* player_json = read_file_to_string(player_file);
     json obj = deserialize_json(player_json, strlen(player_json));

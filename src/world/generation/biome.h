@@ -19,7 +19,8 @@ typedef struct {
     int foliage_count;
 } biome;
 
-void read_biomes(char* filename);
+void init_biomes(char* filename);
+void biome_cleanup(void);
 biome* get_biome(float x, float z);
 
 extern biome* BIOMES;

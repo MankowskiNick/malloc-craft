@@ -53,33 +53,25 @@ typedef struct {
     int* num_packets;
     chunk_mesh** packet;
     world_mesh* world_mesh;
-    player* player;
+    player player;
     int is_running;
     bool mesh_requires_update;
-
-    // array of chunks that need water updates.  this is an array of chunk ids determined by a prime factorization hash.
-    int* chunks_to_flow;
-    int num_chunks_to_flow;
 
     float tick;
 
     // UI state
     bool show_fps;
     int fps;
-    
-    // FPS averaging
-    float* frame_time_buffer;
-    int frame_buffer_index;
-    int fps_average_frames;
-    int average_fps;
 } game_data;
 
-static inline void free_game_data(game_data data) {
-    free(data.chunks_to_flow);
-    free(data.frame_time_buffer);
+static inline void destroy_game_data(game_data data) {
     free(data.world_mesh);
     free(data.packet);
-    free(data.player);
+}
+
+static inline void update_game_data(game_data* data) {
+    data->x = data->player.cam.position[0];
+    data->z = data->player.cam.position[2];
 }
 
 static inline world_mesh* copy_world_mesh(world_mesh* src) {

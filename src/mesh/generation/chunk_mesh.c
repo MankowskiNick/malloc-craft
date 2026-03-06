@@ -7,13 +7,12 @@
 #include <assert.h>
 #include <pthread.h>
 #include <unistd.h>
-#include "../../world/physics/water.h"
 
 pthread_mutex_t cm_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_t cm_updater_thread = 0;
 
-camera_cache cm_camera_cache = {0, 0, 0};
+static camera_cache cm_camera_cache = {0, 0, 0};
 
 void lock_mesh() {
     pthread_mutex_lock(&cm_mutex);
@@ -23,7 +22,7 @@ void unlock_mesh() {
     pthread_mutex_unlock(&cm_mutex);
 }
 
-void chunk_mesh_init(camera* camera) {
+void init_chunk_mesh(camera* camera) {
     cm_camera_cache.x = camera->position[0];
     cm_camera_cache.y = camera->position[1];
     cm_camera_cache.z = camera->position[2];
@@ -157,7 +156,7 @@ void get_chunk_meshes(game_data* args) {
 
     // Update camera cache for sorting
     cm_camera_cache.x = args->x;
-    cm_camera_cache.y = args->player->cam.position[1];
+    cm_camera_cache.y = args->player.cam.position[1];
     cm_camera_cache.z = args->z;
 
     chunk_mesh** packet = NULL;
@@ -187,7 +186,7 @@ void get_chunk_meshes(game_data* args) {
             if (new_lod != current_lod) {
                 // LOD changed - queue regeneration at new LOD
                 lock_mesh();
-                chunk_mesh* new_lod_mesh = update_chunk_mesh(x, z, args->player->position[0], args->player->position[2]);
+                chunk_mesh* new_lod_mesh = update_chunk_mesh(x, z, args->player.position[0], args->player.position[2]);
                 unlock_mesh();
                 
                 // Use the new LOD mesh if available, otherwise keep using current one
@@ -214,7 +213,7 @@ void get_chunk_meshes(game_data* args) {
     }
 
     sort_chunk();
-    load_chunk(args->player->position[0], args->player->position[2]);
+    load_chunk(args->player.position[0], args->player.position[2]);
 
     quicksort(packet, count, sizeof(chunk_mesh*), chunk_distance_to_camera);
 

@@ -1,135 +1,67 @@
-#include <stdio.h>
-#include <string.h>
 #include "render/core/window.h"
-#include "render.h"
-#include "world/core/block.h"
-#include <player/core/camera.h>
-#include <player/input/input.h>
-#include "util/settings.h"
-#include <player/core/player.h>
-#include "skybox.h"
-#include <chunk_mesh.h>
-#include <mesh.h>
+#include "render/core/render.h"
+#include "player/input/input.h"
+#include "mesh/core/mesh.h"
 #include "world/core/world.h"
-#include "world/generation/biome.h"
+#include "world/core/block.h"
 #include "server/server.h"
 #include "server/threads/client_recv.h"
-#include <pthread.h>
-#include <time.h>
-#include <game_data.h>
+#include "util/metrics.h"
+#include "util/core.h"
 
 int main(int argc, char** argv) {
-    int server_mode = 0;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--server") == 0) {
-            server_mode = 1;
-            break;
+            server_main();
+            return 0;
+        }
+        if (strcmp(argv[i], "--localhost") == 0) {
+            start_local_server();
         }
     }
 
-    read_settings("res/settings.json");
-
-    read_biomes("res/biomes.json");
-    printf("RENDER DISTANCE: %i\n\n", TRUE_RENDER_DISTANCE);
-
-    block_init();
-    w_init();
-
-    if (server_mode) {
-        start_server();
-        return 0;
-    }
-
-    pthread_t server_thread = 0;
-    if (strcmp(SERVER_HOST, "127.0.0.1") == 0) {
-        pthread_create(&server_thread, NULL, (void* (*)(void*))start_server, NULL);
-    }
-
-    pthread_t recv_thread = 0;
-    pthread_create(&recv_thread, NULL, run_client_recv_thread, NULL);
+    init_core();
+    
+    start_broadcast_listener();
 
     GLFWwindow* window = create_window(TITLE, WIDTH, HEIGHT);
-    if (!window || !load_gl()) {
-        return -1;
-    }
-
-
-    player* pl = malloc(sizeof(*pl));
-    *pl = player_init(PLAYER_FILE);
-
-    // Initialize num_packets on heap so background threads can update it
-    int* num_packets_ptr = malloc(sizeof(int));
-    *num_packets_ptr = 0;
 
     game_data data = {
-        .x = (int)pl->cam.position[0],
-        .z = (int)pl->cam.position[2],
-        .player = pl,
-        .is_running = TRUE,
+        .x = 0,
+        .z = 0,
+        .player = create_player(PLAYER_FILE),
+        .is_running = true,
         .show_fps = false,
-        .fps = 0,
-        .fps_average_frames = FPS_AVERAGE_FRAMES,
-        .frame_buffer_index = 0,
-        .average_fps = 0,
-        .num_packets = num_packets_ptr,
+        .num_packets = NULL,
         .packet = NULL,
         .world_mesh = NULL,
-        .mesh_requires_update = FALSE,
+        .mesh_requires_update = true,
     };
-    
-    // Initialize frame time buffer for rolling average
-    data.frame_time_buffer = (float*)malloc(sizeof(float) * data.fps_average_frames);
-    for (int i = 0; i < data.fps_average_frames; i++) {
-        data.frame_time_buffer[i] = 16.67f; // Default ~60 FPS
-    }
-    
+
+    init_world_mesh(&data.player.cam);
     renderer r = create_renderer(&data);
-
-    wm_init(&(pl->cam));
-
-    i_init(window, &data);
+    
     start_chunk_mesh_updater(&data);
     start_world_mesh_updater(&data);
-
-    long start = (long)(glfwGetTime() * 1000.0);
-    float last_tick = 0.0f;
+    
+    init_input(window, &data);
 
     while (!glfwWindowShouldClose(window)) {
 
-        data.x = data.player->cam.position[0];
-        data.z = data.player->cam.position[2];
-        data.tick = (int)(glfwGetTime() * 1000.0) - start; // 1 tick = 1 ms
-        float delta_ms = data.tick - last_tick;
-        last_tick = data.tick;
+        update_game_data(&data);
+        update_fps();
 
-        // Calculate rolling average FPS
-        if (delta_ms > 0) {
-            // Add current frame time to circular buffer
-            data.frame_time_buffer[data.frame_buffer_index] = delta_ms;
-            data.frame_buffer_index = (data.frame_buffer_index + 1) % data.fps_average_frames;
-            
-            // Calculate average frame time
-            float avg_delta_ms = 0.0f;
-            for (int i = 0; i < data.fps_average_frames; i++) {
-                avg_delta_ms += data.frame_time_buffer[i];
-            }
-            avg_delta_ms /= (float)data.fps_average_frames;
-            
-            // Convert to FPS
-            data.average_fps = (int)(1000.0f / avg_delta_ms);
-            data.fps = (int)(1000.0f / delta_ms); // Keep for backwards compatibility
-        }
+        update_camera(get_delta_ms());
 
-        update_camera(delta_ms);
-        apply_physics(data.player, delta_ms);
-        update_selected_block(data.player);
+        apply_physics(&data.player, get_delta_ms());
+        update_selected_block(&data.player);
 
         lock_mesh();
-        world_mesh* render_mesh = copy_world_mesh(data.world_mesh);
-        int render_num_packets = *(data.num_packets);
+            world_mesh* render_mesh = copy_world_mesh(data.world_mesh);
+            int render_packet_count = *(data.num_packets);
         unlock_mesh();
 
-        render(&data, &r, render_mesh, render_num_packets);
+        render(&data, &r, render_mesh, render_packet_count);
         free_world_mesh(render_mesh);
 
         glfwSwapBuffers(window);
@@ -140,13 +72,15 @@ int main(int argc, char** argv) {
     kill_world_mesh_updater();
 
     destroy_renderer(&r);
-    i_cleanup();
-    m_cleanup();
-    w_cleanup();
-    
-    free_game_data(data);
+    destroy_game_data(data);
 
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    mesh_cleanup();
+    input_cleanup();
+
+    core_cleanup();
+
     return 0;
 }

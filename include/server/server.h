@@ -3,6 +3,7 @@
 
 #include <server/models.h>
 
-void start_server(void);
+void server_main(void);
+void start_local_server(void);
 
 #endif

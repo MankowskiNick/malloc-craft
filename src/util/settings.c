@@ -130,7 +130,6 @@ char* UI_VERTEX_SHADER = "res/shaders/ui/ui.vert";
 char* UI_FRAGMENT_SHADER = "res/shaders/ui/ui.frag";
 
 // UI settings
-int FPS_AVERAGE_FRAMES = 60;
 float UI_SCALE = 1.0f;
 float FPS_COUNTER_SCALE = 1.0f;
 
@@ -681,11 +680,6 @@ void parse_ui_settings(json_object ui_obj) {
     if (ui_obj.type != JSON_OBJECT) {
         fprintf(stderr, "Error: ui section is not an object in settings.json\n");
         exit(EXIT_FAILURE);
-    }
-
-    json_object fps_average_frames = json_get_property(ui_obj, "fps_average_frames");
-    if (fps_average_frames.type == JSON_NUMBER) {
-        FPS_AVERAGE_FRAMES = (int)fps_average_frames.value.number;
     }
 
     json_object ui_scale = json_get_property(ui_obj, "ui_scale");

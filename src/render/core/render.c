@@ -1,29 +1,37 @@
 #include "render.h"
 
-#include "block_renderer.h"
-#include "blockbench_renderer.h"
-#include "liquid_renderer.h"
-#include "foliage_renderer.h"
-#include "skybox.h"
-#include <glad/glad.h>
-#include <chunk_mesh.h>
-#include <mesh.h>
-#include "util/sort.h"
 #include "../../world/core/world.h"
+
+#include "../../util/metrics.h"
+#include "../../util/sort.h"
+#include "../../util/settings.h"
+
+#include "../../mesh/generation/chunk_mesh.h"
+#include "../../mesh/generation/world_mesh.h"
+#include "../../mesh/core/mesh.h"
+
+#include "../effects/fbo.h"
+#include "../effects/shadow_map.h"
+#include "../effects/reflection_map.h"
+
+#include "../world/foliage_renderer.h"
+#include "../world/liquid_renderer.h"
+#include "../world/block_renderer.h"
+
+#include "../entities/blockbench_renderer.h"
+#include "../environment/skybox.h"
+
 #include <util.h>
-#include "util/settings.h"
-#include <world_mesh.h>
-#include "fbo.h"
-#include "shadow_map.h"
-#include "reflection_map.h"
+
 #include <assert.h>
+#include <glad/glad.h>
 
 renderer create_renderer(game_data* data) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    player* player = data->player;
+    player* player = &data->player;
     camera* camera = &(player->cam);
 
     if (WIREFRAME) {
@@ -104,7 +112,7 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
 
         render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
         render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
-        if (args->player->is_underwater) {
+        if (args->player.is_underwater) {
             render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
             render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
             render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
@@ -114,15 +122,15 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
             render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
         }
 
-        if (args->player->has_selected_block) {
-            render_outline(&(r->or), args->player->selected_block_pos[0], args->player->selected_block_pos[1], args->player->selected_block_pos[2]);
+        if (args->player.has_selected_block) {
+            render_outline(&(r->or), args->player.selected_block_pos[0], args->player.selected_block_pos[1], args->player.selected_block_pos[2]);
         }
     }
 
     glDisable(GL_DEPTH_TEST);
-    render_hotbar(&(r->ui), args->player->hotbar, args->player->hotbar_size, args->player->selected_block);
+    render_hotbar(&(r->ui), args->player.hotbar, args->player.hotbar_size, args->player.selected_block);
     if (args->show_fps) {
-        render_fps(&(r->ui), args->average_fps);
+        render_fps(&(r->ui), (int)get_fps());
     }
     glEnable(GL_DEPTH_TEST);
 }

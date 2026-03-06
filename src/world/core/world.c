@@ -26,14 +26,14 @@ const char* get_worlds_dir(void) {
     return WORLDS_DIR;
 }
 
-void w_init() {
-    c_init();
+void init_world() {
+    init_chunks();
 
     chunks = chunk_map_init(CHUNK_CACHE_SIZE);
     pthread_mutex_init(&chunk_map_lock, NULL);
 }
 
-void w_cleanup() {
+void world_cleanup() {
     for (size_t i = 0; i < chunks.capacity; ++i) {
         chunk_map_entry* current = chunks.buckets[i];
         while (current) {

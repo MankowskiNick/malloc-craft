@@ -51,7 +51,7 @@ void m_init(camera* camera) {
     chunk_packets_buffer = chunk_mesh_lod_map_init(CHUNK_CACHE_SIZE);  // Initialize staging buffer
     queue_init(&sort_queue);
     queue_init(&chunk_load_queue);
-    chunk_mesh_init(camera);
+    init_chunk_mesh(camera);
 
     pthread_mutex_init(&chunk_packets_mutex, NULL);
     pthread_mutex_init(&sort_queue_mutex, NULL);
@@ -65,7 +65,7 @@ void m_init(camera* camera) {
     }
 }
 
-void m_cleanup() {
+void mesh_cleanup() {
     // Shutdown worker pool
     if (chunk_worker_pool != NULL) {
         pool_shutdown(chunk_worker_pool);
@@ -89,8 +89,8 @@ void preload_initial_chunks(game_data* data) {
         return;
     }
 
-    float player_x = data->player->position[0];
-    float player_z = data->player->position[2];
+    float player_x = data->player.position[0];
+    float player_z = data->player.position[2];
 
     // Calculate how many chunks we need to load
     int player_chunk_x = WORLD_POS_TO_CHUNK_POS(player_x);

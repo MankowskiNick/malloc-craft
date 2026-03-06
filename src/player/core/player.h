@@ -35,7 +35,7 @@ typedef struct {
     bool has_selected_block;  // Whether player is looking at a valid block
 } player;
 
-player player_init(char* player_file);
+player create_player(char* player_file);
 void apply_physics(player* player, float delta_ms);
 
 #endif

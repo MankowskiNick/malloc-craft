@@ -61,7 +61,7 @@ void wm_buffer_reset_counts(world_mesh_buffer* buf);
 void wm_buffer_free(world_mesh_buffer* buf);
 
 void m_init(camera* camera);
-void m_cleanup();
+void mesh_cleanup();
 void preload_initial_chunks(game_data* data);
 chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z);
 chunk_mesh* get_chunk_mesh(int x, int z);

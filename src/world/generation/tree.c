@@ -101,7 +101,7 @@ void map_json_to_trees(json tree_types) {
     }
 }
 
-void tree_init() {
+void init_tree() {
     // load tree types from json
     char* tree_types_json = read_file_to_string("res/trees.json");
     if (tree_types_json == NULL) {

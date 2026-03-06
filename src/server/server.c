@@ -1,6 +1,7 @@
 
 #include <server/server.h>
 
+#include "../util/core.h"
 #include "../util/settings.h"
 #include "threads/listen.h"
 #include "threads/broadcast.h"
@@ -13,6 +14,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <string.h>
 
 
 int configure_fd(void) {
@@ -79,7 +81,14 @@ server_t* create_server() {
     return server;
 }
 
-void start_server(void) {
+void start_local_server(void) {
+    pthread_t server_thread = 0;
+    pthread_create(&server_thread, NULL, (void* (*)(void*))server_main, NULL);
+    pthread_detach(server_thread);
+}
+
+void server_main(void) {
+    init_core();
 
     server_t* server = create_server();
 
@@ -100,4 +109,5 @@ void start_server(void) {
     }
 
     free(server); // more to free for sure
+    core_cleanup();
 }

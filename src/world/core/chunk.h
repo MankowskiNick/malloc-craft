@@ -16,7 +16,7 @@ uint chunk_hash(chunk_coord c);
 int chunk_equals(chunk_coord a, chunk_coord b);
 int chunk_coord_equals(void* a, void* b);
 
-void c_init();
+void init_chunks();
 void chunk_create(chunk* c, int x, int z);
 
 void set_block_info(game_data* data,chunk* c, int x, int y, int z, short id, short orientation, short rot, short water_level);

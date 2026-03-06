@@ -6,7 +6,6 @@
 
 #include "../../player/core/player.h"
 #include "../../mesh/geometry/blockbench_loader.h"
-#include "../physics/water.h"
 #include "mesh.h"
 #include "world.h"
 
@@ -316,7 +315,7 @@ bool check_block_foliage(short id) {
 
 
 void modify_block(game_data* data, short block_id, float t_offset) {
-    camera cam = data->player->cam;
+    camera cam = data->player.cam;
     block_ray_result result;
     get_empty_dist(cam, &result);
 
@@ -373,10 +372,10 @@ void modify_block(game_data* data, short block_id, float t_offset) {
         invalidate_chunk_mesh_all_lods(c->x, c->z + 1);
     }
     
-    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
+    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player.position[0], data->player.position[2]);
     
-    int px = WORLD_POS_TO_CHUNK_POS(data->player->position[0]);
-    int pz = WORLD_POS_TO_CHUNK_POS(data->player->position[2]);
+    int px = WORLD_POS_TO_CHUNK_POS(data->player.position[0]);
+    int pz = WORLD_POS_TO_CHUNK_POS(data->player.position[2]);
     queue_chunk_for_sorting(new_mesh, px, pz);
 
     send_chunk_to_server(c);
@@ -385,10 +384,10 @@ void modify_block(game_data* data, short block_id, float t_offset) {
 
 #pragma endregion
 
-void block_init() {
+void init_blocks(char* file) {
     
     // load block types from file
-    char* block_types_json = read_file_to_string("res/blocks.json");
+    char* block_types_json = read_file_to_string(file);
     if (block_types_json == NULL) {
         fprintf(stderr, "Failed to read block types from file\n");
         return;
@@ -420,6 +419,10 @@ void block_init() {
     map_json_to_types(block_types);
     json_free(&block_types);
     free(block_types_json);
+}
+
+void block_cleanup(void) {
+    free(TYPES);
 }
 
 short get_selected_block(player player) {
@@ -539,6 +542,6 @@ void break_block(game_data* data) {
 }
 
 void place_block(game_data* data) {
-    short selected_block = get_selected_block(*data->player);
+    short selected_block = get_selected_block(data->player);
     modify_block(data, selected_block, -RAY_STEP);
 }

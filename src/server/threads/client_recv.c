@@ -80,3 +80,9 @@ void* run_client_recv_thread(void* args) {
 
     return NULL;
 }
+
+void start_broadcast_listener(void) {
+    pthread_t recv_thread = 0;
+    pthread_create(&recv_thread, NULL, run_client_recv_thread, NULL);
+    pthread_detach(recv_thread);
+}

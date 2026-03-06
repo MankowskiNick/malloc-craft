@@ -101,7 +101,7 @@ short get_biome_id(float x, float z) {
     return BIOMES[(int)biome_index % BIOME_COUNT].id;
 }
 
-void read_biomes(char* filename) {
+void init_biomes(char* filename) {
     char* biomes_json = read_file_to_string(filename);
     
     if (biomes_json == NULL) {
@@ -124,6 +124,10 @@ void read_biomes(char* filename) {
     }
 
     copy_biome_data(obj.root);
+}
+
+void biome_cleanup(void) {
+    free(BIOMES);
 }
 
 biome* get_biome(float x, float z) {

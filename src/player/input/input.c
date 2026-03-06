@@ -68,15 +68,14 @@ void update_pos(int key, vec3 front, vec3 right, int is_underwater) {
     }
     
     // Accumulate desired direction (will be normalized later)
-    player* p = g_data->player;
-    p->acceleration[0] += dx;
-    p->acceleration[1] += dy;  // Vertical movement when swimming
-    p->acceleration[2] += dz;
+    g_data->player.acceleration[0] += dx;
+    g_data->player.acceleration[1] += dy;  // Vertical movement when swimming
+    g_data->player.acceleration[2] += dz;
 }
 
 void update_position() {
     // Reset desired direction accumulation
-    player* p = g_data->player;
+    player* p = &g_data->player;
     p->acceleration[0] = 0.0f;
     p->acceleration[1] = 0.0f;  // Reset vertical acceleration
     p->acceleration[2] = 0.0f;
@@ -97,7 +96,7 @@ void update_position() {
         } else {
             // Movement keys (W, A, S, D)
             vec3 front, up, right;
-            camera* cam = &(g_data->player->cam);
+            camera* cam = &(g_data->player.cam);
             glm_normalize_to(cam->front, front);
             glm_normalize_to(cam->up, up);
             glm_vec3_cross(front, up, right);
@@ -111,7 +110,7 @@ void update_position() {
 
 void update_camera(int delta_ms) {
     update_position();
-    update_orientation(&(g_data->player->cam));
+    update_orientation(&(g_data->player.cam));
 }
 
 
@@ -138,25 +137,25 @@ void handle_keypress(int key) {
 
     /* Toggle fly mode with V key */
     if (key == GLFW_KEY_V) {
-        g_data->player->fly_mode = !g_data->player->fly_mode;
+        g_data->player.fly_mode = !g_data->player.fly_mode;
         // Reset velocity when entering/exiting fly mode to prevent momentum carry-over
-        g_data->player->velocity[0] = 0.0f;
-        g_data->player->velocity[1] = 0.0f;
-        g_data->player->velocity[2] = 0.0f;
+        g_data->player.velocity[0] = 0.0f;
+        g_data->player.velocity[1] = 0.0f;
+        g_data->player.velocity[2] = 0.0f;
         return;
     }
 
     if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9) {
         int index = key - GLFW_KEY_0;
-        if (index < g_data->player->hotbar_size) {
-            g_data->player->selected_block = index;
+        if (index < g_data->player.hotbar_size) {
+            g_data->player.selected_block = index;
         }
         return;
     }
 
     /* Handle jump input */
     if (key == GLFW_KEY_SPACE) {
-        g_data->player->jump_requested = 1;
+        g_data->player.jump_requested = 1;
         // Also add to key stack for swimming control
         for (key_entry* cur = key_stack; cur != NULL; cur = cur->next) {
             if (cur->key == key) return;  // Already in stack
@@ -171,8 +170,8 @@ void handle_keypress(int key) {
 
     /* Handle crouch input (Left Shift) - only when grounded */
     if (key == GLFW_KEY_LEFT_SHIFT) {
-        if (g_data->player->is_grounded) {
-            g_data->player->is_crouching = true;
+        if (g_data->player.is_grounded) {
+            g_data->player.is_crouching = true;
         }
         return;
     }
@@ -185,7 +184,7 @@ void handle_keypress(int key) {
         // Check if this is within the double-tap window (in milliseconds)
         if (time_since_last_press < SPRINT_DOUBLE_TAP_TIME && time_since_last_press > 0) {
             // Double-tap detected! Start sprinting
-            g_data->player->is_sprinting = true;
+            g_data->player.is_sprinting = true;
             w_press_count = 0;  // Reset counter
         } else {
             // Reset double-tap counter if too much time has passed
@@ -210,13 +209,13 @@ void handle_keypress(int key) {
 void handle_keyrelease(int key) {
     /* Handle crouch release */
     if (key == GLFW_KEY_LEFT_SHIFT) {
-        g_data->player->is_crouching = false;
+        g_data->player.is_crouching = false;
         return;
     }
 
     /* Handle sprint disable when W is released */
     if (key == GLFW_KEY_W) {
-        g_data->player->is_sprinting = false;
+        g_data->player.is_sprinting = false;
         w_press_count = 0;
     }
 
@@ -262,7 +261,7 @@ void mouse_move_callback(GLFWwindow* window, double xpos, double ypos) {
     double dx = xpos - WIDTH / 2;
     double dy = ypos - HEIGHT / 2;
 
-    camera* cam = &(g_data->player->cam);
+    camera* cam = &(g_data->player.cam);
     cam->yaw += dx * SENSITIVITY;
     cam->pitch -= dy * SENSITIVITY;
 
@@ -290,19 +289,19 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    if (g_data->player->hotbar_size <= 0) return;
+    if (g_data->player.hotbar_size <= 0) return;
     
     // yoffset > 0 means scroll up (next item), < 0 means scroll down (previous item)
     if (yoffset < 0) {
         // Scroll up - cycle to next item
-        g_data->player->selected_block = (g_data->player->selected_block + 1) % g_data->player->hotbar_size;
+        g_data->player.selected_block = (g_data->player.selected_block + 1) % g_data->player.hotbar_size;
     } else if (yoffset > 0) {
         // Scroll down - cycle to previous item
-        g_data->player->selected_block = (g_data->player->selected_block - 1 + g_data->player->hotbar_size) % g_data->player->hotbar_size;
+        g_data->player.selected_block = (g_data->player.selected_block - 1 + g_data->player.hotbar_size) % g_data->player.hotbar_size;
     }
 }
 
-void i_init(GLFWwindow* window, game_data* data) {
+void init_input(GLFWwindow* window, game_data* data) {
     key_stack = NULL;
     g_window = window;
 
@@ -317,7 +316,7 @@ void i_init(GLFWwindow* window, game_data* data) {
     g_data = data;
 }
 
-void i_cleanup() {
+void input_cleanup() {
     key_entry* cur = key_stack;
     key_entry* next = NULL;
 

@@ -5,7 +5,6 @@
 #include "block.h"
 #include <mesh.h>
 #include "world.h"
-#include "../physics/water.h"
 #include <stdlib.h>
 
 uint chunk_hash(chunk_coord c) {
@@ -17,9 +16,9 @@ int chunk_equals(chunk_coord a, chunk_coord b) {
     return a.x == b.x && a.z == b.z;
 }
 
-void c_init() {
-    n_init(SEED);
-    tree_init();
+void init_chunks() {
+    init_noise(SEED);
+    init_tree();
 }
 
 int get_block_height(chunk* c, float x, float z, biome* b) {
@@ -60,7 +59,6 @@ void set_block_info(game_data* game_data, chunk* c, int x, int y, int z, short i
             get_chunk(c->x, c->z + 1),
             get_chunk(c->x - 1, c->z)
         };
-        check_for_flow(game_data, c, adj, x, y, z);
     }
 }
 
