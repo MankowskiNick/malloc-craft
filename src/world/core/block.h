@@ -25,6 +25,9 @@ void update_selected_block(player* p);
 short get_block_id(char* name);
 bool check_block_foliage(short id);
 
+
+block_data_t get_block_data(int x, int y, int z, chunk* c);
+
 void send_cube_vbo(VAO vao, VBO vbo);
 
 block_type get_block_type(short id);

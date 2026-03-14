@@ -136,23 +136,6 @@ void preload_initial_chunks(game_data* data) {
     }
 }
 
-block_data_t get_block_data(int x, int y, int z, chunk* c) {
-    block_data_t data = {
-        .bytes = { 0, 0, 0 }
-    };
-    if (c == NULL) {
-        printf("ERROR: Cannot get block data from NULL chunk.\n");
-        return data;
-    }
-    
-    // Validate bounds
-    if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_HEIGHT || z < 0 || z >= CHUNK_SIZE) {
-        return data;  // Return air block (0) for out-of-bounds access
-    }
-    
-    return c->blocks[x][y][z];
-}
-
 block_data_t get_adjacent_block_data(int x, int y, int z, short side, short lod_scale, chunk* c, chunk* adj) {
     switch(side) {
         case (int)UP:
