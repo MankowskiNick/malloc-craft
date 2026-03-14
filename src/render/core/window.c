@@ -9,7 +9,7 @@ typedef struct {
     GLFWwindow* window;
 } window;
 
-window screen;
+static window screen;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -17,6 +17,19 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     screen.height = height;
 }
 
+int load_gl() {
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        printf("Failed to initialize GLAD\n");
+        return 0;
+    }
+
+    gladLoadGL();
+
+    glViewport(0, 0, screen.width, screen.height);
+
+    return 1;
+}
 
 GLFWwindow* create_window(char* title, int width, int height) {
     if (!glfwInit()) {
@@ -56,21 +69,11 @@ GLFWwindow* create_window(char* title, int width, int height) {
         glfwSwapInterval(0);
     }
 
-    return window;
-}
-
-int load_gl() {
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        printf("Failed to initialize GLAD\n");
-        return 0;
+    if (!load_gl()) {
+        printf("ERROR: Failed to load OpenGL bindings.\n");
     }
 
-    gladLoadGL();
-
-    glViewport(0, 0, screen.width, screen.height);
-
-    return 1;
+    return window;
 }
 
 int get_screen_width() {

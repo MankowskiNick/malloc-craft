@@ -1,10 +1,9 @@
 #include "chunk_io.h"
+#include "../compression/compression.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-
-#define CHUNK_FILE_SIZE (CHUNK_SIZE * CHUNK_HEIGHT * CHUNK_SIZE * sizeof(block_data_t))
 
 int init_worlds_directory(const char* worlds_dir) {
     struct stat st = {0};
@@ -49,29 +48,39 @@ int chunk_save_to_disk(chunk* c, const char* worlds_dir) {
         return -1;
     }
     
-    FILE* file = fopen(filepath, "wb");
-    if (file == NULL) {
-        perror("Failed to open chunk file for writing");
+    int compressed_size = 0;
+    byte* compressed = compress_chunk(c, &compressed_size);
+    if (compressed == NULL) {
         free(filepath);
         return -1;
     }
-    
-    // Write all blocks sequentially
-    for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int y = 0; y < CHUNK_HEIGHT; y++) {
-            for (int z = 0; z < CHUNK_SIZE; z++) {
-                size_t written = fwrite(&c->blocks[x][y][z], sizeof(block_data_t), 1, file);
-                if (written != 1) {
-                    perror("Failed to write block data");
-                    fclose(file);
-                    free(filepath);
-                    return -1;
-                }
-            }
-        }
+
+    FILE* file = fopen(filepath, "wb");
+    if (file == NULL) {
+        perror("Failed to open chunk file for writing");
+        free(compressed);
+        free(filepath);
+        return -1;
     }
-    
+
+    if (fwrite(&compressed_size, sizeof(int), 1, file) != 1) {
+        perror("Failed to write compressed size");
+        fclose(file);
+        free(compressed);
+        free(filepath);
+        return -1;
+    }
+
+    if (fwrite(compressed, 1, compressed_size, file) != (size_t)compressed_size) {
+        perror("Failed to write compressed chunk data");
+        fclose(file);
+        free(compressed);
+        free(filepath);
+        return -1;
+    }
+
     fclose(file);
+    free(compressed);
     free(filepath);
     return 0;
 }
@@ -91,26 +100,42 @@ int chunk_load_from_disk(chunk* c, const char* worlds_dir) {
         free(filepath);
         return -1;
     }
-    
-    for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int y = 0; y < CHUNK_HEIGHT; y++) {
-            for (int z = 0; z < CHUNK_SIZE; z++) {
-                size_t read_count = fread(&c->blocks[x][y][z], sizeof(block_data_t), 1, file);
-                if (read_count != 1) {
-                    perror("Failed to read block data");
-                    fclose(file);
-                    free(filepath);
-                    return -1;
-                }
-            }
-        }
+
+    int compressed_size = 0;
+    if (fread(&compressed_size, sizeof(int), 1, file) != 1) {
+        perror("Failed to read compressed size");
+        fclose(file);
+        free(filepath);
+        return -1;
     }
-    
+
+    byte* compressed = malloc(compressed_size);
+    if (compressed == NULL) {
+        perror("Memory allocation failed");
+        fclose(file);
+        free(filepath);
+        return -1;
+    }
+
+    if (fread(compressed, 1, compressed_size, file) != (size_t)compressed_size) {
+        perror("Failed to read compressed chunk data");
+        fclose(file);
+        free(compressed);
+        free(filepath);
+        return -1;
+    }
+
     fclose(file);
     free(filepath);
-    
-    // Mark as not modified since we just loaded it
-    c->modified = false;
-    
+
+    chunk* loaded = decompress_chunk(compressed, compressed_size);
+    free(compressed);
+    if (loaded == NULL) {
+        return -1;
+    }
+
+    memcpy(c->blocks, loaded->blocks, sizeof(c->blocks));
+    free(loaded);
+
     return 0;
 }

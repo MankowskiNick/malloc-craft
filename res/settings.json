@@ -8,10 +8,10 @@
     "fullscreen": false
   },
   "chunks": {
-    "worker_threads": 10,
+    "worker_threads": 8,
     "chunk_load_per_frame": 4,
     "chunk_cache_size": 1024,
-    "chunk_render_distance": 12,
+    "chunk_render_distance": 10,
     "lod_scaling_constant": 2,
     "max_lod_block_size": 4,
     "foliage_render_distance": 12,
@@ -141,5 +141,10 @@
     "fps_average_frames": 60,
     "ui_scale": 1.0,
     "fps_counter_scale": 0.5
+  },
+  "server": {
+    "port": 8085,
+    "host": "127.0.0.1",
+    "worlds_dir": "./worlds/"
   }
 }

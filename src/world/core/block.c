@@ -1,13 +1,16 @@
 #include "block.h"
-#include <mesh.h>
-#include "world.h"
+
+#include <server/client.h>
+#include <cerialize/cerialize.h>
 #include <util.h>
-#include <player/core/player.h>
-#include "../physics/water.h"
+
+#include "../../player/core/player.h"
+#include "../../mesh/geometry/blockbench_loader.h"
+#include "mesh.h"
+#include "world.h"
+
 #include <cglm/cglm.h>
 #include <glad/glad.h>
-#include <cerialize/cerialize.h>
-#include <blockbench_loader.h>
 
 block_type* TYPES;
 int BLOCK_COUNT = 0;
@@ -19,6 +22,7 @@ typedef struct block_ray_result {
     short water_level;
 } block_ray_result;
 
+#pragma region json_and_model_loading
 void cache_model(char* model) {
     blockbench_model* m = get_blockbench_model(model);
     if (!m) {
@@ -167,43 +171,10 @@ void map_json_to_types(json block_types) {
     }
 }
 
-void block_init() {
-    
-    // load block types from file
-    char* block_types_json = read_file_to_string("res/blocks.json");
-    if (block_types_json == NULL) {
-        fprintf(stderr, "Failed to read block types from file\n");
-        return;
-    }
+#pragma endregion
 
-    // Deserialize the block types
-    json block_types = deserialize_json(block_types_json, strlen(block_types_json));
-    if (block_types.failure) {
-        fprintf(stderr, "Failed to deserialize block types: %s\n", block_types.error_text);
-        free(block_types_json);
-        exit(EXIT_FAILURE);
-    }
-
-    if (block_types.root.type != JSON_LIST) {
-        fprintf(stderr, "Block types JSON is not a list\n");
-        free(block_types_json);
-        exit(EXIT_FAILURE);
-    }
-
-    BLOCK_COUNT = block_types.root.value.list.count;
-
-    // Initialize block types array 
-    TYPES = malloc(sizeof(block_type) * BLOCK_COUNT);
-    if (TYPES == NULL) {
-        fprintf(stderr, "Failed to allocate memory for block types\n");
-        return;
-    }
-
-    map_json_to_types(block_types);
-    json_free(&block_types);
-    free(block_types_json);
-}
-
+#pragma region helper_functions
+// TODO: too many magic numbers!
 short calculate_hit_side(vec3 position, vec3 dir, float t, int chunk_x, int chunk_y, int chunk_z, chunk* c) {
     // determine which side was hit
     float x = position[0] + t * dir[0];
@@ -303,68 +274,10 @@ void get_empty_dist(camera cam, block_ray_result* out_result) {
     out_result->water_level = water_level;
 }
 
-void break_block(game_data* data) {
-    camera cam = data->player->cam;
-    block_ray_result result;
-    get_empty_dist(cam, &result);
-    float t = result.distance;
-    short hit_side = result.side;
-    short rot = result.rot;
-    short water_level = result.water_level;
-    t += RAY_STEP;
-
-    if (t > MAX_REACH) {
-        return;
-    }
-
-    vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
-    glm_normalize_to(dir, dir);
-    float x = cam.position[0] + t * dir[0];
-    float y = cam.position[1] + t * dir[1];
-    float z = cam.position[2] + t * dir[2];
-
-    int chunk_x = 0;
-    int chunk_y = 0;
-    int chunk_z = 0;
-    chunk_y = (int)y;
-    chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
-
-    if (chunk_x == -1 || chunk_y == -1 || chunk_z == -1 || c == NULL || chunk_y > CHUNK_HEIGHT - 1 || chunk_y < 0) {
-        return;
-    }
-
-    set_block_info(data, c, chunk_x, chunk_y, chunk_z, get_block_id("air"), (short)UNKNOWN_SIDE, 0, water_level);
-    
-    // Mark chunk as modified
-    c->modified = true;
-    
-    // Invalidate all LOD versions of this chunk so it will be regenerated
-    invalidate_chunk_mesh_all_lods(c->x, c->z);
-    
-    // Also invalidate adjacent chunks if the broken block is at a chunk boundary
-    // This ensures sides that reference the broken block are properly updated
-    if (chunk_x == 0) {
-        // Block is at EAST boundary (x=0), invalidate chunk to the EAST (x-1)
-        invalidate_chunk_mesh_all_lods(c->x - 1, c->z);
-    }
-    if (chunk_x == CHUNK_SIZE - 1) {
-        // Block is at WEST boundary (x=CHUNK_SIZE-1), invalidate chunk to the WEST (x+1)
-        invalidate_chunk_mesh_all_lods(c->x + 1, c->z);
-    }
-    if (chunk_z == 0) {
-        // Block is at NORTH boundary (z=0), invalidate chunk to the NORTH (z-1)
-        invalidate_chunk_mesh_all_lods(c->x, c->z - 1);
-    }
-    if (chunk_z == CHUNK_SIZE - 1) {
-        // Block is at SOUTH boundary (z=CHUNK_SIZE-1), invalidate chunk to the SOUTH (z+1)
-        invalidate_chunk_mesh_all_lods(c->x, c->z + 1);
-    }
-    
-    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
-    
-    int px = WORLD_POS_TO_CHUNK_POS(data->player->position[0]);
-    int pz = WORLD_POS_TO_CHUNK_POS(data->player->position[2]);
-    queue_chunk_for_sorting(new_mesh, px, pz);
+bool coord_in_chunk(int x, int y, int z) {
+    return x >= 0 && x < CHUNK_SIZE
+        && z >= 0 && z < CHUNK_SIZE
+        && y >= 0 && y < CHUNK_HEIGHT;
 }
 
 short get_block_id(char* block_type) {
@@ -400,6 +313,118 @@ bool check_block_foliage(short id) {
     return false;
 }
 
+
+void modify_block(game_data* data, short block_id, float t_offset) {
+    camera cam = data->player.cam;
+    block_ray_result result;
+    get_empty_dist(cam, &result);
+
+    float t = result.distance;
+    short hit_side = result.side;
+    short rot = result.rot;
+
+    t += t_offset;
+
+    if (t > MAX_REACH) {
+        return;
+    }
+
+    vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
+    glm_normalize_to(dir, dir);
+    float x = cam.position[0] + t * dir[0];
+    float y = cam.position[1] + t * dir[1];
+    float z = cam.position[2] + t * dir[2];
+
+    int chunk_x = 0;
+    int chunk_y = 0;
+    int chunk_z = 0;
+    chunk_y = (int)y;
+    chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
+
+    if (c == NULL || !coord_in_chunk(chunk_x, chunk_y, chunk_z)) {
+        return;
+    }
+
+    block_type type = get_block_type(block_id);
+    short water_level = type.liquid ? 7 : 0;
+
+    set_block_info(data, c, chunk_x, chunk_y, chunk_z, block_id, hit_side, rot, water_level);
+    
+    // Invalidate all LOD versions of this chunk so it will be regenerated
+    invalidate_chunk_mesh_all_lods(c->x, c->z);
+    
+    // Also invalidate adjacent chunks if the broken block is at a chunk boundary
+    // This ensures sides that reference the broken block are properly updated
+    if (chunk_x == 0) {
+        // Block is at EAST boundary (x=0), invalidate chunk to the EAST (x-1)
+        invalidate_chunk_mesh_all_lods(c->x - 1, c->z);
+    }
+    if (chunk_x == CHUNK_SIZE - 1) {
+        // Block is at WEST boundary (x=CHUNK_SIZE-1), invalidate chunk to the WEST (x+1)
+        invalidate_chunk_mesh_all_lods(c->x + 1, c->z);
+    }
+    if (chunk_z == 0) {
+        // Block is at NORTH boundary (z=0), invalidate chunk to the NORTH (z-1)
+        invalidate_chunk_mesh_all_lods(c->x, c->z - 1);
+    }
+    if (chunk_z == CHUNK_SIZE - 1) {
+        // Block is at SOUTH boundary (z=CHUNK_SIZE-1), invalidate chunk to the SOUTH (z+1)
+        invalidate_chunk_mesh_all_lods(c->x, c->z + 1);
+    }
+    
+    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player.position[0], data->player.position[2]);
+    
+    int px = WORLD_POS_TO_CHUNK_POS(data->player.position[0]);
+    int pz = WORLD_POS_TO_CHUNK_POS(data->player.position[2]);
+    queue_chunk_for_sorting(new_mesh, px, pz);
+
+    send_chunk_to_server(c);
+}
+
+
+#pragma endregion
+
+void init_blocks(char* file) {
+    
+    // load block types from file
+    char* block_types_json = read_file_to_string(file);
+    if (block_types_json == NULL) {
+        fprintf(stderr, "Failed to read block types from file\n");
+        return;
+    }
+
+    // Deserialize the block types
+    json block_types = deserialize_json(block_types_json, strlen(block_types_json));
+    if (block_types.failure) {
+        fprintf(stderr, "Failed to deserialize block types: %s\n", block_types.error_text);
+        free(block_types_json);
+        exit(EXIT_FAILURE);
+    }
+
+    if (block_types.root.type != JSON_LIST) {
+        fprintf(stderr, "Block types JSON is not a list\n");
+        free(block_types_json);
+        exit(EXIT_FAILURE);
+    }
+
+    BLOCK_COUNT = block_types.root.value.list.count;
+
+    // Initialize block types array 
+    TYPES = malloc(sizeof(block_type) * BLOCK_COUNT);
+    if (TYPES == NULL) {
+        fprintf(stderr, "Failed to allocate memory for block types\n");
+        return;
+    }
+
+    map_json_to_types(block_types);
+    json_free(&block_types);
+    free(block_types_json);
+}
+
+void block_cleanup(void) {
+    free(TYPES);
+}
+
 short get_selected_block(player player) {
     // Validate selected_block index is within bounds
     if (player.selected_block < 0 || player.selected_block >= player.hotbar_size) {
@@ -418,96 +443,26 @@ short get_selected_block(player player) {
     return get_block_id(block_id);
 }
 
-void place_block(game_data* data) {
-    camera cam = data->player->cam;
-    float t = 0.0f;
-    short hit_side = (short)UNKNOWN_SIDE;
-    short rot = 0;
-    block_ray_result result;
-    get_empty_dist(cam, &result);
-    t = result.distance;
-    hit_side = result.side;
-    rot = result.rot;
-    t -= RAY_STEP;
-
-    if (t >= MAX_REACH - RAY_STEP) {
-        return;
-    }
-
-    vec3 dir = {cam.front[0], cam.front[1], cam.front[2]};
-    glm_normalize_to(dir, dir);
-    float x = cam.position[0] + t * dir[0];
-    float y = cam.position[1] + t * dir[1];
-    float z = cam.position[2] + t * dir[2];
-
-    int chunk_x = 0;
-    int chunk_y = 0;
-    int chunk_z = 0;
-    chunk_y = (uint)y;
-    chunk* c = get_chunk_at(x, z, &chunk_x, &chunk_z);
-
-    if (chunk_x == -1 || chunk_y == -1 || chunk_z == -1 || c == NULL || chunk_y > CHUNK_HEIGHT - 1 || chunk_y < 0) {
-        return;
-    }
-
-    short selected_block = get_selected_block(*data->player);
-    block_type* type = get_block_type(selected_block);
-
-    // Water blocks need water level 7 (source) to render and flow
-    short water_level = (type && type->liquid) ? 7 : 0;
-
-    set_block_info(data, c, chunk_x, chunk_y, chunk_z, selected_block, hit_side, rot, water_level);
-
-    // Mark chunk as modified
-    c->modified = true;
-    
-    // Invalidate all LOD versions of this chunk so it will be regenerated
-    invalidate_chunk_mesh_all_lods(c->x, c->z);
-    
-    // Also invalidate adjacent chunks if the placed block is at a chunk boundary
-    // This ensures sides that reference the placed block are properly updated
-    if (chunk_x == 0) {
-        // Block is at EAST boundary (x=0), invalidate chunk to the EAST (x-1)
-        invalidate_chunk_mesh_all_lods(c->x - 1, c->z);
-    }
-    if (chunk_x == CHUNK_SIZE - 1) {
-        // Block is at WEST boundary (x=CHUNK_SIZE-1), invalidate chunk to the WEST (x+1)
-        invalidate_chunk_mesh_all_lods(c->x + 1, c->z);
-    }
-    if (chunk_z == 0) {
-        // Block is at NORTH boundary (z=0), invalidate chunk to the NORTH (z-1)
-        invalidate_chunk_mesh_all_lods(c->x, c->z - 1);
-    }
-    if (chunk_z == CHUNK_SIZE - 1) {
-        // Block is at SOUTH boundary (z=CHUNK_SIZE-1), invalidate chunk to the SOUTH (z+1)
-        invalidate_chunk_mesh_all_lods(c->x, c->z + 1);
-    }
-    
-    // update chunk and adjacent chunks
-    chunk_mesh* new_mesh = update_chunk_mesh(c->x, c->z, data->player->position[0], data->player->position[2]);
-
-    int px = WORLD_POS_TO_CHUNK_POS(data->player->position[0]);
-    int pz = WORLD_POS_TO_CHUNK_POS(data->player->position[2]);
-    queue_chunk_for_sorting(new_mesh, px, pz);
-}
-
 // TODO: refactor to make more safe
-block_type* get_block_type(short id) {
+block_type get_block_type(short id) {
+    block_type out = {
+        .id = -1
+    };
     // Validate ID is within reasonable range (block IDs should be small positive numbers)
     // Extract only lower 10 bits to match block_data_t encoding
     if (id < 0 || id >= 1024) {
         fprintf(stderr, "ERROR: Invalid block type ID %d (out of valid range 0-1023)\n", id);
-        return NULL;
+        return out;
     }
     
     for (int i = 0; i < BLOCK_COUNT; i++) {
         if (TYPES[i].id == id) {
-            return &TYPES[i];
+            return TYPES[i];
         }
     }
     
     fprintf(stderr, "ERROR: Block type ID %d not found in registry\n", id);
-    return NULL;
+    return out;
 }
 
 void send_cube_vbo(VAO vao, VBO vbo) {
@@ -543,6 +498,11 @@ void update_selected_block(player* p) {
 
     chunk* c = get_chunk_at(position[0], position[2], &chunk_x, &chunk_z);
 
+    if (c == NULL) {
+        printf("ERROR: Could not fetch chunk.\n");
+        return;
+    }
+
     short hit = false;
     short water_id = get_block_id("water");
 
@@ -575,5 +535,31 @@ void update_selected_block(player* p) {
         p->has_selected_block = false;
         p->selected_block_id = 0;
     }
+}
+
+void break_block(game_data* data) {
+    modify_block(data, get_block_id("air"), RAY_STEP);
+}
+
+void place_block(game_data* data) {
+    short selected_block = get_selected_block(data->player);
+    modify_block(data, selected_block, -RAY_STEP);
+}
+
+block_data_t get_block_data(int x, int y, int z, chunk* c) {
+    block_data_t data = {
+        .bytes = { 0, 0, 0 }
+    };
+    if (c == NULL) {
+        printf("ERROR: Cannot get block data from NULL chunk.\n");
+        return data;
+    }
+    
+    // Validate bounds
+    if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_HEIGHT || z < 0 || z >= CHUNK_SIZE) {
+        return data;  // Return air block (0) for out-of-bounds access
+    }
+    
+    return c->blocks[x][y][z];
 }
 

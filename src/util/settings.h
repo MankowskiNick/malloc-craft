@@ -151,6 +151,11 @@ extern float MAX_REACH;
 extern float RAY_STEP;
 
 
+// SERVER SETTINGS
+extern int SERVER_PORT;
+extern char* SERVER_HOST;
+extern char* WORLDS_DIR;
+
 // WORLD GENERATION SETTINGS
 
 // World generation seed
@@ -202,7 +207,6 @@ extern char* UI_VERTEX_SHADER;
 extern char* UI_FRAGMENT_SHADER;
 
 // UI settings
-extern int FPS_AVERAGE_FRAMES;
 extern float UI_SCALE;
 extern float FPS_COUNTER_SCALE;
 

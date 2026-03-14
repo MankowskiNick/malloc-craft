@@ -74,7 +74,7 @@ float n_get(float x, float z, float freq, float amp, uint num_octaves) {
     return total / max_value;
 } 
 
-void n_init(uint seed) {
+void init_noise(uint seed) {
     for (int i = 0; i < 256; i++) {
         permutation[i] = i;
     }

@@ -3,7 +3,7 @@
 
 #include <util.h>
 
-void n_init(uint seed);
+void init_noise(uint seed);
 float n_get(float x, float z, float freq, float amp, uint num_octaves);
 
 #endif

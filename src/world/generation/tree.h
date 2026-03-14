@@ -19,7 +19,7 @@ typedef struct {
     float leaf_density;
 } tree;
 
-void tree_init();
+void init_tree();
 tree* get_tree_type(char* id);
 
 void generate_tree(int x, int y, int z, char* id, chunk* c);

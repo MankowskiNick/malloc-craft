@@ -5,8 +5,8 @@
 
 #include <GLFW/glfw3.h>
 
-void i_init(GLFWwindow* window, game_data* data);
-void i_cleanup();
+void init_input(GLFWwindow* window, game_data* data);
+void input_cleanup();
 void update_camera(int delta_ms);
 
 #endif

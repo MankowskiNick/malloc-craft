@@ -26,7 +26,7 @@ typedef struct {
 uint chunk_mesh_key_hash(chunk_mesh_key k);
 int chunk_mesh_key_equals(chunk_mesh_key a, chunk_mesh_key b);
 
-void chunk_mesh_init(camera* camera);
+void init_chunk_mesh(camera* camera);
 int chunk_mesh_equals(void* a, void* b);
 int chunk_work_item_equals(void* a, void* b);
 void chunk_mesh_to_buffer(int* head, side_instance* sides, int num_sides, int lod_scale);

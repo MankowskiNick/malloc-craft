@@ -90,6 +90,10 @@ float SPRINT_MAX_SPEED_MULTIPLIER = 1.5f; // 50% faster max speed when sprinting
 int SPRINT_DOUBLE_TAP_TIME = 200;         // 200 ms to double-tap W
 int SPRINT_TIMEOUT = 500;                 // 500 ms without movement to disable sprint
 
+int SERVER_PORT = 8085;
+char* SERVER_HOST = "127.0.0.1";
+char* WORLDS_DIR = "./worlds/";
+
 int SEED = 42069;
 float WORLDGEN_BIOME_FREQUENCY = 0.2f;
 float WORLDGEN_BIOME_AMPLITUDE = 1.0f;
@@ -126,7 +130,6 @@ char* UI_VERTEX_SHADER = "res/shaders/ui/ui.vert";
 char* UI_FRAGMENT_SHADER = "res/shaders/ui/ui.frag";
 
 // UI settings
-int FPS_AVERAGE_FRAMES = 60;
 float UI_SCALE = 1.0f;
 float FPS_COUNTER_SCALE = 1.0f;
 
@@ -679,11 +682,6 @@ void parse_ui_settings(json_object ui_obj) {
         exit(EXIT_FAILURE);
     }
 
-    json_object fps_average_frames = json_get_property(ui_obj, "fps_average_frames");
-    if (fps_average_frames.type == JSON_NUMBER) {
-        FPS_AVERAGE_FRAMES = (int)fps_average_frames.value.number;
-    }
-
     json_object ui_scale = json_get_property(ui_obj, "ui_scale");
     if (ui_scale.type == JSON_NUMBER) {
         UI_SCALE = (float)ui_scale.value.number;
@@ -802,6 +800,28 @@ void parse_shader_settings(json_object shader_obj) {
     }
 }
 
+void parse_server_settings(json_object server_obj) {
+    if (server_obj.type != JSON_OBJECT) {
+        fprintf(stderr, "Error: server section is not an object in settings.json\n");
+        exit(EXIT_FAILURE);
+    }
+
+    json_object port = json_get_property(server_obj, "port");
+    if (port.type == JSON_NUMBER) {
+        SERVER_PORT = (int)port.value.number;
+    }
+
+    json_object host = json_get_property(server_obj, "host");
+    if (host.type == JSON_STRING) {
+        SERVER_HOST = strdup(host.value.string);
+    }
+
+    json_object worlds_dir = json_get_property(server_obj, "worlds_dir");
+    if (worlds_dir.type == JSON_STRING) {
+        WORLDS_DIR = strdup(worlds_dir.value.string);
+    }
+}
+
 void read_settings(const char* filename) {
     // Read the JSON file to string
     char* settings_json = read_file_to_string(filename);
@@ -895,6 +915,11 @@ void read_settings(const char* filename) {
     json_object ui_obj = json_get_property(obj.root, "ui");
     if (ui_obj.type != JSON_NULL) {
         parse_ui_settings(ui_obj);
+    }
+
+    json_object server_obj = json_get_property(obj.root, "server");
+    if (server_obj.type != JSON_NULL) {
+        parse_server_settings(server_obj);
     }
 
     // Clean up memory

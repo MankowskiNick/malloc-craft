@@ -1,29 +1,37 @@
 #include "render.h"
 
-#include "block_renderer.h"
-#include "blockbench_renderer.h"
-#include "liquid_renderer.h"
-#include "foliage_renderer.h"
-#include "skybox.h"
-#include <glad/glad.h>
-#include <chunk_mesh.h>
-#include <mesh.h>
-#include "util/sort.h"
 #include "../../world/core/world.h"
+
+#include "../../util/metrics.h"
+#include "../../util/sort.h"
+#include "../../util/settings.h"
+
+#include "../../mesh/generation/chunk_mesh.h"
+#include "../../mesh/generation/world_mesh.h"
+#include "../../mesh/core/mesh.h"
+
+#include "../effects/fbo.h"
+#include "../effects/shadow_map.h"
+#include "../effects/reflection_map.h"
+
+#include "../world/foliage_renderer.h"
+#include "../world/liquid_renderer.h"
+#include "../world/block_renderer.h"
+
+#include "../entities/blockbench_renderer.h"
+#include "../environment/skybox.h"
+
 #include <util.h>
-#include "util/settings.h"
-#include <world_mesh.h>
-#include "fbo.h"
-#include "shadow_map.h"
-#include "reflection_map.h"
+
 #include <assert.h>
+#include <glad/glad.h>
 
 renderer create_renderer(game_data* data) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    player* player = data->player;
+    player* player = &data->player;
     camera* camera = &(player->cam);
 
     if (WIREFRAME) {
@@ -32,11 +40,10 @@ renderer create_renderer(game_data* data) {
 
     glViewport(0, 0, WIDTH, HEIGHT);
 
-    w_init();
     m_init(&(player->cam));
 
-    // Preload initial chunks around the player
-    preload_initial_chunks(player->position[0], player->position[2]);
+    // Queue initial chunks for async loading - progress bar will show while they load
+    preload_initial_chunks(data);
 
     block_renderer wr = create_block_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
     block_renderer lr = create_liquid_renderer(camera, ATLAS_PATH, BUMP_PATH, CAUSTIC_PATH);
@@ -82,21 +89,7 @@ void destroy_renderer(renderer* r) {
 
 void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
     assert(r != NULL && "Renderer is NULL\n");
-    assert(packet != NULL && "World mesh is NULL\n");
 
-    if (num_packets <= 0) {
-        return; // No packets to render
-    }
-
-    render_shadow_map(&(r->shadow_map), &(r->s), packet);
-    render_reflection_map(&(r->reflection_map), r->cam, (float)WORLDGEN_WATER_LEVEL, packet);
-    
-    glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
-    glBindTexture(GL_TEXTURE_2D, r->shadow_map.texture);
-    
-    glActiveTexture(GL_TEXTURE0 + REFLECTION_MAP_TEXTURE_INDEX);
-    glBindTexture(GL_TEXTURE_2D, r->reflection_map.texture);
-    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glDisable(GL_DEPTH_TEST);
@@ -105,35 +98,39 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
 
     render_sun(&(r->s), args->tick);
 
-    glClear(GL_DEPTH_BUFFER_BIT);
-    
-    render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
-    render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
-    if (args->player->is_underwater) {
-        render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
-        render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
-        render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
-    } else {
-        render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
-        render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
-        render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
+    if (packet != NULL && num_packets > 0) {
+        render_shadow_map(&(r->shadow_map), &(r->s), packet);
+        render_reflection_map(&(r->reflection_map), r->cam, (float)WORLDGEN_WATER_LEVEL, packet);
+
+        glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
+        glBindTexture(GL_TEXTURE_2D, r->shadow_map.texture);
+
+        glActiveTexture(GL_TEXTURE0 + REFLECTION_MAP_TEXTURE_INDEX);
+        glBindTexture(GL_TEXTURE_2D, r->reflection_map.texture);
+
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
+        render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
+        if (args->player.is_underwater) {
+            render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
+            render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
+            render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
+        } else {
+            render_liquids(&(r->lr), &(r->s), &(r->shadow_map), &(r->reflection_map), packet);
+            render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
+            render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
+        }
+
+        if (args->player.has_selected_block) {
+            render_outline(&(r->or), args->player.selected_block_pos[0], args->player.selected_block_pos[1], args->player.selected_block_pos[2]);
+        }
     }
 
-    // Render block outline if player is looking at a valid block
-    if (args->player->has_selected_block) {
-        render_outline(&(r->or), args->player->selected_block_pos[0], args->player->selected_block_pos[1], args->player->selected_block_pos[2]);
-    }
-
-    // Render UI (disable depth test for 2D overlay)
     glDisable(GL_DEPTH_TEST);
-
-    // Always render hotbar
-    render_hotbar(&(r->ui), args->player->hotbar, args->player->hotbar_size, args->player->selected_block);
-
-    // Render FPS counter if enabled
+    render_hotbar(&(r->ui), args->player.hotbar, args->player.hotbar_size, args->player.selected_block);
     if (args->show_fps) {
-        render_fps(&(r->ui), args->average_fps);
+        render_fps(&(r->ui), (int)get_fps());
     }
-
     glEnable(GL_DEPTH_TEST);
 }

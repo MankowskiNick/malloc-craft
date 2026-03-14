@@ -29,6 +29,15 @@ pthread_cond_t packet_update_signal = PTHREAD_COND_INITIALIZER;
 // Worker pool for chunk mesh generation
 worker_pool* chunk_worker_pool = NULL;
 
+// Last-known player position, updated each frame via load_chunk
+static float g_player_x = 0.0f;
+static float g_player_z = 0.0f;
+
+void get_mesh_player_pos(float* out_x, float* out_z) {
+    *out_x = g_player_x;
+    *out_z = g_player_z;
+}
+
 // Mutexes for shared structures
 pthread_mutex_t chunk_packets_mutex;
 pthread_mutex_t sort_queue_mutex;
@@ -42,7 +51,7 @@ void m_init(camera* camera) {
     chunk_packets_buffer = chunk_mesh_lod_map_init(CHUNK_CACHE_SIZE);  // Initialize staging buffer
     queue_init(&sort_queue);
     queue_init(&chunk_load_queue);
-    chunk_mesh_init(camera);
+    init_chunk_mesh(camera);
 
     pthread_mutex_init(&chunk_packets_mutex, NULL);
     pthread_mutex_init(&sort_queue_mutex, NULL);
@@ -56,7 +65,7 @@ void m_init(camera* camera) {
     }
 }
 
-void m_cleanup() {
+void mesh_cleanup() {
     // Shutdown worker pool
     if (chunk_worker_pool != NULL) {
         pool_shutdown(chunk_worker_pool);
@@ -75,58 +84,56 @@ void m_cleanup() {
     pthread_cond_destroy(&packet_update_signal);
 }
 
-void preload_initial_chunks(float player_x, float player_z) {
-    if (chunk_worker_pool == NULL) {
+void preload_initial_chunks(game_data* data) {
+    if (chunk_worker_pool == NULL || data == NULL) {
         return;
     }
-    
+
+    float player_x = data->player.position[0];
+    float player_z = data->player.position[2];
+
     // Calculate how many chunks we need to load
     int player_chunk_x = WORLD_POS_TO_CHUNK_POS(player_x);
     int player_chunk_z = WORLD_POS_TO_CHUNK_POS(player_z);
-    
+
     int chunks_queued = 0;
-    
-    // Queue all visible chunks
-    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
-            int x = player_chunk_x - TRUE_RENDER_DISTANCE + i;
-            int z = player_chunk_z - TRUE_RENDER_DISTANCE + j;
-            
-            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
-                continue;
-            }
-            
-            // Try to get/queue the chunk
-            chunk_mesh* existing = get_chunk_mesh(x, z);
+
+    // Spiral outward from the player so nearest chunks are queued first.
+    // Uses the standard square-spiral: right, down, left, up with increasing segment lengths.
+    int sx = player_chunk_x;
+    int sz = player_chunk_z;
+    // dx/dz pairs: right (+x), down (+z), left (-x), up (-z)
+    int dir_dx[] = {1, 0, -1, 0};
+    int dir_dz[] = {0, 1, 0, -1};
+    int dir = 0, seg_len = 1, seg_pos = 0, segs_done = 0;
+    int max_side = 2 * TRUE_RENDER_DISTANCE + 1;
+    int max_iter = max_side * max_side;
+
+    for (int i = 0; i < max_iter; i++) {
+        if (sqrt(pow(sx - player_chunk_x, 2) + pow(sz - player_chunk_z, 2)) <= TRUE_RENDER_DISTANCE) {
+            chunk_mesh* existing = get_chunk_mesh(sx, sz);
             if (existing == NULL) {
                 chunks_queued++;
             }
         }
+
+        sx += dir_dx[dir];
+        sz += dir_dz[dir];
+        if (++seg_pos == seg_len) {
+            seg_pos = 0;
+            dir = (dir + 1) % 4;
+            if (++segs_done % 2 == 0) {
+                seg_len++;
+            }
+        }
     }
-    
-    // Load all queued chunks
+
+    // Submit all queued chunks to workers - they will be processed in the background
     if (chunks_queued > 0) {
         for (int i = 0; i < chunks_queued; i++) {
             load_chunk(player_x, player_z);
-            // Give workers a small amount of time to process each batch
-            usleep(100); // 0.1ms
         }
-        
-        // Wait for all work to complete
-        pool_wait_completion(chunk_worker_pool);
     }
-}
-
-block_data_t get_block_data(int x, int y, int z, chunk* c) {
-    // Validate bounds
-    if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_HEIGHT || z < 0 || z >= CHUNK_SIZE) {
-        block_data_t data = {
-            .bytes = { 0, 0, 0 }
-        };
-        return data;  // Return air block (0) for out-of-bounds access
-    }
-    
-    return c->blocks[x][y][z];
 }
 
 block_data_t get_adjacent_block_data(int x, int y, int z, short side, short lod_scale, chunk* c, chunk* adj) {
@@ -237,19 +244,19 @@ void get_side_visible(
 
     short current_water_level = 0;
     get_block_info(c->blocks[x][y][z], &current_id, NULL, NULL, &current_water_level);
-    block_type* current = get_block_type(current_id);
-    if (current == NULL) {
+    block_type current = get_block_type(current_id);
+    if (current.id == -1) {
         *visible_out = 0;
         return;  // Invalid block, don't render
     }
 
     // calculate visibility
-    block_type* adjacent = get_block_type(adjacent_id);
-    if (adjacent == NULL) {
+    block_type adjacent = get_block_type(adjacent_id);
+    if (adjacent.id == -1) {
         *visible_out = 0;
         return;  // Invalid adjacent block, don't render
     }
-    uint visible = adjacent_id == get_block_id("air") || adjacent->transparent != current->transparent;
+    uint visible = adjacent_id == get_block_id("air") || adjacent.transparent != current.transparent;
 
     // check if we are underwater
     if (adjacent_id == get_block_id("water")) {
@@ -268,9 +275,9 @@ void get_side_visible(
 
     // For liquid blocks: show face at any boundary where we can see the water volume
     // This includes: water-to-air, water-to-solid, but NOT water-to-water
-    if (current->liquid) {
+    if (current.liquid) {
         // Hide face if adjacent is also liquid (same type)
-        if (adjacent != NULL && adjacent->liquid) {
+        if (adjacent.id != -1 && adjacent.liquid) {
             visible = 0;
         }
         // Show face if adjacent is not water (air, solid blocks, etc.)
@@ -280,21 +287,21 @@ void get_side_visible(
     }
 
     // make sure transparent neighbors are visible
-    if (adjacent != NULL && adjacent->transparent != current->transparent) {
+    if (adjacent.id == -1 && adjacent.transparent != current.transparent) {
         visible = 1;
     }
 
-    if (adjacent->is_custom_model) {
+    if (adjacent.is_custom_model) {
         visible = 1;
     }
 
-    if (adjacent != NULL
-        && (adjacent->transparent && current->transparent)
-        && adjacent->id != current->id) {
+    if (adjacent.id != -1
+        && (adjacent.transparent && current.transparent)
+        && adjacent.id != current.id) {
         visible = 1;
     }
 
-    if (current->is_foliage) {
+    if (current.is_foliage) {
         visible = 1; // foliage is always visible
     }
 
@@ -497,13 +504,13 @@ static bool is_ao_solid(int x, int y, int z, chunk* c, chunk* adj_chunks[4]) {
         return false;
     }
 
-    block_type* block = get_block_type(block_id);
+    block_type block = get_block_type(block_id);
 
     // Model blocks don't contribute to AO
-    if (block == NULL 
-            || block->is_custom_model
-            || block->transparent
-            || block->liquid) {
+    if (block.id == -1
+            || block.is_custom_model
+            || block.transparent
+            || block.liquid) {
         return false;
     }
 
@@ -671,22 +678,22 @@ void pack_side(int x_0, int y_0, int z_0,
     data->ao = ao;
 
     // block specific data
-    block_type* block = get_block_type(type);
-    if (block == NULL) {
+    block_type block = get_block_type(type);
+    if (block.id == -1) {
         return;  // Invalid block type, skip packing
     }
-    data->orientation = block->oriented ? orientation : (short)DOWN;
+    data->orientation = block.oriented ? orientation : (short)DOWN;
 
     short display_side = get_rotated_side(side, rot);
-    if (!block->is_custom_model && !block->is_foliage && block->oriented) {
+    if (!block.is_custom_model && !block.is_foliage && block.oriented) {
         display_side = get_converted_side(side, orientation);
     }
     // Foliage only uses sides 0 and 1, clamp to valid range
-    if (block->is_foliage && display_side > 1) {
+    if (block.is_foliage && display_side > 1) {
         display_side = side % 2;
     }
-    data->atlas_x = block->face_atlas_coords[display_side][0];
-    data->atlas_y = block->face_atlas_coords[display_side][1];
+    data->atlas_x = block.face_atlas_coords[display_side][0];
+    data->atlas_y = block.face_atlas_coords[display_side][1];
 }
 
 // Generate water flow transition faces between blocks with different water levels
@@ -767,13 +774,13 @@ void pack_water_transitions(
         trans->ao = 0xFF;  // No AO for water transitions (all vertices = 3)
 
         // Use water texture for transition
-        block_type* water_block = get_block_type(water_id);
-        if (water_block == NULL) {
+        block_type water_block = get_block_type(water_id);
+        if (water_block.id != -1) {
             continue;  // Invalid water block type
         }
         short display_side = side;  // Use the cardinal direction directly
-        trans->atlas_x = water_block->face_atlas_coords[display_side][0];
-        trans->atlas_y = water_block->face_atlas_coords[display_side][1];
+        trans->atlas_x = water_block.face_atlas_coords[display_side][0];
+        trans->atlas_y = water_block.face_atlas_coords[display_side][1];
 
         (*num_sides)++;
     }
@@ -822,11 +829,11 @@ void pack_block(
 
         // For liquid blocks, use the current block's water level
         // For non-liquid blocks, use the adjacent water level (for underwater effects)
-        block_type* block = get_block_type(block_id);
-        if (block == NULL) {
+        block_type block = get_block_type(block_id);
+        if (block.id == -1) {
             continue;  // Invalid block type, skip this face
         }
-        short water_level_to_use = block->liquid ? current_water_level : (short)adj_water_level;
+        short water_level_to_use = block.liquid ? current_water_level : (short)adj_water_level;
 
         // Calculate AO for this face
         int ao = calculate_face_ao(x, y, z, side, c, adj_chunks);
@@ -856,19 +863,19 @@ void pack_model(
     short rot = 0;
     short water_level = 0;
     get_block_info(c->blocks[x][y][z], &block_id, &orientation, &rot, &water_level);
-    block_type* block = get_block_type(block_id);
-    if (block == NULL || !block->is_custom_model || block->model == NULL) {
+    block_type block = get_block_type(block_id);
+    if (block.id == -1 || !block.is_custom_model || block.model == NULL) {
         return;
     }
 
     // reference blockbench model data hashmap based on model name
     blockbench_model* model = NULL;
 
-    if (block->oriented) {
-        model = get_blockbench_model(block->models[orientation]);
+    if (block.oriented) {
+        model = get_blockbench_model(block.models[orientation]);
     }
     else {
-        model = get_blockbench_model(block->model);
+        model = get_blockbench_model(block.model);
     }
 
     if (model == NULL) {
@@ -883,7 +890,7 @@ void pack_model(
     }
 
     mat4 transformation;
-    get_model_transformation(transformation, block, orientation, rot);
+    get_model_transformation(transformation, &block, orientation, rot);
 
     // copy model data into chunk mesh data
     for (int i = 0; i < model->index_count; i++) {
@@ -951,11 +958,11 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                     continue;
                 }
 
-                block_type* block = get_block_type(block_id);
-                if (block == NULL) {
+                block_type block = get_block_type(block_id);
+                if (block.id == -1) {
                     continue;  // Invalid block type, skip
                 }
-                if (block->liquid) {
+                if (block.liquid) {
                     // Pack normal liquid faces
                     pack_block(i, k, j, lod_scale, c, adj_chunks,
                         liquid_side_data, num_liquid_sides);
@@ -966,7 +973,7 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                     pack_water_transitions(i, k, j, lod_scale, c, adj_chunks, current_water_level,
                         liquid_side_data, num_liquid_sides);
                 }
-                else if (block->transparent && !block->is_foliage) {
+                else if (block.transparent && !block.is_foliage) {
                     // Only pack transparent blocks if within render distance
                     if (render_transparent) {
                         pack_block(i, k, j, lod_scale,
@@ -974,7 +981,7 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                             transparent_side_data, num_transparent_sides);
                     }
                 }
-                else if (block->transparent && block->is_foliage) {
+                else if (block.transparent && block.is_foliage) {
                     // Only pack foliage blocks if within render distance
                     if (render_foliage) {
                         pack_block(i, k, j, lod_scale,
@@ -982,7 +989,7 @@ void pack_chunk(chunk* c, chunk* adj_chunks[4],
                             foliage_side_data, num_foliage_sides);
                     }
                 }
-                else if (block->is_custom_model) {
+                else if (block.is_custom_model) {
                     pack_model(i, k, j, c, custom_model_data, num_custom_verts);
                 }
                 else {
@@ -1037,8 +1044,6 @@ int is_chunk_in_transparent_distance(int chunk_x, int chunk_z, float player_x, f
     float dist = sqrtf(dx * dx + dz * dz);
     return dist <= (float)TRANSPARENT_RENDER_DISTANCE;
 }
-
-chunk_mesh* create_chunk_mesh(int x, int z, float player_x, float player_z);
 
 void process_chunk_work_item(chunk_work_item* work) {
     if (work == NULL) {
@@ -1151,7 +1156,11 @@ chunk_mesh* update_chunk_mesh(int x, int z, float player_x, float player_z) {
     // This ensures LOD transitions happen smoothly as the player moves
     
     chunk_coord coords[5] = {
-        {x+1, z}, {x-1, z}, {x, z+1}, {x, z-1}, {x, z}
+        {x+1, z}, 
+        {x-1, z}, 
+        {x, z+1}, 
+        {x, z-1}, 
+        {x, z}
     };
     
     // Update all adjacent chunks at their appropriate LOD
@@ -1204,29 +1213,34 @@ chunk_mesh* get_chunk_mesh(int x, int z) {
 
 void invalidate_chunk_mesh_all_lods(int x, int z) {
     // Remove all LOD versions of a chunk from the cache
-    // This is called when a block is modified to force regeneration
     for (short lod = 1; lod <= CHUNK_SIZE; lod *= LOD_SCALING_CONSTANT) {
         chunk_mesh_key key = {x, z, lod};
         chunk_mesh* mesh = chunk_mesh_lod_map_get(&chunk_packets, key);
         if (mesh != NULL) {
-            // Free the mesh data
             if (mesh->opaque_sides != NULL) free(mesh->opaque_sides);
             if (mesh->transparent_sides != NULL) free(mesh->transparent_sides);
             if (mesh->liquid_sides != NULL) free(mesh->liquid_sides);
             if (mesh->foliage_sides != NULL) free(mesh->foliage_sides);
             if (mesh->custom_model_data != NULL) free(mesh->custom_model_data);
-            
-            // Remove from cache
             chunk_mesh_lod_map_remove(&chunk_packets, key);
         }
     }
+
+    // Regenerate synchronously on this thread, bypassing the worker pool.
+    // create_chunk_mesh inserts the new entry into chunk_packets by value;
+    // free the returned outer struct since the cache owns the data arrays.
+    // chunk_mesh* mesh = create_chunk_mesh(x, z, g_player_x, g_player_z);
+    // free(mesh);
 }
 
 void load_chunk(float player_x, float player_z) {
     if (chunk_worker_pool == NULL) {
         return;
     }
-    
+
+    g_player_x = player_x;
+    g_player_z = player_z;
+
     for (int i = 0; i < CHUNK_LOAD_PER_FRAME; i++) {
         chunk_coord* coord = (chunk_coord*)queue_pop(&chunk_load_queue);
         if (coord == NULL) {

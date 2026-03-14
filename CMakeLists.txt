@@ -8,7 +8,10 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type (Debug or Release)" FORCE)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Set compiler flags for Debug and Release
+# set(CMAKE_C_FLAGS_DEBUG "-g -fsanitize=address -fno-omit-frame-pointer")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 
@@ -22,3 +25,8 @@ add_executable(malloc-craft ${SOURCES})
 target_include_directories(malloc-craft PUBLIC include src src/util src/player/core src/player/input src/player/serialization src/world/core src/world/generation src/world/physics src/mesh/core src/mesh/geometry src/mesh/generation src/mesh/world src/mesh/utilities src/render/core src/render/geometry src/render/effects src/render/world src/render/entities src/render/environment src/render/ui)
 target_link_libraries(malloc-craft glfw)
 target_link_libraries(malloc-craft cglm)
+
+add_custom_command(TARGET malloc-craft POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:malloc-craft>/res
+)

@@ -92,7 +92,16 @@ void copy_biome_data(json_object obj) {
     BIOME_COUNT = size;
 }
 
-void read_biomes(char* filename) {
+short get_biome_id(float x, float z) {
+    float noise = n_get(x, z, 
+        WORLDGEN_BIOME_FREQUENCY, 
+        WORLDGEN_BIOME_AMPLITUDE, 
+        WORLDGEN_BIOME_OCTAVES);
+    float biome_index = noise * (float)BIOME_COUNT;
+    return BIOMES[(int)biome_index % BIOME_COUNT].id;
+}
+
+void init_biomes(char* filename) {
     char* biomes_json = read_file_to_string(filename);
     
     if (biomes_json == NULL) {
@@ -117,13 +126,8 @@ void read_biomes(char* filename) {
     copy_biome_data(obj.root);
 }
 
-short get_biome_id(float x, float z) {
-    float noise = n_get(x, z, 
-        WORLDGEN_BIOME_FREQUENCY, 
-        WORLDGEN_BIOME_AMPLITUDE, 
-        WORLDGEN_BIOME_OCTAVES);
-    float biome_index = noise * (float)BIOME_COUNT; // multiply by number of biomes
-    return BIOMES[(int)biome_index % BIOME_COUNT].id;
+void biome_cleanup(void) {
+    free(BIOMES);
 }
 
 biome* get_biome(float x, float z) {

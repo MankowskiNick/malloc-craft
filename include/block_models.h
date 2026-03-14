@@ -4,6 +4,8 @@
 #include <util/settings.h>
 #include <util.h>
 
+#include <stdbool.h>
+
 #define NORTH   0.0f
 #define WEST    1.0f
 #define SOUTH   2.0f
@@ -52,7 +54,6 @@ typedef struct {
 
 typedef struct {
     int x, z;
-    bool modified;
     block_data_t blocks[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
 } chunk;
 

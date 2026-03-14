@@ -1,0 +1,88 @@
+#include "client_recv.h"
+
+#include <stdio.h>
+#include <server/models.h>
+#include <server/client.h>
+#include <util.h>
+
+#include "../../world/core/world.h"
+#include "../compression/compression.h"
+#include "../../mesh/core/mesh.h"
+
+#include <sys/socket.h>
+#include <stdlib.h>
+
+static void process_chunk_broadcast(int fd) {
+    int packet_size = -1;
+    if (recv(fd, &packet_size, sizeof(int), MSG_WAITALL) <= 0) {
+        printf("ERROR: Failed to receive broadcast size from server\n");
+        return;
+    }
+
+    if (packet_size <= 0) {
+        printf("ERROR: Invalid broadcast packet size (%d)\n", packet_size);
+        return;
+    }
+
+    byte* data = malloc(packet_size);
+    if (data == NULL || recv(fd, data, packet_size, MSG_WAITALL) != packet_size) {
+        printf("ERROR: Failed to receive broadcast chunk data from server\n");
+        free(data);
+        return;
+    }
+
+    chunk* c = decompress_chunk(data, packet_size);
+    free(data);
+
+    if (c == NULL) {
+        printf("ERROR: Failed to decompress broadcast chunk\n");
+        return;
+    }
+
+    int x = c->x, z = c->z;
+    update_chunk(c);
+    float player_x, player_z;
+    get_mesh_player_pos(&player_x, &player_z);
+    chunk_mesh* mesh = create_chunk_mesh(x, z, player_x, player_z);
+    free(mesh);
+}
+
+void* run_client_recv_thread(void* args) {
+    (void)args;
+
+    int fd = acquire_server_fd();
+    if (fd < 0) {
+        printf("ERROR: Client recv thread could not connect to server\n");
+        return NULL;
+    }
+
+    if (!send_msg_header(SUBSCRIBE_BROADCAST, fd)) {
+        printf("ERROR: Client recv thread could not subscribe to broadcasts\n");
+        return NULL;
+    }
+
+    while (1) {
+        chunk_msg_type msg_type = UNKNOWN;
+        if (recv(fd, &msg_type, sizeof(chunk_msg_type), MSG_WAITALL) <= 0) {
+            printf("Server disconnected (client recv thread)\n");
+            break;
+        }
+
+        switch (msg_type) {
+            case CHUNK_BROADCAST:
+                process_chunk_broadcast(fd);
+                break;
+            default:
+                printf("ERROR: Unexpected message type in client recv thread (%d)\n", msg_type);
+                break;
+        }
+    }
+
+    return NULL;
+}
+
+void start_broadcast_listener(void) {
+    pthread_t recv_thread = 0;
+    pthread_create(&recv_thread, NULL, run_client_recv_thread, NULL);
+    pthread_detach(recv_thread);
+}
