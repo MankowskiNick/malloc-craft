@@ -563,3 +563,87 @@ block_data_t get_block_data(int x, int y, int z, chunk* c) {
     return c->blocks[x][y][z];
 }
 
+block_data_t get_adjacent_block_data(int x, int y, int z, short side, short lod_scale, chunk* c, chunk* adj) {
+    switch(side) {
+        case (int)UP:
+            if (y + lod_scale < CHUNK_HEIGHT) {
+                return c->blocks[x][y + lod_scale][z];
+            }
+            break;
+        case (int)DOWN:
+            if (y - lod_scale >= 0) {
+                return c->blocks[x][y - lod_scale][z];
+            }
+            break;
+        case (int)WEST:
+            if (x + lod_scale < CHUNK_SIZE) {
+                return c->blocks[x + lod_scale][y][z];
+            }
+            else if (adj != NULL) {
+                // Calculate how far we've overshot into the adjacent chunk
+                int overflow = (x + lod_scale) - CHUNK_SIZE;
+                int adj_x = (overflow > 0) ? overflow : 0;
+                if (adj_x < CHUNK_SIZE) {
+                    return adj->blocks[adj_x][y][z];
+                }
+            }
+            break;
+        case (int)EAST:
+            if (x - lod_scale >= 0) {
+                return c->blocks[x - lod_scale][y][z];
+            }
+            else if (adj != NULL) {
+                // Calculate position in adjacent chunk when underflowing
+                int underflow = lod_scale - x;
+                int adj_x = CHUNK_SIZE - underflow;
+                if (adj_x >= 0 && adj_x < CHUNK_SIZE) {
+                    return adj->blocks[adj_x][y][z];
+                }
+            }
+            break;
+        case (int)NORTH:
+            if (z - lod_scale >= 0) {
+                return c->blocks[x][y][z - lod_scale];
+            }
+            else if (adj != NULL) {
+                // Calculate position in adjacent chunk when underflowing
+                int underflow = lod_scale - z;
+                int adj_z = CHUNK_SIZE - underflow;
+                if (adj_z >= 0 && adj_z < CHUNK_SIZE) {
+                    return adj->blocks[x][y][adj_z];
+                }
+            }
+            break;
+        case (int)SOUTH:
+            if (z + lod_scale < CHUNK_SIZE) {
+                return c->blocks[x][y][z + lod_scale];
+            }
+            else if (adj != NULL) {
+                // Calculate how far we've overshot into the adjacent chunk
+                int overflow = (z + lod_scale) - CHUNK_SIZE;
+                int adj_z = (overflow > 0) ? overflow : 0;
+                if (adj_z < CHUNK_SIZE) {
+                    return adj->blocks[x][y][adj_z];
+                }
+            }
+            break;
+        default:
+            break;
+    }
+    
+    // Return air block (0) if we've reached this point
+    // This happens when:
+    // - UP/DOWN sides exceed chunk height boundaries
+    // - Horizontal sides need adjacent chunk but adj is NULL or out of bounds after overflow
+    block_data_t data = { .bytes = { 0, 0, 0 } };
+    return data;
+}
+
+short get_adjacent_block(int x, int y, int z, short side, short lod_scale, chunk* c, chunk* adj) {
+    block_data_t block_data = get_adjacent_block_data(x, y, z, side, lod_scale, c, adj);
+    short block_id = 0;
+    get_block_info(block_data, &block_id, NULL, NULL, NULL);
+    return block_id;
+}
+
+

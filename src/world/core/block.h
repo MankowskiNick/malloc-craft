@@ -21,15 +21,16 @@ void block_cleanup(void);
 
 void break_block(game_data* data);
 void place_block(game_data* data);
+
 void update_selected_block(player* p);
+
 short get_block_id(char* name);
+block_data_t get_adjacent_block_data(int x, int y, int z, short side, short lod_scale, chunk* c, chunk* adj); 
+short get_adjacent_block(int x, int y, int z, short side, short lod_scale, chunk* c, chunk* adj);
 bool check_block_foliage(short id);
-
-
 block_data_t get_block_data(int x, int y, int z, chunk* c);
+block_type get_block_type(short id);
 
 void send_cube_vbo(VAO vao, VBO vbo);
-
-block_type get_block_type(short id);
 
 #endif
