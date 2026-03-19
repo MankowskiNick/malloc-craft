@@ -74,10 +74,10 @@ void copy_biome_data(json_object obj) {
 
         BIOMES[i].id = (short)id_obj.value.number;
         BIOMES[i].name = strdup(name_obj.value.string);
-        BIOMES[i].surface_type = surface_type_obj.value.string;
-        BIOMES[i].subsurface_type = subsurface_type_obj.value.string;
-        BIOMES[i].underground_type = underground_type_obj.value.string;
-        BIOMES[i].underwater_type = underwater_type_obj.value.string;
+        BIOMES[i].surface_type = strdup(surface_type_obj.value.string);
+        BIOMES[i].subsurface_type = strdup(subsurface_type_obj.value.string);
+        BIOMES[i].underground_type = strdup(underground_type_obj.value.string);
+        BIOMES[i].underwater_type = strdup(underwater_type_obj.value.string);
         BIOMES[i].foliage_count = (int)foliage_obj.value.list.count;
         BIOMES[i].foliage = malloc(sizeof(foliage) * BIOMES[i].foliage_count);
         if (BIOMES[i].foliage == NULL) {
@@ -124,9 +124,21 @@ void init_biomes(char* filename) {
     }
 
     copy_biome_data(obj.root);
+    json_free(&obj);
 }
 
 void biome_cleanup(void) {
+    for (int i = 0; i < BIOME_COUNT; i++) {
+        free(BIOMES[i].name);
+        free(BIOMES[i].surface_type);
+        free(BIOMES[i].subsurface_type);
+        free(BIOMES[i].underground_type);
+        free(BIOMES[i].underwater_type);
+        for (int j = 0; j < BIOMES[i].foliage_count; j++) {
+            free(BIOMES[i].foliage[j].type);
+        }
+        free(BIOMES[i].foliage);
+    }
     free(BIOMES);
 }
 
