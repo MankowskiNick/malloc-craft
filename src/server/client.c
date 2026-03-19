@@ -6,156 +6,151 @@
 #include "../world/core/chunk.h"
 #include "compression/compression.h"
 
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <unistd.h>
-
 
 #pragma region thread_management
 
-static pthread_key_t  thread_socket_key;
+static pthread_key_t thread_socket_key;
 static pthread_once_t thread_socket_key_once = PTHREAD_ONCE_INIT;
 
-static void close_thread_socket(void* ptr) {
-    int* fd_ptr = (int*)ptr;
-    if (fd_ptr) {
-        if (*fd_ptr >= 0) close(*fd_ptr);
-        free(fd_ptr);
-    }
+static void close_thread_socket(void *ptr) {
+  int *fd_ptr = (int *)ptr;
+  if (fd_ptr) {
+    if (*fd_ptr >= 0)
+      close(*fd_ptr);
+    free(fd_ptr);
+  }
 }
 
 static void init_thread_socket_key(void) {
-    pthread_key_create(&thread_socket_key, close_thread_socket);
+  pthread_key_create(&thread_socket_key, close_thread_socket);
 }
 
 // Returns this thread's socket fd, connecting (or reconnecting) as needed.
 static int get_thread_socket(void) {
-    pthread_once(&thread_socket_key_once, init_thread_socket_key);
+  pthread_once(&thread_socket_key_once, init_thread_socket_key);
 
-    int* fd_ptr = (int*)pthread_getspecific(thread_socket_key);
-    if (fd_ptr == NULL) {
-        fd_ptr = malloc(sizeof(int));
-        *fd_ptr = -1;
-        pthread_setspecific(thread_socket_key, fd_ptr);
-    }
+  int *fd_ptr = (int *)pthread_getspecific(thread_socket_key);
+  if (fd_ptr == NULL) {
+    fd_ptr = malloc(sizeof(int));
+    *fd_ptr = -1;
+    pthread_setspecific(thread_socket_key, fd_ptr);
+  }
 
-    // Return the cached fd if it's valid.
-    if (*fd_ptr >= 0) {
-        return *fd_ptr;
-    }
+  // Return the cached fd if it's valid.
+  if (*fd_ptr >= 0) {
+    return *fd_ptr;
+  }
 
-    // Connect (or reconnect after a previous failure or broken socket).
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) {
-        fprintf(stderr, "ERROR: Failed to create client socket\n");
-        return -1;
-    }
+  // Connect (or reconnect after a previous failure or broken socket).
+  int fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (fd < 0) {
+    fprintf(stderr, "ERROR: Failed to create client socket\n");
+    return -1;
+  }
 
-    struct sockaddr_in addr = {
-        .sin_family = AF_INET,
-        .sin_port   = htons(SERVER_PORT)
-    };
-    inet_pton(AF_INET, SERVER_HOST, &addr.sin_addr);
+  struct sockaddr_in addr = {.sin_family = AF_INET,
+                             .sin_port = htons(SERVER_PORT)};
+  inet_pton(AF_INET, SERVER_HOST, &addr.sin_addr);
 
-    if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        fprintf(stderr, "ERROR: Failed to connect to chunk server\n");
-        close(fd);
-        return -1;
-    }
+  if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    fprintf(stderr, "ERROR: Failed to connect to chunk server\n");
+    close(fd);
+    return -1;
+  }
 
-    *fd_ptr = fd;
-    return fd;
+  *fd_ptr = fd;
+  return fd;
 }
 
-// Mark this thread's socket as broken so the next get_thread_socket() reconnects.
+// Mark this thread's socket as broken so the next get_thread_socket()
+// reconnects.
 static void reset_thread_socket(void) {
-    int* fd_ptr = (int*)pthread_getspecific(thread_socket_key);
-    if (fd_ptr && *fd_ptr >= 0) {
-        close(*fd_ptr);
-        *fd_ptr = -1;
-    }
+  int *fd_ptr = (int *)pthread_getspecific(thread_socket_key);
+  if (fd_ptr && *fd_ptr >= 0) {
+    close(*fd_ptr);
+    *fd_ptr = -1;
+  }
 }
 
 #pragma endregion
 
-int acquire_server_fd(void) {
-    return get_thread_socket();
-}
+int acquire_server_fd(void) { return get_thread_socket(); }
 
 // TODO: convert this to use send_data
-void send_chunk_request(int fd, int x, int z) {\
-    if (!send_msg_header(CHUNK_REQ, fd)) {
-        return;
-    }
-    
-    chunk_request req = {
-        .x = x,
-        .z = z
-    };
-    if (send(fd, &req, sizeof(req), MSG_NOSIGNAL) < 0) {
-        fprintf(stderr, "ERROR: Failed to send chunk request to server\n");
-        return;
-    }
-
+void send_chunk_request(int fd, int x, int z) {
+  if (!send_msg_header(CHUNK_REQ, fd)) {
     return;
+  }
+
+  chunk_request req = {.x = x, .z = z};
+  if (send(fd, &req, sizeof(req), MSG_NOSIGNAL) < 0) {
+    fprintf(stderr, "ERROR: Failed to send chunk request to server\n");
+    return;
+  }
+
+  return;
 }
 
-byte* receive_chunk(int fd, int* packet_size) {
-    if (recv(fd, packet_size, sizeof(int), MSG_WAITALL) != sizeof(int) || *packet_size <= 0) {
-        printf("ERROR: Failed to receive chunk size from server\n");
-        return NULL;
-    }
+byte *receive_chunk(int fd, int *packet_size) {
+  if (recv(fd, packet_size, sizeof(int), MSG_WAITALL) != sizeof(int) ||
+      *packet_size <= 0) {
+    printf("ERROR: Failed to receive chunk size from server\n");
+    return NULL;
+  }
 
-    byte* compressed_chunk = malloc(*packet_size);
-    if (compressed_chunk == NULL) {
-        printf("ERROR: Could not allocate buffer for compressed chunk\n");
-        return NULL;
-    }
-    if (recv(fd, compressed_chunk, *packet_size, MSG_WAITALL) != *packet_size) {
-        printf("ERROR: Could not receive compressed chunk from server (fd %i)\n", fd);
-        free(compressed_chunk);
-        return NULL;
-    }
-
-    return compressed_chunk;
-}
-
-chunk* request_chunk(int x, int z) {
-    int fd = get_thread_socket();
-    send_chunk_request(fd, x, z);
-
-    int packet_size = -1;
-    byte* compressed_chunk = receive_chunk(fd, &packet_size);
-
-    if (compressed_chunk == NULL || packet_size < 0) {
-        printf("ERROR: Could not receive chunk from server.\n");
-        return NULL;
-    }
-
-    chunk* c = decompress_chunk(compressed_chunk, packet_size);
+  byte *compressed_chunk = malloc(*packet_size);
+  if (compressed_chunk == NULL) {
+    printf("ERROR: Could not allocate buffer for compressed chunk\n");
+    return NULL;
+  }
+  if (recv(fd, compressed_chunk, *packet_size, MSG_WAITALL) != *packet_size) {
+    printf("ERROR: Could not receive compressed chunk from server (fd %i)\n",
+           fd);
     free(compressed_chunk);
-    return c;
+    return NULL;
+  }
+
+  return compressed_chunk;
 }
 
-void send_compressed_chunk(int fd, byte* data, int size) {
-    if (!send_msg_header(CHUNK_UPDATE, fd)) {
-        return;
-    }
+chunk *request_chunk(int x, int z) {
+  int fd = get_thread_socket();
+  send_chunk_request(fd, x, z);
 
-    if (!send_data(fd, &size, sizeof(int)) ||
-        !send_data(fd, data, size)) {
-        printf("ERROR: Failed to send chunk to client (fd %d)\n", fd);
-    }
+  int packet_size = -1;
+  byte *compressed_chunk = receive_chunk(fd, &packet_size);
+
+  if (compressed_chunk == NULL || packet_size < 0) {
+    printf("ERROR: Could not receive chunk from server.\n");
+    return NULL;
+  }
+
+  chunk *c = decompress_chunk(compressed_chunk, packet_size);
+  free(compressed_chunk);
+  return c;
 }
 
-void send_chunk_to_server(chunk* c) {
-    int fd = get_thread_socket();
+void send_compressed_chunk(int fd, byte *data, int size) {
+  if (!send_msg_header(CHUNK_UPDATE, fd)) {
+    return;
+  }
 
-    int packet_size = -1;
-    byte* compressed_chunk = compress_chunk(c, &packet_size);
+  if (!send_data(fd, &size, sizeof(int)) || !send_data(fd, data, size)) {
+    printf("ERROR: Failed to send chunk to client (fd %d)\n", fd);
+  }
+}
 
-    send_compressed_chunk(fd, compressed_chunk, packet_size);
+void send_chunk_to_server(chunk *c) {
+  int fd = get_thread_socket();
 
-    free(compressed_chunk); 
+  int packet_size = -1;
+  byte *compressed_chunk = compress_chunk(c, &packet_size);
+
+  send_compressed_chunk(fd, compressed_chunk, packet_size);
+
+  free(compressed_chunk);
 }
