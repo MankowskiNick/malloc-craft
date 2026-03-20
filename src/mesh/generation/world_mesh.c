@@ -261,6 +261,9 @@ void get_world_mesh(game_data* args) {
                                   
     // Deep copy packet list while holding lock to avoid data races
     for (int i = 0; i < packet_count; i++) {
+        if (packet[i] == NULL) {
+            continue;
+        }
         packet[i] = copy_chunk_mesh(args->packet[i]);
     }
 

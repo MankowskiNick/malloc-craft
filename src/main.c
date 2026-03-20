@@ -50,6 +50,9 @@ int main(int argc, char** argv) {
 
     while (!glfwWindowShouldClose(window)) {
 
+        if (data.world_mesh == NULL || *data.num_packets == 0)
+            continue;
+
         update_game_data(&data);
         update_fps();
 
