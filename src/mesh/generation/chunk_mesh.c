@@ -165,60 +165,63 @@ void get_chunk_meshes(game_data* args) {
     chunk_mesh** packet = NULL;
     int count = 0;
 
+    // First pass: handle LOD updates (expensive, done without holding lock)
     for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
         for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
-            int x = player_chunk_x - TRUE_RENDER_DISTANCE + i;
-            int z = player_chunk_z - TRUE_RENDER_DISTANCE + j;
+            int cx = player_chunk_x - TRUE_RENDER_DISTANCE + i;
+            int cz = player_chunk_z - TRUE_RENDER_DISTANCE + j;
 
-            if (sqrt(pow(x - player_chunk_x, 2) + pow(z - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
+            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
                 continue;
             }
-            
+
             lock_mesh();
-            chunk_mesh* mesh = get_chunk_mesh(x, z);
+            chunk_mesh* mesh = get_chunk_mesh(cx, cz);
+            if (mesh != NULL) {
+                short current_lod = mesh->lod_scale;
+                short new_lod = calculate_lod(cx, cz, args->x, args->z);
+
+                if (new_lod != current_lod) {
+                    update_chunk_mesh(cx, cz, args->player.position[0], args->player.position[2]);
+                    args->mesh_requires_update = TRUE;
+                }
+            }
             unlock_mesh();
+        }
+    }
+
+    // Second pass: collect meshes into packet array while holding lock
+    lock_mesh();
+
+    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
+            int cx = player_chunk_x - TRUE_RENDER_DISTANCE + i;
+            int cz = player_chunk_z - TRUE_RENDER_DISTANCE + j;
+
+            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
+                continue;
+            }
+
+            chunk_mesh* mesh = get_chunk_mesh(cx, cz);
 
             if (mesh == NULL) {
                 continue;
-            }
-
-            // Check if LOD has changed for this chunk
-            short current_lod = mesh->lod_scale;
-            short new_lod = calculate_lod(x, z, args->x, args->z);
-            
-            if (new_lod != current_lod) {
-                // LOD changed - queue regeneration at new LOD
-                lock_mesh();
-                chunk_mesh* new_lod_mesh = update_chunk_mesh(x, z, args->player.position[0], args->player.position[2]);
-                unlock_mesh();
-                
-                // Use the new LOD mesh if available, otherwise keep using current one
-                if (new_lod_mesh != NULL) {
-                    mesh = new_lod_mesh;
-                }
-                
-                // Mark world mesh for regeneration
-                args->mesh_requires_update = TRUE;
             }
 
             packet = realloc(packet, (count + 1) * sizeof(chunk_mesh*));
             packet[count] = mesh;
             count++;
 
-            if (x >= player_chunk_x - 1 
-                && x <= player_chunk_x + 1 
-                && z >= player_chunk_z - 1
-                && z <= player_chunk_z + 1
+            if (cx >= player_chunk_x - 1
+                && cx <= player_chunk_x + 1
+                && cz >= player_chunk_z - 1
+                && cz <= player_chunk_z + 1
                 && movedBlocks) {
                 queue_chunk_for_sorting(mesh, player_chunk_x, player_chunk_z);
             }
         }
     }
 
-    sort_chunk();
-    load_chunk(args->player.position[0], args->player.position[2]);
-
-    lock_mesh();
     quicksort(packet, count, sizeof(chunk_mesh*), chunk_distance_to_camera);
 
     if (args->num_packets == NULL) {
@@ -226,8 +229,11 @@ void get_chunk_meshes(game_data* args) {
     }
     *args->num_packets = count;
     args->packet = packet;
+
     unlock_mesh();
 
+    sort_chunk();
+    load_chunk(args->player.position[0], args->player.position[2]);
 }
 
 void update_chunk_meshes(game_data* data) {
