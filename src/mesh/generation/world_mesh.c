@@ -249,6 +249,9 @@ void get_world_mesh(game_data* args) {
         }
     }
 
+    if (args->num_packets == NULL) {
+        return;
+    }
     int packet_count = *(args->num_packets);
     if (packet_count == 0) {
         return;
@@ -258,13 +261,19 @@ void get_world_mesh(game_data* args) {
     assert(packet != NULL && "ERROR: Could not allocate memory for chunk_mesh double buffer in world_mesh generation.\n");
 
     lock_mesh();
-                                  
+
+    // Check if packet data is available
+    if (args->packet == NULL) {
+        unlock_mesh();
+        free(packet);
+        return;
+    }
+
     // Deep copy packet list while holding lock to avoid data races
     for (int i = 0; i < packet_count; i++) {
-        if (packet[i] == NULL) {
-            continue;
+        if (args->packet[i] != NULL) {
+            packet[i] = copy_chunk_mesh(args->packet[i]);
         }
-        packet[i] = copy_chunk_mesh(args->packet[i]);
     }
 
     unlock_mesh();

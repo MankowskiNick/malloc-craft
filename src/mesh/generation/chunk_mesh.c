@@ -36,6 +36,9 @@ int chunk_coord_equals(void* a, void* b) {
 }
 
 int chunk_mesh_equals(void* a, void* b) {
+    if (a == NULL || b == NULL) {
+        return a == NULL && b == NULL;
+    }
     chunk_mesh* c1 = (chunk_mesh*)a;
     chunk_mesh* c2 = (chunk_mesh*)b;
     return c1->x == c2->x && c1->z == c2->z;
@@ -215,9 +218,9 @@ void get_chunk_meshes(game_data* args) {
     sort_chunk();
     load_chunk(args->player.position[0], args->player.position[2]);
 
+    lock_mesh();
     quicksort(packet, count, sizeof(chunk_mesh*), chunk_distance_to_camera);
 
-    lock_mesh();
     if (args->num_packets == NULL) {
         args->num_packets = malloc(sizeof(int));
     }
