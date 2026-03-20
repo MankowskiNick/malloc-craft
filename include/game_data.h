@@ -119,8 +119,9 @@ static inline world_mesh* copy_world_mesh(world_mesh* src) {
     }
     
     if (src->custom_model_data && src->num_custom_verts > 0) {
-        copy->custom_model_data = (float*)malloc(sizeof(float) * FLOATS_PER_MODEL_VERT * src->num_custom_verts);
-        memcpy(copy->custom_model_data, src->custom_model_data, sizeof(float) * src->num_custom_verts);
+        size_t custom_model_size = sizeof(float) * FLOATS_PER_MODEL_VERT * src->num_custom_verts;
+        copy->custom_model_data = (float*)malloc(custom_model_size);
+        memcpy(copy->custom_model_data, src->custom_model_data, custom_model_size);
     } else {
         copy->custom_model_data = NULL;
     }
