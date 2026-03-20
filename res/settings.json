@@ -13,7 +13,7 @@
     "chunk_cache_size": 1024,
     "chunk_render_distance": 10,
     "lod_scaling_constant": 2,
-    "max_lod_block_size": 1,
+    "max_lod_block_size": 4,
     "foliage_render_distance": 12,
     "transparent_render_distance": 32
   },
