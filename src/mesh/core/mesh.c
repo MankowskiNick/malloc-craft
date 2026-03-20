@@ -904,10 +904,12 @@ chunk_mesh *get_chunk_mesh(int x, int z) {
 }
 
 void invalidate_chunk_mesh_all_lods(int x, int z) {
+
   // Remove all LOD versions of a chunk from the cache
   for (short lod = 1; lod <= CHUNK_SIZE; lod *= LOD_SCALING_CONSTANT) {
     chunk_mesh_key key = {x, z, lod};
     chunk_mesh *mesh = chunk_mesh_lod_map_get(&chunk_packets, key);
+    queue_remove(&sort_queue, mesh, chunk_mesh_equals);
     if (mesh != NULL) {
       if (mesh->opaque_sides != NULL)
         free(mesh->opaque_sides);
@@ -926,8 +928,8 @@ void invalidate_chunk_mesh_all_lods(int x, int z) {
   // Regenerate synchronously on this thread, bypassing the worker pool.
   // create_chunk_mesh inserts the new entry into chunk_packets by value;
   // free the returned outer struct since the cache owns the data arrays.
-  // chunk_mesh* mesh = create_chunk_mesh(x, z, g_player_x, g_player_z);
-  // free(mesh);
+  chunk_mesh* mesh = create_chunk_mesh(x, z, g_player_x, g_player_z);
+  free(mesh);
 }
 
 void load_chunk(float player_x, float player_z) {

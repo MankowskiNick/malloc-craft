@@ -10,6 +10,10 @@
 #include "util/core.h"
 
 int main(int argc, char** argv) {
+    
+
+    init_core();
+    
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--server") == 0) {
             server_main();
@@ -19,8 +23,6 @@ int main(int argc, char** argv) {
             start_local_server();
         }
     }
-
-    init_core();
     
     start_broadcast_listener();
 
@@ -47,6 +49,9 @@ int main(int argc, char** argv) {
     init_input(window, &data);
 
     while (!glfwWindowShouldClose(window)) {
+
+        if (data.world_mesh == NULL || data.num_packets == NULL || *data.num_packets == 0)
+            continue;
 
         update_game_data(&data);
         update_fps();
