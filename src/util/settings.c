@@ -30,9 +30,7 @@ int REFLECTION_MAP_TEXTURE_INDEX = 5;
 int VSYNC = 1;
 int FULLSCREEN = 0;
 int CHUNK_RENDER_DISTANCE = 16;
-int TRUE_RENDER_DISTANCE = 16;
 int LOD_SCALING_CONSTANT = 2;
-int MAX_LOD_BLOCK_SIZE = 8;
 int FOLIAGE_RENDER_DISTANCE = 16;
 int TRANSPARENT_RENDER_DISTANCE = 16;
 int SHADOW_MAP_WIDTH = 10000;
@@ -200,21 +198,9 @@ void parse_chunks_settings(json_object chunks_obj) {
         LOD_SCALING_CONSTANT = (int)lod_scaling_constant.value.number;
     }
 
-    json_object max_lod_block_size = json_get_property(chunks_obj, "max_lod_block_size");
-    if (max_lod_block_size.type == JSON_NUMBER) {
-        int size = (int)max_lod_block_size.value.number;
-        // Clamp to valid range 1-256
-        if (size < 1) size = 1;
-        if (size > 256) size = 256;
-        MAX_LOD_BLOCK_SIZE = size;
-    }
-
     json_object chunk_render_distance = json_get_property(chunks_obj, "chunk_render_distance");
     if (chunk_render_distance.type == JSON_NUMBER) {
         CHUNK_RENDER_DISTANCE = (int)chunk_render_distance.value.number;    
-        
-        int lod_steps = (int)(log(MAX_LOD_BLOCK_SIZE) / log(LOD_SCALING_CONSTANT));
-        TRUE_RENDER_DISTANCE = (int)pow((double)LOD_SCALING_CONSTANT, (double)lod_steps) * CHUNK_RENDER_DISTANCE;
     }
 
     json_object foliage_render_distance = json_get_property(chunks_obj, "foliage_render_distance");

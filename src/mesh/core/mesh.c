@@ -115,12 +115,11 @@ void preload_initial_chunks(game_data *data) {
   int dir_dx[] = {1, 0, -1, 0};
   int dir_dz[] = {0, 1, 0, -1};
   int dir = 0, seg_len = 1, seg_pos = 0, segs_done = 0;
-  int max_side = 2 * TRUE_RENDER_DISTANCE + 1;
+  int max_side = 2 * CHUNK_RENDER_DISTANCE + 1;
   int max_iter = max_side * max_side;
 
   for (int i = 0; i < max_iter; i++) {
-    if (sqrt(pow(sx - player_chunk_x, 2) + pow(sz - player_chunk_z, 2)) <=
-        TRUE_RENDER_DISTANCE) {
+    if (sqrt(pow(sx - player_chunk_x, 2) + pow(sz - player_chunk_z, 2)) <= CHUNK_RENDER_DISTANCE) {
       chunk_mesh *existing = get_chunk_mesh(sx, sz);
       if (existing == NULL) {
         chunks_queued++;
@@ -695,19 +694,9 @@ short calculate_lod(int x, int z, float player_x, float player_z) {
   float dz = (float)(z + 0.5f) - pz;
   float dist = sqrtf(dx * dx + dz * dz);
 
-  int lod = 1;
+  float lod = fmax(1.0f, log(dist - 8) / log(LOD_SCALING_CONSTANT));
 
-  if (dist < CHUNK_RENDER_DISTANCE) {
-    return lod;
-  }
-
-  int check_dist = CHUNK_RENDER_DISTANCE;
-  while (lod < MAX_LOD_BLOCK_SIZE && check_dist < dist) {
-    lod *= LOD_SCALING_CONSTANT;
-    check_dist = lod * CHUNK_RENDER_DISTANCE;
-  }
-
-  return lod;
+  return (short)lod;
 }
 
 // Check if chunk is within foliage render distance
@@ -881,12 +870,24 @@ chunk_mesh *update_chunk_mesh(int x, int z, float player_x, float player_z) {
 }
 
 chunk_mesh *get_chunk_mesh(int x, int z) {
-  // Try to find any LOD version of this chunk in cache
-  // Start with LOD 1 (highest quality) and try progressively coarser LODs
-  // This allows reuse of previously generated lower-quality meshes
+  // Calculate the correct LOD for this chunk at current player distance
+  float player_x, player_z;
+  get_mesh_player_pos(&player_x, &player_z);
+  short target_lod = calculate_lod(x, z, player_x, player_z);
+
+  // Try to get the mesh at the correct LOD first
+  chunk_mesh_key key = {x, z, target_lod};
+  chunk_mesh *packet = chunk_mesh_lod_map_get(&chunk_packets, key);
+  if (packet != NULL) {
+    return packet;
+  }
+
+  // Fallback: try any existing LOD (for in-progress transitions)
   for (short lod = 1; lod <= CHUNK_SIZE; lod *= 2) {
-    chunk_mesh_key key = {x, z, lod};
-    chunk_mesh *packet = chunk_mesh_lod_map_get(&chunk_packets, key);
+    if (lod == target_lod)
+      continue;
+    chunk_mesh_key fallback_key = {x, z, lod};
+    packet = chunk_mesh_lod_map_get(&chunk_packets, fallback_key);
     if (packet != NULL) {
       return packet;
     }

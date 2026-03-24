@@ -166,12 +166,12 @@ void get_chunk_meshes(game_data* args) {
     int count = 0;
 
     // First pass: handle LOD updates (expensive, done without holding lock)
-    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
-            int cx = player_chunk_x - TRUE_RENDER_DISTANCE + i;
-            int cz = player_chunk_z - TRUE_RENDER_DISTANCE + j;
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+            int cx = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
+            int cz = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
 
-            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
+            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
                 continue;
             }
 
@@ -193,12 +193,12 @@ void get_chunk_meshes(game_data* args) {
     // Second pass: collect meshes into packet array while holding lock
     lock_mesh();
 
-    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
-            int cx = player_chunk_x - TRUE_RENDER_DISTANCE + i;
-            int cz = player_chunk_z - TRUE_RENDER_DISTANCE + j;
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+            int cx = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
+            int cz = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
 
-            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
+            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
                 continue;
             }
 

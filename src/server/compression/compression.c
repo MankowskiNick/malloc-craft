@@ -118,7 +118,8 @@ compressed_chunk* from_buffer(byte* source, int size) {
         return NULL;
     }
 
-    if (size <= 2 * INT_BYTES + INT_BYTES + BLOCK_DATA_BYTES + INT_BYTES) {
+    int max_size = 3 * INT_BYTES + BLOCK_DATA_BYTES;
+    if (size < max_size) {
         printf("ERROR: Size of chunk buffer is smaller than the minimum number of bytes.\n");
         return NULL;
     }

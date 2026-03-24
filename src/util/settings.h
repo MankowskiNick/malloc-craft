@@ -27,9 +27,6 @@ extern int CHUNK_LOAD_PER_FRAME;
 extern int CHUNK_CACHE_SIZE;
 
 
-
-
-
  // GRAPHICS SETTINGS 
 
 // Render as wireframe? Useful for debugging
@@ -53,10 +50,7 @@ extern int VSYNC;
 extern int FULLSCREEN;
 // Radius of chunks to render
 extern int CHUNK_RENDER_DISTANCE;
-extern int TRUE_RENDER_DISTANCE;
 extern int LOD_SCALING_CONSTANT;
-// Maximum block size for LOD - LOD stops scaling when reaching this block size
-extern int MAX_LOD_BLOCK_SIZE;
 
 // Render distances for specific block types (in chunks)
 extern int FOLIAGE_RENDER_DISTANCE;
