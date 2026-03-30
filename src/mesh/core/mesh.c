@@ -620,6 +620,93 @@ bool in_chunk_bounds(int x, int y, int z) {
          z < CHUNK_SIZE && z >= 0;
 }
 
+void pack_skirt_side(short side, chunk* c, chunk* adj_chunks[4], side_instance **opaque_side_data, int *num_opaque_sides, int skirt_depth, short lod_scale) {
+  struct direction {
+    int x;
+    int z;
+  };
+
+  struct direction dir = {.x = 0, .z = 0};
+
+  int start_x = 0;
+  int start_z = 0;
+
+  switch(side) {
+    case (short)NORTH:
+      dir.x = lod_scale;
+      start_z = 0;
+      break;
+    case (short)SOUTH:
+      dir.x = lod_scale;
+      start_z = CHUNK_SIZE - lod_scale;
+      break;
+    case (short)EAST:
+      dir.z = lod_scale;
+      start_x = 0;
+      break;
+    case (short)WEST:
+      dir.z = lod_scale;
+      start_x = CHUNK_SIZE - lod_scale;
+      break;
+  }
+
+  int num_positions = CHUNK_SIZE / lod_scale + 1;
+  int idx = *num_opaque_sides;
+  (*num_opaque_sides) += skirt_depth * num_positions;
+
+  // check if we need to reallocate memory
+  if (*num_opaque_sides > SIDES_PER_CHUNK) {
+    side_instance *tmp = realloc(*opaque_side_data, *(num_opaque_sides) * sizeof(side_instance));
+    assert(tmp != NULL && "Failed to allocate memory for side data");
+    *opaque_side_data = tmp;
+  }
+
+  for (int i = 0; i + lod_scale < num_positions; i++) {
+    int x = start_x + dir.x * i;
+    int z = start_z + dir.z * i;
+
+    // Convert to world coordinates for get_block_height (same formula as generate_blocks)
+    float world_x_f = (float)c->x + (float)x / (float)CHUNK_SIZE;
+    float world_z_f = (float)c->z + (float)z / (float)CHUNK_SIZE;
+    int surface_y = get_block_height(c, world_x_f, world_z_f);
+    int start_y = surface_y + (1 - skirt_depth) * lod_scale;
+    for (int y = start_y; y <= surface_y; y += lod_scale) {
+      if (y < 0 || y >= CHUNK_HEIGHT) {
+        continue;
+      }
+
+      short rot = 0;
+      short orientation = 0;
+      short id = 0;
+      short water_level = 0;
+      bool underwater = 0;
+
+      get_block_info(c->blocks[x][y][z], &id, &orientation, &rot, &water_level);
+      int ao = calculate_face_ao(x, y, z, (int)side, c, adj_chunks);
+
+      int world_x = x + CHUNK_SIZE * c->x;
+      int world_y = y;
+      int world_z = z + CHUNK_SIZE * c->z;
+      pack_side(world_x, world_y, world_z, (short)side, orientation, rot, id, water_level, underwater, ao, &((*opaque_side_data)[idx]));
+      idx++;
+    }
+  }
+
+}
+
+// Generate vertical skirt faces along chunk boundaries to hide LOD seams
+// The skirt extends downward from the bottom of terrain at each edge position
+void pack_chunk_skirt(chunk *c, chunk* adj_chunks[4], side_instance **opaque_side_data, int *num_opaque_sides, int skirt_depth, short lod_scale) {
+  if (c == NULL) {
+    return;
+  }
+
+  pack_skirt_side((int)NORTH, c, adj_chunks, opaque_side_data, num_opaque_sides, skirt_depth, lod_scale);
+  pack_skirt_side((int)SOUTH, c, adj_chunks, opaque_side_data, num_opaque_sides, skirt_depth, lod_scale);
+  pack_skirt_side((int)EAST, c, adj_chunks, opaque_side_data, num_opaque_sides, skirt_depth, lod_scale);
+  pack_skirt_side((int)WEST, c, adj_chunks, opaque_side_data, num_opaque_sides, skirt_depth, lod_scale);
+}
+
 void pack_chunk(chunk *c, chunk *adj_chunks[4], short lod_scale,
                 side_instance **opaque_side_data, int *num_opaque_sides,
                 side_instance **transparent_side_data,
@@ -684,6 +771,10 @@ void pack_chunk(chunk *c, chunk *adj_chunks[4], short lod_scale,
       }
     }
   }
+
+  // Generate chunk boundary skirts to hide LOD seams
+  pack_chunk_skirt(c, adj_chunks, opaque_side_data, num_opaque_sides,
+                   CHUNK_SKIRT_DEPTH, lod_scale);
 }
 
 short calculate_lod(int x, int z, float player_x, float player_z) {

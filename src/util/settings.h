@@ -56,6 +56,9 @@ extern int LOD_SCALING_CONSTANT;
 extern int FOLIAGE_RENDER_DISTANCE;
 extern int TRANSPARENT_RENDER_DISTANCE;
 
+// Chunk boundary skirt depth (blocks) to hide LOD seams
+extern int CHUNK_SKIRT_DEPTH;
+
 // Shadow map settings
 extern int SHADOW_MAP_WIDTH;
 extern int SHADOW_MAP_HEIGHT;

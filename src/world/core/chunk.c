@@ -21,15 +21,17 @@ void init_chunks() {
     init_tree();
 }
 
-int get_block_height(chunk* c, float x, float z, biome* b) {
-    float noise = n_get(x, z, 
+int get_block_height(chunk* c, float x, float z) {
+
+    return 200;
+
+
+    float noise = n_get(x, z,
         WORLDGEN_BLOCKHEIGHT_FREQUENCY,
         WORLDGEN_BLOCKHEIGHT_AMPLITUDE,
         WORLDGEN_BLOCKHEIGHT_OCTAVES);
-
-    float y_ = exp(noise) * WORLDGEN_BLOCKHEIGHT_MODIFIER;
-    // float y_ = WORLDGEN_BASE_TERRAIN_HEIGHT + offset;
     
+    float y_ = exp(noise) * WORLDGEN_BLOCKHEIGHT_MODIFIER;
     return (int)y_;
 }
 
@@ -95,7 +97,7 @@ void generate_blocks(chunk* c, int x, int z) {
             float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
 
             biome* b = get_biome(x_, z_);
-            float y = get_block_height(c, x_, z_, b);
+            float y = get_block_height(c, x_, z_);
             
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 short water_level = calculate_water_level(k);
@@ -126,29 +128,29 @@ void generate_blocks(chunk* c, int x, int z) {
         }
     }
 
-    // generate foliage
-    for (int i = 2; i < CHUNK_SIZE - 2; i++) {
-        for (int j = 2; j < CHUNK_SIZE - 2; j++) {
-            float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
-            float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
+     // generate foliage
+     for (int i = 2; i < CHUNK_SIZE - 2; i++) {
+         for (int j = 2; j < CHUNK_SIZE - 2; j++) {
+             float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
+             float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
 
-            biome* b = get_biome(x_, z_);
-            int y = get_block_height(c, x_, z_, b);
+             biome* b = get_biome(x_, z_);
+             int y = get_block_height(c, x_, z_);
 
-            if (y <= WORLDGEN_WATER_LEVEL) {
-                continue;
-            }
+             if (y <= WORLDGEN_WATER_LEVEL) {
+                 continue;
+             }
 
-            int placed = 0;
-            for (int f = 0; f < b->foliage_count; f++) {
-                if (rand() / (float)RAND_MAX < b->foliage[f].density && !placed) {
-                    placed = 1;
+             int placed = 0;
+             for (int f = 0; f < b->foliage_count; f++) {
+                 if (rand() / (float)RAND_MAX < b->foliage[f].density && !placed) {
+                     placed = 1;
 
-                    generate_tree(i, y + 1, j, b->foliage[f].type, c);
-                }
-            }
-        }
-    }
+                     generate_tree(i, y + 1, j, b->foliage[f].type, c);
+                 }
+             }
+         }
+     }
 }
 
 void chunk_create(chunk* c, int x, int z) {

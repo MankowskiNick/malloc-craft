@@ -129,6 +129,12 @@ void handle_keypress(int key) {
         return;
     }
 
+    /* Toggle mesh refresh pause with F2 key */
+    if (key == GLFW_KEY_F2) {
+        g_data->mesh_refresh_paused = !g_data->mesh_refresh_paused;
+        return;
+    }
+
     /* Toggle fullscreen with F11 key */
     if (key == GLFW_KEY_F11) {
         toggle_fullscreen(g_window);

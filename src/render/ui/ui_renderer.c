@@ -50,6 +50,19 @@ void read_ui_settings(const char* filename) {
             }
         }
 
+        // Parse special characters: ( ) , . -
+        json_object chars_obj = json_get_property(font_obj, "chars");
+        if (chars_obj.type == JSON_OBJECT) {
+            const char* char_keys[] = {"(", ")", ",", ".", "-"};
+            for (int i = 0; i < 5; i++) {
+                json_object ch = json_get_property(chars_obj, char_keys[i]);
+                if (ch.type == JSON_LIST && ch.value.list.count >= 2) {
+                    g_font_config.char_atlas_coords[i][0] = (int)ch.value.list.items[0].value.number;
+                    g_font_config.char_atlas_coords[i][1] = (int)ch.value.list.items[1].value.number;
+                }
+            }
+        }
+
         json_object char_width = json_get_property(font_obj, "char_width");
         if (char_width.type == JSON_NUMBER) {
             g_font_config.char_width = (int)char_width.value.number;
@@ -240,31 +253,69 @@ void render_ui_quad(ui_renderer* ui, float x, float y, float width, float height
     render_ui_quad_ex(ui, x, y, width, height, atlas_x, atlas_y, false);
 }
 
-void render_fps(ui_renderer* ui, int fps) {
+// Helper to get atlas coords for a character
+static void get_char_atlas_coords(ui_renderer* ui, char c, int* atlas_x, int* atlas_y) {
+    if (c >= '0' && c <= '9') {
+        int digit = c - '0';
+        *atlas_x = ui->font.digit_atlas_coords[digit][0];
+        *atlas_y = ui->font.digit_atlas_coords[digit][1];
+    } else {
+        // Special characters: ( ) , . - mapped to indices 0-4
+        int idx = -1;
+        switch (c) {
+            case '(': idx = 0; break;
+            case ')': idx = 1; break;
+            case ',': idx = 2; break;
+            case '.': idx = 3; break;
+            case '-': idx = 4; break;
+            default: idx = -1; break;
+        }
+        if (idx >= 0) {
+            *atlas_x = ui->font.char_atlas_coords[idx][0];
+            *atlas_y = ui->font.char_atlas_coords[idx][1];
+        } else {
+            *atlas_x = -1;
+            *atlas_y = -1;
+        }
+    }
+}
+
+// Render a string and return the x position after the last character
+static float render_string(ui_renderer* ui, const char* str, float x, float y,
+                           float char_width, float char_height, float spacing) {
+    for (int i = 0; str[i] != '\0'; i++) {
+        int atlas_x, atlas_y;
+        get_char_atlas_coords(ui, str[i], &atlas_x, &atlas_y);
+        if (atlas_x >= 0 && atlas_y >= 0) {
+            render_ui_quad(ui, x, y, char_width, char_height, atlas_x, atlas_y);
+        }
+        x += char_width + spacing;
+    }
+    return x;
+}
+
+void render_debug(ui_renderer* ui, int fps, float player_x, float player_y, float player_z) {
     // Clamp FPS to reasonable range
     if (fps < 0) fps = 0;
     if (fps > 9999) fps = 9999;
-
-    // Convert FPS to digits
-    char fps_str[8];
-    snprintf(fps_str, sizeof(fps_str), "%d", fps);
 
     float x = (float)ui->fps_config.x;
     float y = (float)ui->fps_config.y;
     float char_width = (float)(ui->font.char_width * ui->font.scale) * ui->fps_config.scale;
     float char_height = (float)(ui->font.char_height * ui->font.scale) * ui->fps_config.scale;
     float spacing = (float)ui->fps_config.spacing * ui->fps_config.scale;
+    float line_height = char_height + spacing * 2;
 
-    // Render each digit
-    for (int i = 0; fps_str[i] != '\0'; i++) {
-        int digit = fps_str[i] - '0';
-        if (digit >= 0 && digit <= 9) {
-            render_ui_quad(ui, x, y, char_width, char_height,
-                          ui->font.digit_atlas_coords[digit][0],
-                          ui->font.digit_atlas_coords[digit][1]);
-        }
-        x += char_width + spacing;
-    }
+    // Line 1: FPS
+    char fps_str[8];
+    snprintf(fps_str, sizeof(fps_str), "%d", fps);
+    render_string(ui, fps_str, x, y, char_width, char_height, spacing);
+
+    // Line 2: Coordinates (x, y, z) with 2 decimal places
+    y += line_height;
+    char coord_str[64];
+    snprintf(coord_str, sizeof(coord_str), "(%.2f,%.2f,%.2f)", player_x, player_y, player_z);
+    render_string(ui, coord_str, x, y, char_width, char_height, spacing);
 }
 
 void render_hotbar(ui_renderer* ui, char** hotbar, int hotbar_size, int selected_block) {

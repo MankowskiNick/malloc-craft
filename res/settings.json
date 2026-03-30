@@ -15,7 +15,8 @@
     "lod_scaling_constant": 2,
     "max_lod_block_size": 4,
     "foliage_render_distance": 12,
-    "transparent_render_distance": 32
+    "transparent_render_distance": 32,
+    "chunk_skirt_depth": 2
   },
   "graphics": {
     "wireframe": false,

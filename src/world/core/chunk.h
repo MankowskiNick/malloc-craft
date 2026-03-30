@@ -21,5 +21,6 @@ void chunk_create(chunk* c, int x, int z);
 
 void set_block_info(game_data* data,chunk* c, int x, int y, int z, short id, short orientation, short rot, short water_level);
 void get_block_info(block_data_t data, short* id, short* orientation, short* rot, short* water_level);
+int get_block_height(chunk* c, float x, float z);
 
 #endif

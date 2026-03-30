@@ -162,6 +162,11 @@ void get_chunk_meshes(game_data* args) {
     cm_camera_cache.y = args->player.cam.position[1];
     cm_camera_cache.z = args->z;
 
+    // Skip mesh refresh if paused
+    if (args->mesh_refresh_paused) {
+        return;
+    }
+
     chunk_mesh** packet = NULL;
     int count = 0;
 

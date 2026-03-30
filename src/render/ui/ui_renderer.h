@@ -9,6 +9,7 @@
 
 typedef struct {
     int digit_atlas_coords[10][2];
+    int char_atlas_coords[5][2];  // ( ) , . -
     int char_width;
     int char_height;
     int scale;
@@ -47,7 +48,7 @@ ui_renderer create_ui_renderer();
 void destroy_ui_renderer(ui_renderer* ui);
 
 void render_ui_quad(ui_renderer* ui, float x, float y, float width, float height, int atlas_x, int atlas_y);
-void render_fps(ui_renderer* ui, int fps);
+void render_debug(ui_renderer* ui, int fps, float player_x, float player_y, float player_z);
 void render_hotbar(ui_renderer* ui, char** hotbar, int hotbar_size, int selected_block);
 
 #endif
