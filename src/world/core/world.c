@@ -44,7 +44,6 @@ void world_cleanup() {
         }
     }
     chunk_map_free(&chunks);
-
 }
 
 chunk* get_chunk(int x, int z) {

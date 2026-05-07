@@ -130,7 +130,10 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
     glDisable(GL_DEPTH_TEST);
     render_hotbar(&(r->ui), args->player.hotbar, args->player.hotbar_size, args->player.selected_block);
     if (args->show_fps) {
-        render_fps(&(r->ui), (int)get_fps());
+        render_debug(&(r->ui), (int)get_fps(),
+                     args->player.cam.position[0],
+                     args->player.cam.position[1],
+                     args->player.cam.position[2]);
     }
     glEnable(GL_DEPTH_TEST);
 }

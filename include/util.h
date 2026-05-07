@@ -14,6 +14,10 @@
 
 #define WORLD_POS_TO_CHUNK_POS(x) x >= 0 ? (int)(x / CHUNK_SIZE) : (int)(x / CHUNK_SIZE) - 1
 #define F_WORLD_POS_TO_CHUNK_POS(x) x >= 0 ? (x / (float)CHUNK_SIZE) : (x / (float)CHUNK_SIZE) - 1.0f
+#define CHUNK_POS_TO_WORLD_POS(chunk_pos, local_pos) ((local_pos) + (CHUNK_SIZE * (chunk_pos)))
+#define F_CHUNK_POS_TO_WORLD_POS(chunk_pos, local_pos) ((float)(local_pos) + (float)(CHUNK_SIZE * (chunk_pos)))
+#define CHUNK_POS_TO_WORLD_SAMPLE_POS(chunk_pos, local_pos) ((float)(chunk_pos) + ((float)(local_pos) / (float)CHUNK_SIZE))
+#define CHUNK_POS_TO_WORLD_CENTER_POS(chunk_pos) (F_CHUNK_POS_TO_WORLD_POS((chunk_pos), 0) + (CHUNK_SIZE / 2.0f))
 
 typedef unsigned int uint;
 typedef unsigned char byte;

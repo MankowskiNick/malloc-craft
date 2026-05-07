@@ -2,7 +2,6 @@
 #include "render/core/render.h"
 #include "player/input/input.h"
 #include "mesh/core/mesh.h"
-#include "world/core/world.h"
 #include "world/core/block.h"
 #include "server/server.h"
 #include "server/threads/client_recv.h"

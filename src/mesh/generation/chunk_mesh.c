@@ -100,8 +100,8 @@ float chunk_distance_to_camera(const void* item) {
     chunk_mesh* mesh = *mesh_ptr;
 
     // Calculate chunk center position
-    float chunk_center_x = (float)(mesh->x * CHUNK_SIZE) + (CHUNK_SIZE / 2.0f);
-    float chunk_center_z = (float)(mesh->z * CHUNK_SIZE) + (CHUNK_SIZE / 2.0f);
+    float chunk_center_x = CHUNK_POS_TO_WORLD_CENTER_POS(mesh->x);
+    float chunk_center_z = CHUNK_POS_TO_WORLD_CENTER_POS(mesh->z);
 
     // multiply by -1 to sort in descending order (back-to-front)
     return -1.0f * sqrt(
@@ -162,16 +162,21 @@ void get_chunk_meshes(game_data* args) {
     cm_camera_cache.y = args->player.cam.position[1];
     cm_camera_cache.z = args->z;
 
+    // Skip mesh refresh if paused
+    if (args->mesh_refresh_paused) {
+        return;
+    }
+
     chunk_mesh** packet = NULL;
     int count = 0;
 
     // First pass: handle LOD updates (expensive, done without holding lock)
-    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
-            int cx = player_chunk_x - TRUE_RENDER_DISTANCE + i;
-            int cz = player_chunk_z - TRUE_RENDER_DISTANCE + j;
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+            int cx = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
+            int cz = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
 
-            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
+            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
                 continue;
             }
 
@@ -193,12 +198,12 @@ void get_chunk_meshes(game_data* args) {
     // Second pass: collect meshes into packet array while holding lock
     lock_mesh();
 
-    for (int i = 0; i < 2 * TRUE_RENDER_DISTANCE; i++) {
-        for (int j = 0; j < 2 * TRUE_RENDER_DISTANCE; j++) {
-            int cx = player_chunk_x - TRUE_RENDER_DISTANCE + i;
-            int cz = player_chunk_z - TRUE_RENDER_DISTANCE + j;
+    for (int i = 0; i < 2 * CHUNK_RENDER_DISTANCE; i++) {
+        for (int j = 0; j < 2 * CHUNK_RENDER_DISTANCE; j++) {
+            int cx = player_chunk_x - CHUNK_RENDER_DISTANCE + i;
+            int cz = player_chunk_z - CHUNK_RENDER_DISTANCE + j;
 
-            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > TRUE_RENDER_DISTANCE) {
+            if (sqrt(pow(cx - player_chunk_x, 2) + pow(cz - player_chunk_z, 2)) > CHUNK_RENDER_DISTANCE) {
                 continue;
             }
 

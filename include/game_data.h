@@ -63,6 +63,7 @@ typedef struct {
 
     // UI state
     bool show_fps;
+    bool mesh_refresh_paused;  // Pause mesh refresh updates (F2 toggle)
     int fps;
 } game_data;
 

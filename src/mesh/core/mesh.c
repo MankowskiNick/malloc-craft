@@ -115,12 +115,11 @@ void preload_initial_chunks(game_data *data) {
   int dir_dx[] = {1, 0, -1, 0};
   int dir_dz[] = {0, 1, 0, -1};
   int dir = 0, seg_len = 1, seg_pos = 0, segs_done = 0;
-  int max_side = 2 * TRUE_RENDER_DISTANCE + 1;
+  int max_side = 2 * CHUNK_RENDER_DISTANCE + 1;
   int max_iter = max_side * max_side;
 
   for (int i = 0; i < max_iter; i++) {
-    if (sqrt(pow(sx - player_chunk_x, 2) + pow(sz - player_chunk_z, 2)) <=
-        TRUE_RENDER_DISTANCE) {
+    if (sqrt(pow(sx - player_chunk_x, 2) + pow(sz - player_chunk_z, 2)) <= CHUNK_RENDER_DISTANCE) {
       chunk_mesh *existing = get_chunk_mesh(sx, sz);
       if (existing == NULL) {
         chunks_queued++;
@@ -400,9 +399,9 @@ void pack_water_transitions(int x, int y, int z, short lod_scale, chunk *c,
                             chunk *adj_chunks[4], short current_water_level,
                             side_instance **chunk_side_data, int *num_sides) {
 
-  int world_x = x + (CHUNK_SIZE * c->x);
+  int world_x = CHUNK_POS_TO_WORLD_POS(c->x, x);
   int world_y = y;
-  int world_z = z + (CHUNK_SIZE * c->z);
+  int world_z = CHUNK_POS_TO_WORLD_POS(c->z, z);
 
   short water_id = get_block_id("water");
 
@@ -488,9 +487,9 @@ void pack_block(int x, int y, int z, short lod_scale, chunk *c,
                 chunk *adj_chunks[4], // front, back, left, right
                 side_instance **chunk_side_data, int *num_sides) {
 
-  int world_x = x + (CHUNK_SIZE * c->x);
+  int world_x = CHUNK_POS_TO_WORLD_POS(c->x, x);
   int world_y = y;
-  int world_z = z + (CHUNK_SIZE * c->z);
+  int world_z = CHUNK_POS_TO_WORLD_POS(c->z, z);
 
   short block_id = 0;
   short orientation = 0;
@@ -585,9 +584,9 @@ void pack_model(int x, int y, int z, chunk *c, float **custom_model_data,
   for (int i = 0; i < model->index_count; i++) {
     int dest_idx = (*num_custom_verts + i) * FLOATS_PER_MODEL_VERT;
 
-    float dest_x = (float)x + (float)(c->x * CHUNK_SIZE);
+    float dest_x = F_CHUNK_POS_TO_WORLD_POS(c->x, x);
     float dest_y = (float)y;
-    float dest_z = (float)z + (float)(c->z * CHUNK_SIZE);
+    float dest_z = F_CHUNK_POS_TO_WORLD_POS(c->z, z);
     blockbench_vertex vert = model->vertices[model->indices[i]];
 
     // apply transformation
@@ -619,6 +618,97 @@ void pack_model(int x, int y, int z, chunk *c, float **custom_model_data,
 bool in_chunk_bounds(int x, int y, int z) {
   return x < CHUNK_SIZE && x >= 0 && y < CHUNK_HEIGHT && y >= 0 &&
          z < CHUNK_SIZE && z >= 0;
+}
+
+void pack_skirt_side(short side, chunk* c, chunk* adj_chunks[4], side_instance **opaque_side_data, int *num_opaque_sides, int skirt_depth, short lod_scale) {
+  struct direction {
+    int x;
+    int z;
+  };
+
+  struct direction dir = {.x = 0, .z = 0};
+
+  int start_x = 0;
+  int start_z = 0;
+
+  switch(side) {
+    case (short)NORTH:
+      dir.x = lod_scale;
+      start_z = 0;
+      break;
+    case (short)SOUTH:
+      dir.x = lod_scale;
+      start_z = CHUNK_SIZE - lod_scale;
+      break;
+    case (short)EAST:
+      dir.z = lod_scale;
+      start_x = 0;
+      break;
+    case (short)WEST:
+      dir.z = lod_scale;
+      start_x = CHUNK_SIZE - lod_scale;
+      break;
+  }
+
+  int num_positions = CHUNK_SIZE / lod_scale;
+  int idx = *num_opaque_sides;
+  (*num_opaque_sides) += skirt_depth * num_positions;
+
+  // check if we need to reallocate memory
+  if (*num_opaque_sides > SIDES_PER_CHUNK) {
+    side_instance *tmp = realloc(*opaque_side_data, *(num_opaque_sides) * sizeof(side_instance));
+    assert(tmp != NULL && "Failed to allocate memory for side data");
+    *opaque_side_data = tmp;
+  }
+
+  for (int i = 0; i < num_positions; i++) {
+    int x = start_x + dir.x * i;
+    int z = start_z + dir.z * i;
+
+    float world_x_f = CHUNK_POS_TO_WORLD_SAMPLE_POS(c->x, x);
+    float world_z_f = CHUNK_POS_TO_WORLD_SAMPLE_POS(c->z, z);
+    int surface_block_height = get_block_height(c, world_x_f, world_z_f);
+
+    // needs to be normalized so that the top of the block matches the sides.
+    // so, the surface_y should divide lod_scale to ensure that no chunk skirt pops through the top of the chunk
+    int surface_y = lod_scale * (int)((surface_block_height / lod_scale) + 1);
+    int start_y = surface_y - skirt_depth * lod_scale;
+
+    for (int y = start_y; y < surface_y; y += lod_scale) {
+      if (y < 0 || y >= CHUNK_HEIGHT) {
+        continue;
+      }
+
+      short rot = 0;
+      short orientation = 0;
+      short id = 0;
+      short water_level = 0;
+      bool underwater = 0;
+
+      get_block_info(c->blocks[x][y][z], &id, &orientation, &rot, &water_level);
+      int ao = calculate_face_ao(x, y, z, (int)side, c, adj_chunks);
+
+      int world_x = CHUNK_POS_TO_WORLD_POS(c->x, x);
+      int world_y = y;
+      int world_z = CHUNK_POS_TO_WORLD_POS(c->z, z);
+      pack_side(world_x, world_y, world_z, (short)side, orientation, rot, id, water_level, underwater, ao, &((*opaque_side_data)[idx]));
+      idx++;
+    }
+  }
+
+}
+
+// Generate vertical skirt faces along chunk boundaries to hide LOD seams
+// The skirt extends downward from the bottom of terrain at each edge position
+void pack_chunk_skirt(chunk *c, chunk* adj_chunks[4], side_instance **opaque_side_data, int *num_opaque_sides, int skirt_depth, short lod_scale) {
+  if (c == NULL) {
+    return;
+  }
+
+  pack_skirt_side((int)NORTH, c, adj_chunks, opaque_side_data, num_opaque_sides, skirt_depth, lod_scale);
+  pack_skirt_side((int)SOUTH, c, adj_chunks, opaque_side_data, num_opaque_sides, skirt_depth, lod_scale);
+  pack_skirt_side((int)EAST, c, adj_chunks, opaque_side_data, num_opaque_sides, skirt_depth, lod_scale);
+  pack_skirt_side((int)WEST, c, adj_chunks, opaque_side_data, num_opaque_sides, skirt_depth, lod_scale);
 }
 
 void pack_chunk(chunk *c, chunk *adj_chunks[4], short lod_scale,
@@ -685,6 +775,10 @@ void pack_chunk(chunk *c, chunk *adj_chunks[4], short lod_scale,
       }
     }
   }
+
+  // Generate chunk boundary skirts to hide LOD seams
+  pack_chunk_skirt(c, adj_chunks, opaque_side_data, num_opaque_sides,
+                   CHUNK_SKIRT_DEPTH, lod_scale);
 }
 
 short calculate_lod(int x, int z, float player_x, float player_z) {
@@ -695,19 +789,9 @@ short calculate_lod(int x, int z, float player_x, float player_z) {
   float dz = (float)(z + 0.5f) - pz;
   float dist = sqrtf(dx * dx + dz * dz);
 
-  int lod = 1;
+  float lod = fmax(1.0f, log(dist - 8) / log(LOD_SCALING_CONSTANT));
 
-  if (dist < CHUNK_RENDER_DISTANCE) {
-    return lod;
-  }
-
-  int check_dist = CHUNK_RENDER_DISTANCE;
-  while (lod < MAX_LOD_BLOCK_SIZE && check_dist < dist) {
-    lod *= LOD_SCALING_CONSTANT;
-    check_dist = lod * CHUNK_RENDER_DISTANCE;
-  }
-
-  return lod;
+  return (short)lod;
 }
 
 // Check if chunk is within foliage render distance
@@ -881,12 +965,24 @@ chunk_mesh *update_chunk_mesh(int x, int z, float player_x, float player_z) {
 }
 
 chunk_mesh *get_chunk_mesh(int x, int z) {
-  // Try to find any LOD version of this chunk in cache
-  // Start with LOD 1 (highest quality) and try progressively coarser LODs
-  // This allows reuse of previously generated lower-quality meshes
+  // Calculate the correct LOD for this chunk at current player distance
+  float player_x, player_z;
+  get_mesh_player_pos(&player_x, &player_z);
+  short target_lod = calculate_lod(x, z, player_x, player_z);
+
+  // Try to get the mesh at the correct LOD first
+  chunk_mesh_key key = {x, z, target_lod};
+  chunk_mesh *packet = chunk_mesh_lod_map_get(&chunk_packets, key);
+  if (packet != NULL) {
+    return packet;
+  }
+
+  // Fallback: try any existing LOD (for in-progress transitions)
   for (short lod = 1; lod <= CHUNK_SIZE; lod *= 2) {
-    chunk_mesh_key key = {x, z, lod};
-    chunk_mesh *packet = chunk_mesh_lod_map_get(&chunk_packets, key);
+    if (lod == target_lod)
+      continue;
+    chunk_mesh_key fallback_key = {x, z, lod};
+    packet = chunk_mesh_lod_map_get(&chunk_packets, fallback_key);
     if (packet != NULL) {
       return packet;
     }
