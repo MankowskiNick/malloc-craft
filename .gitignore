@@ -3,4 +3,5 @@ worlds/
 napkin/
 .vscode/
 .cache/
+.claude/
 compile_commands.json

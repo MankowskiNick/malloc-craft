@@ -22,10 +22,6 @@ void init_chunks() {
 }
 
 int get_block_height(chunk* c, float x, float z) {
-
-    return 200;
-
-
     float noise = n_get(x, z,
         WORLDGEN_BLOCKHEIGHT_FREQUENCY,
         WORLDGEN_BLOCKHEIGHT_AMPLITUDE,
@@ -98,7 +94,7 @@ void generate_blocks(chunk* c, int x, int z) {
 
             biome* b = get_biome(x_, z_);
             float y = get_block_height(c, x_, z_);
-            
+            printf("surface_height: %f\n", y);
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 short water_level = calculate_water_level(k);
 

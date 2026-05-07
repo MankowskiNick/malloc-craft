@@ -650,7 +650,7 @@ void pack_skirt_side(short side, chunk* c, chunk* adj_chunks[4], side_instance *
       break;
   }
 
-  int num_positions = CHUNK_SIZE / lod_scale + 1;
+  int num_positions = CHUNK_SIZE / lod_scale;
   int idx = *num_opaque_sides;
   (*num_opaque_sides) += skirt_depth * num_positions;
 
@@ -661,16 +661,22 @@ void pack_skirt_side(short side, chunk* c, chunk* adj_chunks[4], side_instance *
     *opaque_side_data = tmp;
   }
 
-  for (int i = 0; i + lod_scale < num_positions; i++) {
+  for (int i = 0; i < num_positions; i++) {
     int x = start_x + dir.x * i;
     int z = start_z + dir.z * i;
 
     // Convert to world coordinates for get_block_height (same formula as generate_blocks)
+    // 
     float world_x_f = (float)c->x + (float)x / (float)CHUNK_SIZE;
     float world_z_f = (float)c->z + (float)z / (float)CHUNK_SIZE;
-    int surface_y = get_block_height(c, world_x_f, world_z_f);
-    int start_y = surface_y + (1 - skirt_depth) * lod_scale;
-    for (int y = start_y; y <= surface_y; y += lod_scale) {
+    int surface_block_height = get_block_height(c, world_x_f, world_z_f);
+
+    // needs to be normalized so that the top of the block matches the sides.
+    // so, the surface_y should divide lod_scale to ensure that no chunk skirt pops through the top of the chunk
+    int surface_y = lod_scale * (int)((surface_block_height / lod_scale) + 1);
+    int start_y = surface_y - skirt_depth * lod_scale;
+
+    for (int y = start_y; y < surface_y; y += lod_scale) {
       if (y < 0 || y >= CHUNK_HEIGHT) {
         continue;
       }
