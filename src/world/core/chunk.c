@@ -89,8 +89,8 @@ short calculate_water_level(int y) {
 void generate_blocks(chunk* c, int x, int z) {
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
-            float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
-            float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
+            float x_ = CHUNK_POS_TO_WORLD_SAMPLE_POS(x, i);
+            float z_ = CHUNK_POS_TO_WORLD_SAMPLE_POS(z, j);
 
             biome* b = get_biome(x_, z_);
             float y = get_block_height(c, x_, z_);
@@ -127,8 +127,8 @@ void generate_blocks(chunk* c, int x, int z) {
      // generate foliage
      for (int i = 2; i < CHUNK_SIZE - 2; i++) {
          for (int j = 2; j < CHUNK_SIZE - 2; j++) {
-             float x_ = (float)x + (float)i / (float)CHUNK_SIZE;
-             float z_ = (float)z + (float)j / (float)CHUNK_SIZE;
+             float x_ = CHUNK_POS_TO_WORLD_SAMPLE_POS(x, i);
+             float z_ = CHUNK_POS_TO_WORLD_SAMPLE_POS(z, j);
 
              biome* b = get_biome(x_, z_);
              int y = get_block_height(c, x_, z_);

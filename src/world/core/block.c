@@ -181,13 +181,13 @@ short calculate_hit_side(vec3 position, vec3 dir, float t, int chunk_x, int chun
     float y = position[1] + t * dir[1];
     float z = position[2] + t * dir[2];
     
-    float cx = (float)(chunk_x + (c->x * CHUNK_SIZE));
+    float cx = F_CHUNK_POS_TO_WORLD_POS(c->x, chunk_x);
     float cy = (float)chunk_y;
-    float cz = (float)(chunk_z + (c->z * CHUNK_SIZE));
+    float cz = F_CHUNK_POS_TO_WORLD_POS(c->z, chunk_z);
     
-    float x_diff = x - (float)(chunk_x + (c->x * CHUNK_SIZE));
+    float x_diff = x - F_CHUNK_POS_TO_WORLD_POS(c->x, chunk_x);
     float y_diff = y - (float)chunk_y;
-    float z_diff = z - (float)(chunk_z + (c->z * CHUNK_SIZE));
+    float z_diff = z - F_CHUNK_POS_TO_WORLD_POS(c->z, chunk_z);
     
     if (fabs(x_diff) < 0.01f) {
         return (short)WEST;
@@ -526,9 +526,9 @@ void update_selected_block(player* p) {
         // Skip air and water blocks
         if (block_id != get_block_id("air") && block_id != water_id) {
             hit = true;
-            p->selected_block_pos[0] = chunk_x + (c->x * CHUNK_SIZE);
+            p->selected_block_pos[0] = CHUNK_POS_TO_WORLD_POS(c->x, chunk_x);
             p->selected_block_pos[1] = chunk_y;
-            p->selected_block_pos[2] = chunk_z + (c->z * CHUNK_SIZE);
+            p->selected_block_pos[2] = CHUNK_POS_TO_WORLD_POS(c->z, chunk_z);
             p->selected_block_id = block_id;
             p->has_selected_block = true;
             break;
@@ -655,5 +655,4 @@ short get_adjacent_block(int x, int y, int z, short side, short lod_scale, chunk
     get_block_info(block_data, &block_id, NULL, NULL, NULL);
     return block_id;
 }
-
 

@@ -4,4 +4,5 @@ napkin/
 .vscode/
 .cache/
 .claude/
+.codex
 compile_commands.json

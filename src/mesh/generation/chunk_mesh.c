@@ -100,8 +100,8 @@ float chunk_distance_to_camera(const void* item) {
     chunk_mesh* mesh = *mesh_ptr;
 
     // Calculate chunk center position
-    float chunk_center_x = (float)(mesh->x * CHUNK_SIZE) + (CHUNK_SIZE / 2.0f);
-    float chunk_center_z = (float)(mesh->z * CHUNK_SIZE) + (CHUNK_SIZE / 2.0f);
+    float chunk_center_x = CHUNK_POS_TO_WORLD_CENTER_POS(mesh->x);
+    float chunk_center_z = CHUNK_POS_TO_WORLD_CENTER_POS(mesh->z);
 
     // multiply by -1 to sort in descending order (back-to-front)
     return -1.0f * sqrt(
