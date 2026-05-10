@@ -88,7 +88,7 @@ void start_local_server(void) {
 }
 
 void server_main(void) {
-    init_core();
+    //init_core();
 
     server_t* server = create_server();
 

@@ -6,3 +6,4 @@ napkin/
 .claude/
 .codex
 compile_commands.json
+res/settings.local.json
