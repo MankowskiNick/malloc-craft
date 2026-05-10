@@ -10,17 +10,28 @@
 
 int main(int argc, char** argv) {
     
-
-    init_core();
-    
+    char env[16];
+    bool server_mode = false;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--server") == 0) {
-            server_main();
-            return 0;
+            server_mode = true;
         }
         if (strcmp(argv[i], "--localhost") == 0) {
             start_local_server();
         }
+        if (strcmp(argv[i], "--env") == 0) {
+            if (i + 1 >= argc) {
+                printf("ERROR: Must provide environment when specifying \"--env\"");
+                return -1;
+            }
+            strcpy(env, argv[i + 1]);
+        }
+    }
+
+    init_core(env);
+    if (server_mode) {
+        server_main();
+        return 0;
     }
     
     start_broadcast_listener();

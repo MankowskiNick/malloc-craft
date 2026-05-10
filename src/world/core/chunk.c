@@ -94,7 +94,6 @@ void generate_blocks(chunk* c, int x, int z) {
 
             biome* b = get_biome(x_, z_);
             float y = get_block_height(c, x_, z_);
-            printf("surface_height: %f\n", y);
             for (int k = 0; k < CHUNK_HEIGHT; k++) {
                 short water_level = calculate_water_level(k);
 

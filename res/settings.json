@@ -77,7 +77,7 @@
     "grav_accel": -30,
     "player_accel": 500.0,
     "player_friction": 0.75,
-    "player_max_speed": 16.0,
+    "player_max_speed": 8.0,
     "jump_force": 8,
     "coyote_time": 4,
     "swim_accel": 250.0,
