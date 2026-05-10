@@ -1,13 +1,8 @@
 #include "render.h"
 
-#include "../../world/core/world.h"
-
 #include "../../util/metrics.h"
-#include "../../util/sort.h"
 #include "../../util/settings.h"
 
-#include "../../mesh/generation/chunk_mesh.h"
-#include "../../mesh/generation/world_mesh.h"
 #include "../../mesh/core/mesh.h"
 
 #include "../effects/fbo.h"
@@ -90,17 +85,31 @@ void destroy_renderer(renderer* r) {
 void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
     assert(r != NULL && "Renderer is NULL\n");
 
+    profile_begin_section(PROFILE_SECTION_RENDER_CLEAR);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    profile_end_section(PROFILE_SECTION_RENDER_CLEAR);
 
+    profile_begin_section(PROFILE_SECTION_RENDER_SKYBOX);
     glDisable(GL_DEPTH_TEST);
     render_skybox(&(r->sky));
     glEnable(GL_DEPTH_TEST);
+    profile_end_section(PROFILE_SECTION_RENDER_SKYBOX);
 
+    profile_begin_section(PROFILE_SECTION_RENDER_SUN);
     render_sun(&(r->s), args->tick);
+    profile_end_section(PROFILE_SECTION_RENDER_SUN);
 
     if (packet != NULL && num_packets > 0) {
-        render_shadow_map(&(r->shadow_map), &(r->s), packet);
+        profile_begin_section(PROFILE_SECTION_RENDER_SHADOW_MAP);
+        //if ((int)args->tick % TICK_RATE == 0) {
+            render_shadow_map(&(r->shadow_map), &(r->s), packet);
+        //}        
+
+        profile_end_section(PROFILE_SECTION_RENDER_SHADOW_MAP);
+
+        profile_begin_section(PROFILE_SECTION_RENDER_REFLECTION_MAP);
         render_reflection_map(&(r->reflection_map), r->cam, (float)WORLDGEN_WATER_LEVEL, packet);
+        profile_end_section(PROFILE_SECTION_RENDER_REFLECTION_MAP);
 
         glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
         glBindTexture(GL_TEXTURE_2D, r->shadow_map.texture);
@@ -110,6 +119,7 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
+        profile_begin_section(PROFILE_SECTION_RENDER_WORLD);
         render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
         render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
         if (args->player.is_underwater) {
@@ -125,8 +135,10 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
         if (args->player.has_selected_block) {
             render_outline(&(r->or), args->player.selected_block_pos[0], args->player.selected_block_pos[1], args->player.selected_block_pos[2]);
         }
+        profile_end_section(PROFILE_SECTION_RENDER_WORLD);
     }
 
+    profile_begin_section(PROFILE_SECTION_RENDER_UI);
     glDisable(GL_DEPTH_TEST);
     render_hotbar(&(r->ui), args->player.hotbar, args->player.hotbar_size, args->player.selected_block);
     if (args->show_fps) {
@@ -136,4 +148,5 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
                      args->player.cam.position[2]);
     }
     glEnable(GL_DEPTH_TEST);
+    profile_end_section(PROFILE_SECTION_RENDER_UI);
 }
