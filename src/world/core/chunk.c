@@ -87,6 +87,20 @@ short calculate_water_level(int y) {
 }
 
 void generate_blocks(chunk* c, int x, int z) {
+    if (x % 5 == 0 && z % 5 == 0) {
+        short weezer_id = get_block_id("weezer");
+
+        for (int i = 0; i < CHUNK_SIZE; i++) {
+            for (int j = 0; j < CHUNK_SIZE; j++) {
+                for (int k = 0; k < CHUNK_HEIGHT; k++) {
+                    set_block_info(NULL, c, i, k, j, weezer_id, (short)DOWN, 0, 0);
+                }
+            }
+        }
+
+        return;
+    }
+
     for (int i = 0; i < CHUNK_SIZE; i++) {
         for (int j = 0; j < CHUNK_SIZE; j++) {
             float x_ = CHUNK_POS_TO_WORLD_SAMPLE_POS(x, i);
