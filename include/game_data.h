@@ -5,6 +5,8 @@
 #include <util.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
 
 #define FLOATS_PER_MODEL_VERT 8
 
@@ -49,12 +51,102 @@ typedef struct {
     float* custom_model_data;
 } world_mesh;
 
+static inline void free_world_mesh(world_mesh* mesh) {
+    if (mesh == NULL) {
+        return;
+    }
+    free(mesh->transparent_data);
+    free(mesh->opaque_data);
+    free(mesh->liquid_data);
+    if (mesh->num_foliage_sides > 0) {
+        free(mesh->foliage_data);
+    }
+    if (mesh->num_custom_verts > 0) {
+        free(mesh->custom_model_data);
+    }
+    free(mesh);
+}
+
+typedef struct double_buffer_t {
+    
+    // buffers;
+    world_mesh* a;
+    world_mesh* b;
+    int a_count, b_count;
+    pthread_mutex_t a_lock, b_lock;
+
+    // t = a, 
+    // f = b
+    bool read_buffer;
+} double_buffer_t;
+
+static inline double_buffer_t* create_double_buffer() {
+    double_buffer_t* buf = malloc(sizeof(double_buffer_t));
+
+    buf->read_buffer = 0;
+    buf->a = NULL;
+    buf->b = NULL;
+
+    pthread_mutex_init(&buf->a_lock, NULL);
+    pthread_mutex_init(&buf->a_lock, NULL);
+
+    return buf;
+}
+
+static inline void lock_double_buffer(double_buffer_t* buf, bool target_buffer) {
+    if (buf == NULL) {
+        printf("ERROR: Failed to lock double buffer.  Argument \"buf\" cannot be NULL.\n");
+        return;
+    }
+
+    if (target_buffer) {
+        pthread_mutex_lock(&buf->a_lock);
+    }
+    else {
+        pthread_mutex_lock(&buf->b_lock);
+    }
+}
+
+static inline void unlock_double_buffer(double_buffer_t* buf, bool target_buffer) {
+    if (buf == NULL) {
+        printf("ERROR: Failed to lock double buffer.  Argument \"buf\" cannot be NULL.\n");
+        return;
+    }
+
+    if (target_buffer) {
+        pthread_mutex_unlock(&buf->a_lock);
+    }
+    else {
+        pthread_mutex_unlock(&buf->b_lock);
+    }
+}
+
+static inline void write_double_buffer(double_buffer_t* buf, world_mesh* new) {
+    world_mesh** addr = NULL;
+
+    if (buf->read_buffer) {
+        addr = &buf->a;
+    }
+    else {
+        addr = &buf->b;
+    }
+
+    bool target = buf->read_buffer;
+    buf->read_buffer = !buf->read_buffer;
+    
+    lock_double_buffer(buf, target);
+    world_mesh* old = *addr;
+    *addr = new;
+    free_world_mesh(old);
+    unlock_double_buffer(buf, target);
+}
+
 typedef struct {
     int x;
     int z;
     int* num_packets;
     chunk_mesh** packet;
-    world_mesh* world_mesh;
+    double_buffer_t* world_mesh;
     player player;
     int is_running;
     bool mesh_requires_update;
@@ -77,7 +169,19 @@ static inline void update_game_data(game_data* data) {
     data->z = data->player.cam.position[2];
 }
 
-static inline world_mesh* copy_world_mesh(world_mesh* src) {
+static inline world_mesh* copy_world_mesh(double_buffer_t* buf) {
+    world_mesh* src = NULL;
+    
+    bool target = buf->read_buffer;
+    lock_double_buffer(buf, target);
+    if (buf->read_buffer) {
+        src = buf->a;
+    } else {
+        src = buf->b;
+    }
+
+    buf->read_buffer = !buf->read_buffer;
+    
     if (!src) return NULL;
     
     world_mesh* copy = (world_mesh*)malloc(sizeof(world_mesh));
@@ -126,6 +230,8 @@ static inline world_mesh* copy_world_mesh(world_mesh* src) {
     } else {
         copy->custom_model_data = NULL;
     }
+
+    unlock_double_buffer(buf, target);
     
     return copy;
 }

@@ -28,6 +28,8 @@ FBO create_shadow_map(uint width, uint height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float border_color[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
 
     // create vao
     VAO vao = create_vao();
@@ -76,6 +78,11 @@ void render_shadow_map(FBO* map, sun* s, world_mesh* packet) {
     glViewport(0, 0, map->width, map->height);
     glClear(GL_DEPTH_BUFFER_BIT);
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(SHADOW_POLYGON_OFFSET_FACTOR, SHADOW_POLYGON_OFFSET_UNITS);
+
     use_program(map->program);
 
     send_sun_matrices(&(map->program), s);
@@ -87,6 +94,10 @@ void render_shadow_map(FBO* map, sun* s, world_mesh* packet) {
         render_depth(map, packet->opaque_data, packet->num_opaque_sides);
         render_depth(map, packet->transparent_data, packet->num_transparent_sides);
     }
+
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glCullFace(GL_BACK);
+    glDisable(GL_CULL_FACE);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     

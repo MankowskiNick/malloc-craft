@@ -1,6 +1,8 @@
 #include "fbo.h"
 
 #include <glad/glad.h>
+#include <math.h>
+#include <cglm/cglm.h>
 #include "vao.h"
 #include "vbo.h"
 #include "block.h"
@@ -11,20 +13,31 @@ void FBO_cleanup(FBO* map) {
 }
 
 void get_sun_view_matrix(vec3 pos, vec3 player_pos, mat4* view) {
-    vec3 sun_pos = {pos[0] + player_pos[0], pos[1] + player_pos[1], pos[2] + player_pos[2]};
-    glm_lookat(sun_pos, 
-        player_pos,
-        (vec3){0.0f, 1.0f, 0.0f},
-        *view);
+    vec3 sun_dir = {pos[0], pos[1], pos[2]};
+    glm_normalize(sun_dir);
+
+    vec3 sun_pos = {
+        player_pos[0] + sun_dir[0] * SHADOW_LIGHT_DISTANCE,
+        player_pos[1] + sun_dir[1] * SHADOW_LIGHT_DISTANCE,
+        player_pos[2] + sun_dir[2] * SHADOW_LIGHT_DISTANCE
+    };
+
+    vec3 light_dir = {
+        player_pos[0] - sun_pos[0],
+        player_pos[1] - sun_pos[1],
+        player_pos[2] - sun_pos[2]
+    };
+    glm_look_anyup(sun_pos, light_dir, *view);
 }
 
 void get_sun_proj_matrix(mat4* proj, sun* s) {
-    float x = s->cam->position[0];
-    float y = s->cam->position[1];
-    float z = s->cam->position[2];
+    (void)s;
+    float near_plane = fmaxf(SHADOW_NEAR_CLIP, SHADOW_LIGHT_DISTANCE - SHADOW_RENDER_DIST);
+    float far_plane = SHADOW_LIGHT_DISTANCE + SHADOW_RENDER_DIST;
+
     glm_ortho(-SHADOW_RENDER_DIST, SHADOW_RENDER_DIST, 
         -SHADOW_RENDER_DIST, SHADOW_RENDER_DIST, 
-        -SHADOW_RENDER_DIST, SHADOW_RENDER_DIST, 
+        near_plane, far_plane,
         *proj);
 }
 
@@ -104,11 +117,13 @@ void render_depth(FBO* map, int* side_data, int num_sides) {
     i_add_attrib(&(map->instance_vbo), 1, 3, 0 * sizeof(int), VBO_WIDTH * sizeof(int)); // position
     i_add_attrib(&(map->instance_vbo), 2, 2, 3 * sizeof(int), VBO_WIDTH * sizeof(int)); // atlas coords
     i_add_attrib(&(map->instance_vbo), 3, 1, 5 * sizeof(int), VBO_WIDTH * sizeof(int)); // side
+    i_add_attrib(&(map->instance_vbo), 8, 1, 10 * sizeof(int), VBO_WIDTH * sizeof(int)); // lod scale
     use_vbo(map->instance_vbo);
 
     glVertexAttribDivisor(1, 1);
     glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(8, 1);
 
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, num_sides);
 

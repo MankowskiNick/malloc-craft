@@ -36,6 +36,10 @@ int CHUNK_SKIRT_DEPTH = 2;
 int SHADOW_MAP_WIDTH = 10000;
 int SHADOW_MAP_HEIGHT = 10000;
 float SHADOW_RENDER_DIST = 16.0f * 16.0f;
+float SHADOW_LIGHT_DISTANCE = 16.0f * 16.0f;
+float SHADOW_NEAR_CLIP = 1.0f;
+float SHADOW_POLYGON_OFFSET_FACTOR = 2.0f;
+float SHADOW_POLYGON_OFFSET_UNITS = 4.0f;
 float SHADOW_SOFTNESS = 3.0f;
 int SHADOW_SAMPLES = 4;
 float SHADOW_BIAS = 0.0025f;
@@ -322,6 +326,26 @@ void parse_shadows_settings(json_object shadows_obj) {
     json_object shadow_render_dist = json_get_property(shadows_obj, "shadow_render_dist");
     if (shadow_render_dist.type == JSON_NUMBER) {
         SHADOW_RENDER_DIST = shadow_render_dist.value.number;
+    }
+
+    json_object shadow_light_distance = json_get_property(shadows_obj, "shadow_light_distance");
+    if (shadow_light_distance.type == JSON_NUMBER) {
+        SHADOW_LIGHT_DISTANCE = shadow_light_distance.value.number;
+    }
+
+    json_object shadow_near_clip = json_get_property(shadows_obj, "shadow_near_clip");
+    if (shadow_near_clip.type == JSON_NUMBER) {
+        SHADOW_NEAR_CLIP = shadow_near_clip.value.number;
+    }
+
+    json_object shadow_polygon_offset_factor = json_get_property(shadows_obj, "shadow_polygon_offset_factor");
+    if (shadow_polygon_offset_factor.type == JSON_NUMBER) {
+        SHADOW_POLYGON_OFFSET_FACTOR = shadow_polygon_offset_factor.value.number;
+    }
+
+    json_object shadow_polygon_offset_units = json_get_property(shadows_obj, "shadow_polygon_offset_units");
+    if (shadow_polygon_offset_units.type == JSON_NUMBER) {
+        SHADOW_POLYGON_OFFSET_UNITS = shadow_polygon_offset_units.value.number;
     }
 
     json_object shadow_softness = json_get_property(shadows_obj, "shadow_softness");

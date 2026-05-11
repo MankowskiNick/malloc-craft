@@ -350,10 +350,6 @@ void modify_block(game_data* data, short block_id, float t_offset) {
 
     set_block_info(data, c, chunk_x, chunk_y, chunk_z, block_id, hit_side, rot, water_level);
 
-    if (data->world_mesh != NULL) {
-        free(data->world_mesh);
-        data->world_mesh = NULL;
-    }  
     if (data->packet != NULL) {
         *data->num_packets = 0;
         free(data->packet);
