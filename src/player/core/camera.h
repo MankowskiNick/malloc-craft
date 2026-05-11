@@ -5,6 +5,7 @@
 
 typedef struct {
     float x, y, z;
+    float yaw, pitch;
 } camera_cache;
 
 typedef struct {

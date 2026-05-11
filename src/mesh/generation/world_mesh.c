@@ -1,6 +1,7 @@
 #include "world_mesh.h"
 #include "util/settings.h"
 #include <assert.h>
+#include <math.h>
 #include <string.h>
 #include "util/sort.h"
 #include <util.h>
@@ -11,7 +12,61 @@
 static pthread_mutex_t wm_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_t wm_updater_thread = 0;
 
-static camera_cache wm_camera_cache = {0, 0, 0};
+static camera_cache wm_camera_cache = {0, 0, 0, 0, 0};
+
+#define WORLD_MESH_ROTATION_EPSILON 0.01f
+#define WORLD_MESH_CULL_PADDING 2.0f
+#define WORLD_MESH_NEARBY_CHUNK_BYPASS 1
+
+static int world_mesh_camera_changed(camera* camera, int x, int z) {
+    int moved_blocks = ((int)x == (int)wm_camera_cache.x && (int)z == (int)wm_camera_cache.z) ? 0 : 1;
+    int moved_vertical = ((int)camera->position[1] == (int)wm_camera_cache.y) ? 0 : 1;
+    int rotated = fabsf(camera->yaw - wm_camera_cache.yaw) > WORLD_MESH_ROTATION_EPSILON
+        || fabsf(camera->pitch - wm_camera_cache.pitch) > WORLD_MESH_ROTATION_EPSILON;
+
+    if (moved_blocks || moved_vertical || rotated) {
+        wm_camera_cache.x = camera->position[0];
+        wm_camera_cache.y = camera->position[1];
+        wm_camera_cache.z = camera->position[2];
+        wm_camera_cache.yaw = camera->yaw;
+        wm_camera_cache.pitch = camera->pitch;
+        return 1;
+    }
+
+    return 0;
+}
+
+static int is_chunk_near_camera(int chunk_x, int chunk_z, int player_chunk_x, int player_chunk_z) {
+    return abs(chunk_x - player_chunk_x) <= WORLD_MESH_NEARBY_CHUNK_BYPASS
+        && abs(chunk_z - player_chunk_z) <= WORLD_MESH_NEARBY_CHUNK_BYPASS;
+}
+
+static int chunk_intersects_camera_frustum(camera* camera, int chunk_x, int chunk_z) {
+    mat4 view;
+    mat4 proj;
+    mat4 view_proj;
+    vec4 planes[6];
+
+    vec3 box[2] = {
+        {
+            (float)(chunk_x * CHUNK_SIZE) - WORLD_MESH_CULL_PADDING,
+            0.0f - WORLD_MESH_CULL_PADDING,
+            (float)(chunk_z * CHUNK_SIZE) - WORLD_MESH_CULL_PADDING
+        },
+        {
+            (float)((chunk_x + 1) * CHUNK_SIZE) + WORLD_MESH_CULL_PADDING,
+            (float)CHUNK_HEIGHT + WORLD_MESH_CULL_PADDING,
+            (float)((chunk_z + 1) * CHUNK_SIZE) + WORLD_MESH_CULL_PADDING
+        }
+    };
+
+    get_view_matrix(*camera, &view);
+    get_projection_matrix(&proj, RADS(FOV), (float)WIDTH / (float)HEIGHT, 0.1f, RENDER_DISTANCE);
+    glm_mat4_mul(proj, view, view_proj);
+    glm_frustum_planes(view_proj, planes);
+
+    return glm_aabb_frustum(box, planes);
+}
 
 // Deep copy a chunk_mesh and all its dynamically allocated data
 static chunk_mesh* copy_chunk_mesh(chunk_mesh* src) {
@@ -80,12 +135,14 @@ void init_world_mesh(camera* camera) {
     wm_camera_cache.x = camera->position[0];
     wm_camera_cache.y = camera->position[1];
     wm_camera_cache.z = camera->position[2];
+    wm_camera_cache.yaw = camera->yaw;
+    wm_camera_cache.pitch = camera->pitch;
     init_chunk_mesh(camera);
 }
 
 world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
-    assert(packet != NULL && "Chunk mesh pointer is NULL\n");
-    assert(count > 0 && "Count must be greater than zero\n");
+    assert(count >= 0 && "Count cannot be negative\n");
+    assert(packet != NULL || count == 0);
 
     // First pass: Calculate total memory needed
     int total_transparent_sides = 0;
@@ -108,14 +165,28 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     }
 
     // Allocate all memory at once
-    int* transparent_data = malloc(total_transparent_sides * VBO_WIDTH * sizeof(int));
-    int* opaque_data = malloc(total_opaque_sides * VBO_WIDTH * sizeof(int));
-    int* liquid_data = malloc(total_liquid_sides * VBO_WIDTH * sizeof(int));
-    int* foliage_data = malloc(total_foliage_sides * VBO_WIDTH * sizeof(int));
-    float* custom_model_data = malloc(total_custom_verts * sizeof(float) * FLOATS_PER_MODEL_VERT);
+    int* transparent_data = total_transparent_sides > 0
+        ? malloc(total_transparent_sides * VBO_WIDTH * sizeof(int))
+        : NULL;
+    int* opaque_data = total_opaque_sides > 0
+        ? malloc(total_opaque_sides * VBO_WIDTH * sizeof(int))
+        : NULL;
+    int* liquid_data = total_liquid_sides > 0
+        ? malloc(total_liquid_sides * VBO_WIDTH * sizeof(int))
+        : NULL;
+    int* foliage_data = total_foliage_sides > 0
+        ? malloc(total_foliage_sides * VBO_WIDTH * sizeof(int))
+        : NULL;
+    float* custom_model_data = total_custom_verts > 0
+        ? malloc(total_custom_verts * sizeof(float) * FLOATS_PER_MODEL_VERT)
+        : NULL;
 
     // Check for allocation failure
-    if (!transparent_data || !opaque_data || !liquid_data || !foliage_data || !custom_model_data) {
+    if ((total_transparent_sides > 0 && !transparent_data)
+        || (total_opaque_sides > 0 && !opaque_data)
+        || (total_liquid_sides > 0 && !liquid_data)
+        || (total_foliage_sides > 0 && !foliage_data)
+        || (total_custom_verts > 0 && !custom_model_data)) {
         free(transparent_data);
         free(opaque_data);
         free(liquid_data);
@@ -221,13 +292,10 @@ void free_packets(chunk_mesh** packet, int packet_count) {
 void get_world_mesh(game_data* args) {
     int x = args->x;
     int z = args->z;
+    camera* camera = &args->player.cam;
 
     if (args->world_mesh != NULL) {
-        int movedBlocks = ((int)x == (int)(wm_camera_cache.x) && (int)z == (int)(wm_camera_cache.z)) ? 0 : 1;
-        if (movedBlocks || args->mesh_requires_update) {
-            wm_camera_cache.x = x;
-            wm_camera_cache.z = z;
-        } else {
+        if (!world_mesh_camera_changed(camera, x, z) && !args->mesh_requires_update) {
             // No need to update if the camera hasn't moved
             return;
         }
@@ -255,17 +323,30 @@ void get_world_mesh(game_data* args) {
     chunk_mesh** packet = malloc(packet_count * sizeof(chunk_mesh*));
     assert(packet != NULL && "ERROR: Could not allocate memory for chunk_mesh double buffer in world_mesh generation.\n");
 
-    // Deep copy packet list while holding lock to avoid data races
+    int player_chunk_x = WORLD_POS_TO_CHUNK_POS(camera->position[0]);
+    int player_chunk_z = WORLD_POS_TO_CHUNK_POS(camera->position[2]);
+    int visible_count = 0;
+
+    // Deep copy only visible chunks while holding lock to avoid data races
     for (int i = 0; i < packet_count; i++) {
-        if (args->packet[i] != NULL) {
-            packet[i] = copy_chunk_mesh(args->packet[i]);
+        chunk_mesh* mesh = args->packet[i];
+        if (mesh == NULL) {
+            continue;
         }
+
+        if (!is_chunk_near_camera(mesh->x, mesh->z, player_chunk_x, player_chunk_z)
+            && !chunk_intersects_camera_frustum(camera, mesh->x, mesh->z)) {
+            continue;
+        }
+
+        packet[visible_count] = copy_chunk_mesh(mesh);
+        visible_count++;
     }
 
     unlock_mesh();
 
     // Create world mesh outside lock with copied packet data
-    world_mesh* world = create_world_mesh(packet, packet_count);
+    world_mesh* world = create_world_mesh(packet, visible_count);
 
     if (!world) {
         assert(false && "Failed to create world mesh\n");
@@ -275,7 +356,7 @@ void get_world_mesh(game_data* args) {
         write_double_buffer(args->world_mesh, world);
         args->mesh_requires_update = true;
     }
-    free_packets(packet, packet_count);
+    free_packets(packet, visible_count);
 }
 
 void update_world_mesh(game_data* data) {

@@ -51,6 +51,7 @@ extern int FULLSCREEN;
 // Radius of chunks to render
 extern int CHUNK_RENDER_DISTANCE;
 extern int LOD_SCALING_CONSTANT;
+extern int MAX_LOD_BLOCK_SIZE;
 
 // Render distances for specific block types (in chunks)
 extern int FOLIAGE_RENDER_DISTANCE;

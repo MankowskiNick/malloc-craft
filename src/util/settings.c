@@ -30,6 +30,7 @@ int VSYNC = 1;
 int FULLSCREEN = 0;
 int CHUNK_RENDER_DISTANCE = 16;
 int LOD_SCALING_CONSTANT = 2;
+int MAX_LOD_BLOCK_SIZE = 4;
 int FOLIAGE_RENDER_DISTANCE = 16;
 int TRANSPARENT_RENDER_DISTANCE = 16;
 int CHUNK_SKIRT_DEPTH = 2;
@@ -200,6 +201,11 @@ void parse_chunks_settings(json_object chunks_obj) {
     json_object lod_scaling_constant = json_get_property(chunks_obj, "lod_scaling_constant");
     if (lod_scaling_constant.type == JSON_NUMBER) {
         LOD_SCALING_CONSTANT = (int)lod_scaling_constant.value.number;
+    }
+
+    json_object max_lod_block_size = json_get_property(chunks_obj, "max_lod_block_size");
+    if (max_lod_block_size.type == JSON_NUMBER) {
+        MAX_LOD_BLOCK_SIZE = (int)max_lod_block_size.value.number;
     }
 
     json_object chunk_render_distance = json_get_property(chunks_obj, "chunk_render_distance");

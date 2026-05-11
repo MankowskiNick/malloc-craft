@@ -484,7 +484,7 @@ player create_player(char* player_file) {
         .is_underwater = 0,
         .coyote_counter = 0,
         .jump_requested = 0,
-        .fly_mode = 0,
+        .fly_mode = true,
         .is_crouching = false,
         .camera_height_offset = height,
         .is_sprinting = false,
