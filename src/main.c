@@ -102,10 +102,8 @@ int main(int argc, char** argv) {
         profile_end_section(PROFILE_SECTION_UPDATE_SELECTED_BLOCK);
 
         profile_begin_section(PROFILE_SECTION_COPY_WORLD_MESH);
-        lock_mesh();
-            world_mesh* render_mesh = copy_world_mesh(data.world_mesh);
-            int render_packet_count = *(data.num_packets);
-        unlock_mesh();
+        world_mesh* render_mesh = copy_world_mesh(data.world_mesh);
+        int render_packet_count = *(data.num_packets);
         profile_end_section(PROFILE_SECTION_COPY_WORLD_MESH);
 
         profile_begin_section(PROFILE_SECTION_RENDER_TOTAL);
