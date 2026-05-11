@@ -101,9 +101,9 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
 
     if (packet != NULL && num_packets > 0) {
         profile_begin_section(PROFILE_SECTION_RENDER_SHADOW_MAP);
-        //if ((int)args->tick % TICK_RATE == 0) {
+        if ((int)args->tick % TICK_RATE == 0) {
             render_shadow_map(&(r->shadow_map), &(r->s), packet);
-        //}        
+        }        
 
         profile_end_section(PROFILE_SECTION_RENDER_SHADOW_MAP);
 

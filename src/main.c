@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
         .show_fps = false,
         .num_packets = NULL,
         .packet = NULL,
-        .world_mesh = NULL,
+        .world_mesh = create_double_buffer(),
         .mesh_requires_update = true,
     };
 

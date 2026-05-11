@@ -193,22 +193,6 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     return world;
 }
 
-void free_world_mesh(world_mesh* mesh) {
-    if (mesh == NULL) {
-        return;
-    }
-    free(mesh->transparent_data);
-    free(mesh->opaque_data);
-    free(mesh->liquid_data);
-    if (mesh->num_foliage_sides > 0) {
-        free(mesh->foliage_data);
-    }
-    if (mesh->num_custom_verts > 0) {
-        free(mesh->custom_model_data);
-    }
-    free(mesh);
-}
-
 void free_packets(chunk_mesh** packet, int packet_count) {
     if (packet == NULL) {
         printf("ERROR: Cannot free NULL world mesh packet.");
@@ -287,14 +271,10 @@ void get_world_mesh(game_data* args) {
         assert(false && "Failed to create world mesh\n");
     }
 
-    lock_mesh();
     if (args->world_mesh != NULL) {
-        free_world_mesh(args->world_mesh);
+        write_double_buffer(args->world_mesh, world);
+        args->mesh_requires_update = true;
     }
-    args->world_mesh = world;
-    args->mesh_requires_update = FALSE;
-    unlock_mesh();
-
     free_packets(packet, packet_count);
 }
 
