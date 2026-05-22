@@ -36,9 +36,10 @@ void set_block_info(game_data* game_data, chunk* c, int x, int y, int z, short i
 
     // first 10 bits are block id
     data = id & 0x3FF;
+    
     // next 3 bits are orientation
     data |= (orientation & 0x7) << 10;
-
+    
     // next 2 bits are rotation
     data |= (rot & 0x3) << 13;
 

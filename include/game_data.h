@@ -121,22 +121,22 @@ static inline void unlock_double_buffer(double_buffer_t* buf, bool target_buffer
     }
 }
 
-static inline void write_double_buffer(double_buffer_t* buf, world_mesh* new) {
+static inline void write_double_buffer(double_buffer_t* buf, world_mesh* new_mesh) {
     world_mesh** addr = NULL;
 
-    if (buf->read_buffer) {
+    bool target = buf->read_buffer;
+    buf->read_buffer = !buf->read_buffer;
+    
+    lock_double_buffer(buf, target);
+    if (target) {
         addr = &buf->a;
     }
     else {
         addr = &buf->b;
     }
 
-    bool target = buf->read_buffer;
-    buf->read_buffer = !buf->read_buffer;
-    
-    lock_double_buffer(buf, target);
     world_mesh* old = *addr;
-    *addr = new;
+    *addr = new_mesh;
     free_world_mesh(old);
     unlock_double_buffer(buf, target);
 }
