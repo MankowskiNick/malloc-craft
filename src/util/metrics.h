@@ -36,6 +36,7 @@ void init_metrics(void);
 float get_fps(void);
 void update_fps(void);
 int get_delta_ms(void);
+float get_delta_seconds(void);
 void enable_client_profiling(bool enabled);
 bool client_profiling_enabled(void);
 void profile_configure_startup(bool enabled);

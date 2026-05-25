@@ -10,8 +10,8 @@ static int frame_buffer_index = 0;
 static int average_fps = -1;
 
 static long long start_ms = -1;
-static long long last_tick = -1;
-static long long tick = -1;
+static double last_tick_s = -1.0;
+static double tick_s = -1.0;
 
 static bool profile_enabled = false;
 static bool profile_startup_enabled = true;
@@ -58,6 +58,12 @@ static long long now_ms(void) {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (long long)ts.tv_sec * 1000LL + (long long)(ts.tv_nsec / 1000000LL);
+}
+
+static double now_seconds(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1000000000.0;
 }
 
 static void close_profile_log_file(void) {
@@ -125,8 +131,8 @@ static void ensure_metrics_initialized(void) {
     }
 
     start_ms = now_ms();
-    last_tick = 0;
-    tick = 0;
+    last_tick_s = now_seconds();
+    tick_s = last_tick_s;
 
     for (int i = 0; i < FPS_BUFFER_SIZE; i++) {
         frame_time_buffer[i] = 0.0f;
@@ -148,8 +154,8 @@ static void reset_profile_aggregates(void) {
 
 void init_metrics(void) {
     start_ms = -1;
-    last_tick = -1;
-    tick = -1;
+    last_tick_s = -1.0;
+    tick_s = -1.0;
     ensure_metrics_initialized();
 }
 
@@ -159,15 +165,25 @@ float get_fps(void) {
 
 int get_delta_ms() {
     ensure_metrics_initialized();
-    return (int)(tick - last_tick);
+    return (int)(get_delta_seconds() * 1000.0f);
+}
+
+float get_delta_seconds(void) {
+    ensure_metrics_initialized();
+    return (float)(tick_s - last_tick_s);
 }
 
 void update_fps(void) {
     ensure_metrics_initialized();
 
+    last_tick_s = tick_s;
+    tick_s = now_seconds();
+
+    float delta_seconds = (float)(tick_s - last_tick_s);
+
     // Calculate rolling average FPS
-    if (tick - last_tick > 0) {
-        int delta_ms = (int)(tick - last_tick);
+    if (delta_seconds > 0.0f) {
+        float delta_ms = delta_seconds * 1000.0f;
 
         // Add current frame time to circular buffer
         frame_time_buffer[frame_buffer_index] = delta_ms;
@@ -183,9 +199,6 @@ void update_fps(void) {
         // Convert to FPS
         average_fps = (int)(1000.0f / avg_delta_ms);
     }
-
-    last_tick = tick;
-    tick = now_ms() - start_ms;
 }
 
 void enable_client_profiling(bool enabled) {

@@ -123,14 +123,14 @@ extern float SENSITIVITY;
 // Player physics settings
 extern float GRAV_ACCEL;
 extern float PLAYER_ACCEL;         // Horizontal acceleration magnitude (units/s²)
-extern float PLAYER_FRICTION;      // Friction multiplier (0.0-1.0)
+extern float PLAYER_FRICTION;      // Per-frame damping reference at 60 FPS (0.0-1.0)
 extern float PLAYER_MAX_SPEED;     // Max horizontal speed cap (units/s)
 extern float JUMP_FORCE;           // Initial upward velocity on jump (units/s)
 extern int COYOTE_TIME;            // Frames to allow jump after leaving ground
 
 // Water/Swimming physics settings
 extern float SWIM_ACCEL;           // Swimming acceleration magnitude (units/s²)
-extern float WATER_FRICTION;       // Water friction multiplier (0.0-1.0)
+extern float WATER_FRICTION;       // Per-frame damping reference at 60 FPS (0.0-1.0)
 extern float WATER_MAX_SPEED;      // Max swimming speed cap (units/s)
 extern float WATER_DRAG;           // Water drag/buoyancy modifier (0.0-1.0)
 extern float SWIM_VERTICAL_ACCEL;  // Vertical acceleration when holding space/shift underwater (units/s²)

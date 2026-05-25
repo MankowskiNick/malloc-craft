@@ -90,12 +90,14 @@ int main(int argc, char** argv) {
         update_fps();
         profile_end_section(PROFILE_SECTION_UPDATE_FPS);
 
+        float delta_seconds = get_delta_seconds();
+
         profile_begin_section(PROFILE_SECTION_UPDATE_CAMERA);
-        update_camera(get_delta_ms());
+        update_camera(delta_seconds);
         profile_end_section(PROFILE_SECTION_UPDATE_CAMERA);
 
         profile_begin_section(PROFILE_SECTION_APPLY_PHYSICS);
-        apply_physics(&data.player, get_delta_ms());
+        apply_physics(&data.player, delta_seconds);
         profile_end_section(PROFILE_SECTION_APPLY_PHYSICS);
 
         profile_begin_section(PROFILE_SECTION_UPDATE_SELECTED_BLOCK);

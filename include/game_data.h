@@ -68,12 +68,12 @@ static inline void free_world_mesh(world_mesh* mesh) {
 }
 
 typedef struct double_buffer_t {
-    
     // buffers;
     world_mesh* a;
     world_mesh* b;
     int a_count, b_count;
     pthread_mutex_t a_lock, b_lock;
+    pthread_mutex_t selector_lock;
 
     // t = a, 
     // f = b
@@ -88,7 +88,8 @@ static inline double_buffer_t* create_double_buffer() {
     buf->b = NULL;
 
     pthread_mutex_init(&buf->a_lock, NULL);
-    pthread_mutex_init(&buf->a_lock, NULL);
+    pthread_mutex_init(&buf->b_lock, NULL);
+    pthread_mutex_init(&buf->selector_lock, NULL);
 
     return buf;
 }
@@ -122,22 +123,18 @@ static inline void unlock_double_buffer(double_buffer_t* buf, bool target_buffer
 }
 
 static inline void write_double_buffer(double_buffer_t* buf, world_mesh* new) {
-    world_mesh** addr = NULL;
+    pthread_mutex_lock(&buf->selector_lock);
 
-    if (buf->read_buffer) {
-        addr = &buf->a;
-    }
-    else {
-        addr = &buf->b;
-    }
-
-    bool target = buf->read_buffer;
-    buf->read_buffer = !buf->read_buffer;
-    
+    bool target = !buf->read_buffer;
+    world_mesh** addr = target ? &buf->a : &buf->b;
     lock_double_buffer(buf, target);
+
     world_mesh* old = *addr;
     *addr = new;
     free_world_mesh(old);
+
+    buf->read_buffer = target;
+    pthread_mutex_unlock(&buf->selector_lock);
     unlock_double_buffer(buf, target);
 }
 
@@ -171,18 +168,23 @@ static inline void update_game_data(game_data* data) {
 
 static inline world_mesh* copy_world_mesh(double_buffer_t* buf) {
     world_mesh* src = NULL;
-    
+
+    pthread_mutex_lock(&buf->selector_lock);
     bool target = buf->read_buffer;
+    pthread_mutex_unlock(&buf->selector_lock);
+
     lock_double_buffer(buf, target);
-    if (buf->read_buffer) {
+
+    if (target) {
         src = buf->a;
     } else {
         src = buf->b;
     }
-
-    buf->read_buffer = !buf->read_buffer;
-    
-    if (!src) return NULL;
+ 
+    if (!src) {
+        unlock_double_buffer(buf, target);
+        return NULL;
+    }
     
     world_mesh* copy = (world_mesh*)malloc(sizeof(world_mesh));
     copy->num_opaque_sides = src->num_opaque_sides;

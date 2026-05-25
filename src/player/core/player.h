@@ -36,6 +36,6 @@ typedef struct {
 } player;
 
 player create_player(char* player_file);
-void apply_physics(player* player, float delta_ms);
+void apply_physics(player* player, float delta_seconds);
 
 #endif

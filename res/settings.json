@@ -3,7 +3,7 @@
     "width": 1920,
     "height": 1080,
     "title": "malloc-craft",
-    "vsync": true,
+    "vsync": false,
     "fov": 60.0,
     "fullscreen": false
   },

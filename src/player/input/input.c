@@ -108,7 +108,8 @@ void update_position() {
     }
 }
 
-void update_camera(int delta_ms) {
+void update_camera(float delta_seconds) {
+    (void)delta_seconds;
     update_position();
     update_orientation(&(g_data->player.cam));
 }
