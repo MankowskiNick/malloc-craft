@@ -5,6 +5,7 @@
 #include <string.h>
 #include <cerialize/cerialize.h>
 
+#include "metrics.h"
 #include "util.h"
 
 int WIDTH = 1200;
@@ -135,6 +136,81 @@ char* UI_FRAGMENT_SHADER = "res/shaders/ui/ui.frag";
 // UI settings
 float UI_SCALE = 1.0f;
 float FPS_COUNTER_SCALE = 1.0f;
+
+void parse_profiler_settings(json_object profiler_obj) {
+    if (profiler_obj.type != JSON_OBJECT) {
+        fprintf(stderr, "Error: profiler section is not an object in settings.json\n");
+        exit(EXIT_FAILURE);
+    }
+
+    json_object enabled = json_get_property(profiler_obj, "enabled");
+    if (enabled.type == JSON_BOOL) {
+        enable_client_profiling(enabled.value.boolean);
+    }
+
+    json_object profile_startup = json_get_property(profiler_obj, "profile_startup");
+    if (profile_startup.type == JSON_BOOL) {
+        profile_configure_startup(profile_startup.value.boolean);
+    }
+
+    bool show_average = true;
+    bool show_min = true;
+    bool show_max = true;
+
+    json_object average = json_get_property(profiler_obj, "show_average");
+    if (average.type == JSON_BOOL) {
+        show_average = average.value.boolean;
+    }
+
+    json_object min = json_get_property(profiler_obj, "show_min");
+    if (min.type == JSON_BOOL) {
+        show_min = min.value.boolean;
+    }
+
+    json_object max = json_get_property(profiler_obj, "show_max");
+    if (max.type == JSON_BOOL) {
+        show_max = max.value.boolean;
+    }
+
+    profile_configure_output(show_average, show_min, show_max);
+
+    bool log_to_file_enabled = false;
+    const char* log_file_path = "profiler.log";
+
+    json_object log_to_file = json_get_property(profiler_obj, "log_to_file");
+    if (log_to_file.type == JSON_BOOL) {
+        log_to_file_enabled = log_to_file.value.boolean;
+    }
+
+    json_object log_file = json_get_property(profiler_obj, "log_file");
+    if (log_file.type == JSON_STRING) {
+        log_file_path = log_file.value.string;
+    }
+
+    profile_configure_log_file(log_to_file_enabled, log_file_path);
+
+    json_object code_paths = json_get_property(profiler_obj, "code_paths");
+    if (code_paths.type == JSON_OBJECT) {
+        profile_set_all_sections_enabled(false);
+
+        json_object all = json_get_property(code_paths, "all");
+        if (all.type == JSON_BOOL) {
+            profile_set_all_sections_enabled(all.value.boolean);
+        }
+
+        for (cereal_size_t i = 0; i < code_paths.value.object.node_count; i++) {
+            json_node node = code_paths.value.object.nodes[i];
+            if (node.value.type != JSON_BOOL || strcmp(node.key, "all") == 0) {
+                continue;
+            }
+
+            profile_section section;
+            if (profile_section_from_name(node.key, &section)) {
+                profile_set_section_enabled(section, node.value.value.boolean);
+            }
+        }
+    }
+}
 
 void parse_display_settings(json_object display_obj) {
     if (display_obj.type != JSON_OBJECT) {
@@ -936,6 +1012,11 @@ void read_settings(const char* filename) {
     json_object ui_obj = json_get_property(obj.root, "ui");
     if (ui_obj.type != JSON_NULL) {
         parse_ui_settings(ui_obj);
+    }
+
+    json_object profiler_obj = json_get_property(obj.root, "profiler");
+    if (profiler_obj.type != JSON_NULL) {
+        parse_profiler_settings(profiler_obj);
     }
 
     json_object server_obj = json_get_property(obj.root, "server");

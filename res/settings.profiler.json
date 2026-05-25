@@ -3,7 +3,7 @@
     "width": 1920,
     "height": 1080,
     "title": "malloc-craft",
-    "vsync": true,
+    "vsync": false,
     "fov": 60.0,
     "fullscreen": false
   },
@@ -152,23 +152,9 @@
     "log_to_file": false,
     "log_file": "profiler.log",
     "code_paths": {
-      "all": true,
-      "update_game_data": true,
-      "update_fps": true,
-      "update_camera": true,
-      "apply_physics": true,
-      "update_selected_block": true,
-      "copy_world_mesh": true,
-      "render_total": true,
-      "render_clear": true,
-      "render_skybox": true,
-      "render_sun": true,
-      "render_shadow_map": true,
-      "render_reflection_map": true,
-      "render_world": true,
-      "render_ui": true,
-      "swap_buffers": true,
-      "poll_events": true
+      "all": false,
+      "copy_world_mesh": false,
+      "render_total": true
     }
   },
   "server": {

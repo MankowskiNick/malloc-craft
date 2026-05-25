@@ -5,7 +5,7 @@
 #include "../world/core/world.h"
 #include "settings.h"
 
-char* get_settings_file(char env[16]) {
+static char* get_settings_file(char env[16]) {
     char* file = malloc(64 * sizeof(char));
     if (env != NULL && strcmp(env, "") != 0) {
         strcpy(file, "res/settings.");
@@ -17,10 +17,13 @@ char* get_settings_file(char env[16]) {
     return file;
 }
 
-void init_core(char env[16]) {
+void load_core_settings(char env[16]) {
     char* settings_file = get_settings_file(env);
     read_settings(settings_file);
+    free(settings_file);
+}
 
+void init_core(void) {
     init_biomes("res/biomes.json");
     init_blocks("res/blocks.json");
     init_world();

@@ -32,10 +32,11 @@ int main(int argc, char** argv) {
         }
     }
 
-    enable_client_profiling(profile_client);
+    load_core_settings(env);
+    enable_client_profiling(profile_client || client_profiling_enabled());
     profile_startup_reset();
 
-    init_core(env);
+    init_core();
     profile_startup_checkpoint("init_core");
     if (server_mode) {
         server_main();
