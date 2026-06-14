@@ -122,7 +122,7 @@ static inline void unlock_double_buffer(double_buffer_t* buf, bool target_buffer
     }
 }
 
-static inline void write_double_buffer(double_buffer_t* buf, world_mesh* new) {
+static inline void write_double_buffer(double_buffer_t* buf, world_mesh* new_mesh) {
     pthread_mutex_lock(&buf->selector_lock);
 
     bool target = !buf->read_buffer;
@@ -130,7 +130,7 @@ static inline void write_double_buffer(double_buffer_t* buf, world_mesh* new) {
     lock_double_buffer(buf, target);
 
     world_mesh* old = *addr;
-    *addr = new;
+    *addr = new_mesh;
     free_world_mesh(old);
 
     buf->read_buffer = target;
