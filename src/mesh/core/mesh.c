@@ -620,6 +620,31 @@ bool in_chunk_bounds(int x, int y, int z) {
          z < CHUNK_SIZE && z >= 0;
 }
 
+static int get_stored_surface_block_height(chunk* c, int x, int z) {
+  if (c == NULL || x < 0 || x >= CHUNK_SIZE || z < 0 || z >= CHUNK_SIZE) {
+    return -1;
+  }
+
+  short id = 0;
+  short water_id = get_block_id("water");
+  short air_id = get_block_id("air");
+  for (int y = CHUNK_HEIGHT - 1; y >= 0; y--) {
+    get_block_info(c->blocks[x][y][z], &id, NULL, NULL, NULL);
+    if (id == air_id || id == water_id) {
+      continue;
+    }
+
+    block_type type = get_block_type(id);
+    if (type.id == -1 || type.is_custom_model) {
+      continue;
+    }
+
+    return y;
+  }
+
+  return -1;
+}
+
 void pack_skirt_side(short side, chunk* c, chunk* adj_chunks[4], side_instance **opaque_side_data, int *num_opaque_sides, int skirt_depth, short lod_scale) {
   struct direction {
     int x;
@@ -665,9 +690,10 @@ void pack_skirt_side(short side, chunk* c, chunk* adj_chunks[4], side_instance *
     int x = start_x + dir.x * i;
     int z = start_z + dir.z * i;
 
-    float world_x_f = CHUNK_POS_TO_WORLD_SAMPLE_POS(c->x, x);
-    float world_z_f = CHUNK_POS_TO_WORLD_SAMPLE_POS(c->z, z);
-    int surface_block_height = get_block_height(c, world_x_f, world_z_f);
+    int surface_block_height = get_stored_surface_block_height(c, x, z);
+    if (surface_block_height < 0) {
+      continue;
+    }
 
     // needs to be normalized so that the top of the block matches the sides.
     // so, the surface_y should divide lod_scale to ensure that no chunk skirt pops through the top of the chunk
