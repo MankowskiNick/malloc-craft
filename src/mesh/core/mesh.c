@@ -791,7 +791,7 @@ short calculate_lod(int x, int z, float player_x, float player_z) {
 
   float lod = fmax(1.0f, log(dist - 8) / log(LOD_SCALING_CONSTANT));
 
-  return (short)lod;
+  return (short)fmin(lod, MAX_LOD_BLOCK_SIZE);
 }
 
 // Check if chunk is within foliage render distance

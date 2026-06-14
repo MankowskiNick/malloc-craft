@@ -25,12 +25,26 @@ typedef enum {
     PROFILE_SECTION_COUNT
 } profile_section;
 
+typedef enum {
+    PROFILE_STAT_AVERAGE = 0,
+    PROFILE_STAT_MIN,
+    PROFILE_STAT_MAX,
+    PROFILE_STAT_COUNT
+} profile_stat;
+
 void init_metrics(void);
 float get_fps(void);
 void update_fps(void);
 int get_delta_ms(void);
+float get_delta_seconds(void);
 void enable_client_profiling(bool enabled);
 bool client_profiling_enabled(void);
+void profile_configure_startup(bool enabled);
+void profile_configure_output(bool show_average, bool show_min, bool show_max);
+void profile_configure_log_file(bool enabled, const char* filename);
+void profile_set_all_sections_enabled(bool enabled);
+void profile_set_section_enabled(profile_section section, bool enabled);
+bool profile_section_from_name(const char* name, profile_section* section);
 void profile_startup_reset(void);
 void profile_startup_checkpoint(const char* label);
 void profile_frame_begin(void);

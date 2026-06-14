@@ -7,6 +7,6 @@
 
 void init_input(GLFWwindow* window, game_data* data);
 void input_cleanup();
-void update_camera(int delta_ms);
+void update_camera(float delta_seconds);
 
 #endif

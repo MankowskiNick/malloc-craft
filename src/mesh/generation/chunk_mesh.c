@@ -12,7 +12,7 @@ pthread_mutex_t cm_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_t cm_updater_thread = 0;
 
-static camera_cache cm_camera_cache = {0, 0, 0};
+static camera_cache cm_camera_cache = {0, 0, 0, 0, 0};
 
 void lock_mesh() {
     pthread_mutex_lock(&cm_mutex);
@@ -26,6 +26,8 @@ void init_chunk_mesh(camera* camera) {
     cm_camera_cache.x = camera->position[0];
     cm_camera_cache.y = camera->position[1];
     cm_camera_cache.z = camera->position[2];
+    cm_camera_cache.yaw = camera->yaw;
+    cm_camera_cache.pitch = camera->pitch;
 }
 
 int chunk_coord_equals(void* a, void* b) {

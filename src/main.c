@@ -32,10 +32,11 @@ int main(int argc, char** argv) {
         }
     }
 
-    enable_client_profiling(profile_client);
+    load_core_settings(env);
+    enable_client_profiling(profile_client || client_profiling_enabled());
     profile_startup_reset();
 
-    init_core(env);
+    init_core();
     profile_startup_checkpoint("init_core");
     if (server_mode) {
         server_main();
@@ -89,12 +90,14 @@ int main(int argc, char** argv) {
         update_fps();
         profile_end_section(PROFILE_SECTION_UPDATE_FPS);
 
+        float delta_seconds = get_delta_seconds();
+
         profile_begin_section(PROFILE_SECTION_UPDATE_CAMERA);
-        update_camera(get_delta_ms());
+        update_camera(delta_seconds);
         profile_end_section(PROFILE_SECTION_UPDATE_CAMERA);
 
         profile_begin_section(PROFILE_SECTION_APPLY_PHYSICS);
-        apply_physics(&data.player, get_delta_ms());
+        apply_physics(&data.player, delta_seconds);
         profile_end_section(PROFILE_SECTION_APPLY_PHYSICS);
 
         profile_begin_section(PROFILE_SECTION_UPDATE_SELECTED_BLOCK);

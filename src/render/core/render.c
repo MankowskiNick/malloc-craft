@@ -107,9 +107,9 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
 
         profile_end_section(PROFILE_SECTION_RENDER_SHADOW_MAP);
 
-        profile_begin_section(PROFILE_SECTION_RENDER_REFLECTION_MAP);
-        render_reflection_map(&(r->reflection_map), r->cam, (float)WORLDGEN_WATER_LEVEL, packet);
-        profile_end_section(PROFILE_SECTION_RENDER_REFLECTION_MAP);
+        // profile_begin_section(PROFILE_SECTION_RENDER_REFLECTION_MAP);
+        // render_reflection_map(&(r->reflection_map), r->cam, (float)WORLDGEN_WATER_LEVEL, packet);
+        // profile_end_section(PROFILE_SECTION_RENDER_REFLECTION_MAP);
 
         glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_TEXTURE_INDEX);
         glBindTexture(GL_TEXTURE_2D, r->shadow_map.texture);

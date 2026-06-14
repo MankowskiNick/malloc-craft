@@ -7,6 +7,16 @@
 #include <math.h>
 #include <player/serialization/player_loader.h>
 
+static float get_frame_damping(float per_frame_friction, float dt) {
+    if (per_frame_friction <= 0.0f) {
+        return 0.0f;
+    }
+    if (per_frame_friction >= 1.0f) {
+        return 1.0f;
+    }
+    return powf(per_frame_friction, dt * 60.0f);
+}
+
 // Helper function to get block ID at world coordinates
 static void get_block_info_at(float x, float y, float z, short* id, bool* is_foliage) {
     int chunk_x = 0;
@@ -177,10 +187,11 @@ void update_player_pos(player* player, float delta_ms) {
     }
 }
 
-void apply_physics(player* player, float delta_ms) {
+void apply_physics(player* player, float delta_seconds) {
     // In fly mode, handle movement differently
     if (player->fly_mode) {
-        float dt = delta_ms / 1000.0f;  // Convert ms to seconds
+        float dt = delta_seconds;
+        float damping = get_frame_damping(PLAYER_FRICTION, dt);
         
         // In fly mode: no gravity, no collision checking, but apply friction to stop movement
         // Normalize and apply 3D acceleration
@@ -211,9 +222,9 @@ void apply_physics(player* player, float delta_ms) {
         }
         
         // Apply friction to velocity (for deceleration when no keys pressed)
-        player->velocity[0] *= PLAYER_FRICTION;
-        player->velocity[1] *= PLAYER_FRICTION;
-        player->velocity[2] *= PLAYER_FRICTION;
+        player->velocity[0] *= damping;
+        player->velocity[1] *= damping;
+        player->velocity[2] *= damping;
         
         // Clamp max speed
         float total_speed = sqrtf(player->velocity[0] * player->velocity[0] + 
@@ -255,7 +266,7 @@ void apply_physics(player* player, float delta_ms) {
         get_chunk(chunk_x - 1, chunk_z)
     };
 
-    float dt = delta_ms / 1000.0f;  // Convert ms to seconds
+    float dt = delta_seconds;
 
     // 1. Underwater Detection
     int was_underwater = player->is_underwater;
@@ -295,6 +306,7 @@ void apply_physics(player* player, float delta_ms) {
     float friction = player->is_underwater ? WATER_FRICTION : PLAYER_FRICTION;
     float max_speed = player->is_underwater ? WATER_MAX_SPEED : PLAYER_MAX_SPEED;
     float gravity = player->is_underwater ? (GRAV_ACCEL * WATER_DRAG) : GRAV_ACCEL;
+    float damping = get_frame_damping(friction, dt);
     
     // Apply crouch modifiers to acceleration and speed when crouching
     float crouch_height = player->height;
@@ -337,12 +349,12 @@ void apply_physics(player* player, float delta_ms) {
 
     // 7. Apply friction (only horizontal when not underwater, full 3D when underwater)
     if (player->is_underwater) {
-        player->velocity[0] *= friction;
-        player->velocity[1] *= friction;
-        player->velocity[2] *= friction;
+        player->velocity[0] *= damping;
+        player->velocity[1] *= damping;
+        player->velocity[2] *= damping;
     } else {
-        player->velocity[0] *= friction;
-        player->velocity[2] *= friction;
+        player->velocity[0] *= damping;
+        player->velocity[2] *= damping;
     }
 
     // 8. Clamp max speed (horizontal for ground, all directions for underwater)
@@ -484,7 +496,7 @@ player create_player(char* player_file) {
         .is_underwater = 0,
         .coyote_counter = 0,
         .jump_requested = 0,
-        .fly_mode = 0,
+        .fly_mode = true,
         .is_crouching = false,
         .camera_height_offset = height,
         .is_sprinting = false,

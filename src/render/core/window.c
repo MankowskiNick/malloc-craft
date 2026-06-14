@@ -65,9 +65,7 @@ GLFWwindow* create_window(char* title, int width, int height) {
     glfwMakeContextCurrent(window);
 
 
-    if (VSYNC) {
-        glfwSwapInterval(0);
-    }
+    glfwSwapInterval(VSYNC ? 1 : 0);
 
     if (!load_gl()) {
         printf("ERROR: Failed to load OpenGL bindings.\n");
