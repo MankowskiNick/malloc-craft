@@ -2,6 +2,7 @@
 #define GAME_DATA_H
 
 #include <player/core/player.h>
+#include <entities/entity.h>
 #include <util.h>
 #include <string.h>
 #include <stdlib.h>
@@ -43,12 +44,14 @@ typedef struct {
     int num_liquid_sides;
     int num_foliage_sides;
     int num_custom_verts;
+    int num_entity_verts;
 
     int* transparent_data;
     int* opaque_data;
     int* liquid_data;
     int* foliage_data;
     float* custom_model_data;
+    float* entity_data;
 } world_mesh;
 
 static inline void free_world_mesh(world_mesh* mesh) {
@@ -63,6 +66,9 @@ static inline void free_world_mesh(world_mesh* mesh) {
     }
     if (mesh->num_custom_verts > 0) {
         free(mesh->custom_model_data);
+    }
+    if (mesh->num_entity_verts > 0) {
+        free(mesh->entity_data);
     }
     free(mesh);
 }
@@ -148,6 +154,9 @@ typedef struct {
     int is_running;
     bool mesh_requires_update;
 
+    entity* entities;
+    int entity_count;
+
     float tick;
 
     // UI state
@@ -159,6 +168,7 @@ typedef struct {
 static inline void destroy_game_data(game_data data) {
     free(data.world_mesh);
     free(data.packet);
+    free(data.entities);
 }
 
 static inline void update_game_data(game_data* data) {
@@ -192,6 +202,7 @@ static inline world_mesh* copy_world_mesh(double_buffer_t* buf) {
     copy->num_liquid_sides = src->num_liquid_sides;
     copy->num_foliage_sides = src->num_foliage_sides;
     copy->num_custom_verts = src->num_custom_verts;
+    copy->num_entity_verts = src->num_entity_verts;
     
     if (src->opaque_data && src->num_opaque_sides > 0) {
         int opaque_size = src->num_opaque_sides * VBO_WIDTH;
@@ -231,6 +242,14 @@ static inline world_mesh* copy_world_mesh(double_buffer_t* buf) {
         memcpy(copy->custom_model_data, src->custom_model_data, custom_model_size);
     } else {
         copy->custom_model_data = NULL;
+    }
+
+    if (src->entity_data && src->num_entity_verts > 0) {
+        size_t entity_model_size = sizeof(float) * FLOATS_PER_MODEL_VERT * src->num_entity_verts;
+        copy->entity_data = (float*)malloc(entity_model_size);
+        memcpy(copy->entity_data, src->entity_data, entity_model_size);
+    } else {
+        copy->entity_data = NULL;
     }
 
     unlock_double_buffer(buf, target);

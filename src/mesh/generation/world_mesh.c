@@ -140,7 +140,20 @@ void init_world_mesh(camera* camera) {
     init_chunk_mesh(camera);
 }
 
-world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
+void pack_entities(entity* entities, int entity_count, float** out_verts, int* vert_count) {
+    *out_verts = NULL;
+    
+    if (vert_count == NULL) {
+        printf("ERROR: Output vert_count cannot be NULL in pack_entities().\n");
+        return;
+    }
+    
+    for (int i = 0; i < entity_count; i++) {
+        pack_entity_vertices(&(entities[i]), out_verts, vert_count);
+    }
+}
+
+world_mesh* create_world_mesh(chunk_mesh** packet, int count, entity* entities, int entity_count) {
     assert(count >= 0 && "Count cannot be negative\n");
     assert(packet != NULL || count == 0);
 
@@ -150,13 +163,13 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     int total_opaque_sides = 0;
     int total_liquid_sides = 0;
     int total_custom_verts = 0;
+    int total_entity_verts = 0;
     for (int i = 0; i < count; i++) {
         chunk_mesh* mesh = packet[i];
         if (mesh == NULL) {
             continue;
         }
-        if (mesh->num_custom_verts > 786432)
-            printf("sus!\n");
+
         total_transparent_sides += mesh->num_transparent_sides;
         total_opaque_sides += mesh->num_opaque_sides;
         total_liquid_sides += mesh->num_liquid_sides;
@@ -238,6 +251,10 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
         custom_model_offset += mesh->num_custom_verts * FLOATS_PER_MODEL_VERT;
     }
 
+    float* entity_vert_data = NULL;
+    int entity_vert_count = 0;
+    pack_entities(entities, entity_count, &entity_vert_data, &entity_vert_count);
+
     // Create the world mesh structure
     world_mesh* world = malloc(sizeof(world_mesh));
     if (!world) {
@@ -254,12 +271,14 @@ world_mesh* create_world_mesh(chunk_mesh** packet, int count) {
     world->opaque_data = opaque_data;
     world->liquid_data = liquid_data;
     world->foliage_data = foliage_data;
+    world->entity_data = entity_vert_data;
     world->num_transparent_sides = transparent_offset / VBO_WIDTH;
     world->num_opaque_sides = opaque_offset / VBO_WIDTH;
     world->num_liquid_sides = liquid_offset / VBO_WIDTH;
     world->num_foliage_sides = foliage_offset / VBO_WIDTH;
     world->custom_model_data = custom_model_data;
     world->num_custom_verts = custom_model_offset / FLOATS_PER_MODEL_VERT;
+    world->num_entity_verts = entity_vert_count; // this may be wrong!
 
     return world;
 }
@@ -289,35 +308,20 @@ void free_packets(chunk_mesh** packet, int packet_count) {
     free(packet);
 }
 
-void get_world_mesh(game_data* args) {
-    int x = args->x;
-    int z = args->z;
+chunk_mesh** copy_packets(game_data* args, int* out_size) {
     camera* camera = &args->player.cam;
-
-    if (args->world_mesh != NULL) {
-        if (!world_mesh_camera_changed(camera, x, z) && !args->mesh_requires_update) {
-            // No need to update if the camera hasn't moved
-            return;
-        }
-    }
-
-    if (args->num_packets == NULL) {
-        return;
-    }
-
-    lock_mesh();
 
     // Read packet_count while holding lock to avoid race condition
     int packet_count = *(args->num_packets);
     if (packet_count == 0) {
         unlock_mesh();
-        return;
+        return NULL;
     }
 
     // Check if packet data is available
     if (args->packet == NULL) {
         unlock_mesh();
-        return;
+        return NULL;
     }
 
     chunk_mesh** packet = malloc(packet_count * sizeof(chunk_mesh*));
@@ -343,10 +347,63 @@ void get_world_mesh(game_data* args) {
         visible_count++;
     }
 
+    *out_size = visible_count;
+    return packet;
+}
+
+entity* copy_entities(game_data* args, int* out_size) {
+    assert(args != NULL && "ERROR: game data must be passed to copy_entities().\n");
+    assert(out_size != NULL && "ERROR: must have output size for copy_entities().\n");
+    
+
+    entity* src = args->entities;
+    int size = args->entity_count;
+
+    if (src == NULL || size == 0) {
+        return NULL;
+    }
+    entity* ents = malloc(size * sizeof(entity));
+
+    for (int i = 0; i < size; i++) {
+        ents[i].x = src[i].x;
+        ents[i].y = src[i].y;
+        ents[i].z = src[i].z;
+        ents[i].head_angle = src[i].head_angle;
+        ents[i].xz_orientation = src[i].xz_orientation;
+        ents[i].id = src[i].id;
+        ents[i].model = copy_blockbench_model(&src[i].model);
+    }
+
+    *out_size = size;
+    return ents;
+}
+
+void get_world_mesh(game_data* args) {
+    int x = args->x;
+    int z = args->z;
+    camera* camera = &args->player.cam;
+
+    if (args->world_mesh != NULL) {
+        if (!world_mesh_camera_changed(camera, x, z) && !args->mesh_requires_update) {
+            // No need to update if the camera hasn't moved
+            return;
+        }
+    }
+
+    if (args->num_packets == NULL) {
+        return;
+    }
+
+    lock_mesh();
+    int mesh_count = 0;
+    chunk_mesh** packet = copy_packets(args, &mesh_count);
+
+    int entity_count = 0;
+    entity* entities = copy_entities(args, &entity_count);
     unlock_mesh();
 
     // Create world mesh outside lock with copied packet data
-    world_mesh* world = create_world_mesh(packet, visible_count);
+    world_mesh* world = create_world_mesh(packet, mesh_count, entities, entity_count);
 
     if (!world) {
         assert(false && "Failed to create world mesh\n");
@@ -356,7 +413,7 @@ void get_world_mesh(game_data* args) {
         write_double_buffer(args->world_mesh, world);
         args->mesh_requires_update = true;
     }
-    free_packets(packet, visible_count);
+    free_packets(packet, mesh_count);
 }
 
 void update_world_mesh(game_data* data) {

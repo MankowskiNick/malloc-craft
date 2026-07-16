@@ -56,6 +56,7 @@ extern int MAX_LOD_BLOCK_SIZE;
 // Render distances for specific block types (in chunks)
 extern int FOLIAGE_RENDER_DISTANCE;
 extern int TRANSPARENT_RENDER_DISTANCE;
+extern int ENTITY_SIMULATION_DISTANCE;
 
 // Chunk boundary skirt depth (blocks) to hide LOD seams
 extern int CHUNK_SKIRT_DEPTH;

@@ -543,8 +543,8 @@ void pack_block(int x, int y, int z, short lod_scale, chunk *c,
   }
 }
 
-void pack_model(int x, int y, int z, chunk *c, float **custom_model_data,
-                int *num_custom_verts) {
+void pack_model(int x, int y, int z, chunk* c, float** custom_model_data,
+                int* num_custom_verts) {
   short block_id = 0;
   short orientation = 0;
   short rot = 0;
@@ -569,7 +569,20 @@ void pack_model(int x, int y, int z, chunk *c, float **custom_model_data,
     return;
   }
 
-  int new_vert_count = (*num_custom_verts) + model->index_count;
+  int model_vert_count = 0;
+  for (int element_idx = 0; element_idx < model->element_count; element_idx++) {
+    for (int face_idx = 0; face_idx < 6; face_idx++) {
+      if (model->elements[element_idx].has_face[face_idx]) {
+        model_vert_count += 6;
+      }
+    }
+  }
+
+  if (model_vert_count == 0) {
+    return;
+  }
+
+  int new_vert_count = (*num_custom_verts) + model_vert_count;
   if (new_vert_count > MODEL_VERTICES_PER_CHUNK) {
     float *tmp = realloc(*custom_model_data, new_vert_count * sizeof(float) *
                                                  FLOATS_PER_MODEL_VERT);
@@ -580,39 +593,57 @@ void pack_model(int x, int y, int z, chunk *c, float **custom_model_data,
   mat4 transformation;
   get_model_transformation(transformation, &block, orientation, rot);
 
-  // copy model data into chunk mesh data
-  for (int i = 0; i < model->index_count; i++) {
-    int dest_idx = (*num_custom_verts + i) * FLOATS_PER_MODEL_VERT;
+  int written_verts = 0;
 
-    float dest_x = F_CHUNK_POS_TO_WORLD_POS(c->x, x);
-    float dest_y = (float)y;
-    float dest_z = F_CHUNK_POS_TO_WORLD_POS(c->z, z);
-    blockbench_vertex vert = model->vertices[model->indices[i]];
+  // Expand each Blockbench element into indexed vertices at pack time.
+  for (int element_idx = 0; element_idx < model->element_count; element_idx++) {
+    blockbench_vertex *vertices = NULL;
+    unsigned int *indices = NULL;
+    int vertex_count = 0;
+    int index_count = 0;
 
-    // apply transformation
-    vec4 pos = {vert.position[0], vert.position[1], vert.position[2], 1.0f};
-    vec4 normals = {vert.normal[0], vert.normal[1], vert.normal[2], 0.0f};
+    generate_element_vertices(&model->elements[element_idx], model->texture_size,
+                              &vertices, &indices, &vertex_count, &index_count);
 
-    vec4 transformed_vert, transformed_normals;
-    glm_mat4_mulv(transformation, pos, transformed_vert);
-    glm_mat4_mulv(transformation, normals, transformed_normals);
+    for (int i = 0; i < index_count; i++) {
+      int dest_idx =
+          (*num_custom_verts + written_verts) * FLOATS_PER_MODEL_VERT;
 
-    // position
-    (*custom_model_data)[dest_idx + 0] = dest_x + transformed_vert[0];
-    (*custom_model_data)[dest_idx + 1] = dest_y + transformed_vert[1];
-    (*custom_model_data)[dest_idx + 2] = dest_z + transformed_vert[2];
+      float dest_x = F_CHUNK_POS_TO_WORLD_POS(c->x, x);
+      float dest_y = (float)y;
+      float dest_z = F_CHUNK_POS_TO_WORLD_POS(c->z, z);
+      blockbench_vertex vert = vertices[indices[i]];
 
-    // normal
-    (*custom_model_data)[dest_idx + 3] = transformed_normals[0];
-    (*custom_model_data)[dest_idx + 4] = transformed_normals[1];
-    (*custom_model_data)[dest_idx + 5] = transformed_normals[2];
+      // apply transformation
+      vec4 pos = {vert.position[0], vert.position[1], vert.position[2], 1.0f};
+      vec4 normals = {vert.normal[0], vert.normal[1], vert.normal[2], 0.0f};
 
-    // uv
-    (*custom_model_data)[dest_idx + 6] = vert.uv[0];
-    (*custom_model_data)[dest_idx + 7] = vert.uv[1];
+      vec4 transformed_vert, transformed_normals;
+      glm_mat4_mulv(transformation, pos, transformed_vert);
+      glm_mat4_mulv(transformation, normals, transformed_normals);
+
+      // position
+      (*custom_model_data)[dest_idx + 0] = dest_x + transformed_vert[0];
+      (*custom_model_data)[dest_idx + 1] = dest_y + transformed_vert[1];
+      (*custom_model_data)[dest_idx + 2] = dest_z + transformed_vert[2];
+
+      // normal
+      (*custom_model_data)[dest_idx + 3] = transformed_normals[0];
+      (*custom_model_data)[dest_idx + 4] = transformed_normals[1];
+      (*custom_model_data)[dest_idx + 5] = transformed_normals[2];
+
+      // uv
+      (*custom_model_data)[dest_idx + 6] = vert.uv[0];
+      (*custom_model_data)[dest_idx + 7] = vert.uv[1];
+
+      written_verts++;
+    }
+
+    free(vertices);
+    free(indices);
   }
 
-  *num_custom_verts = new_vert_count;
+  *num_custom_verts += written_verts;
 }
 
 bool in_chunk_bounds(int x, int y, int z) {

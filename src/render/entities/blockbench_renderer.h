@@ -28,6 +28,6 @@ void send_blockbench_atlas(blockbench_renderer* br);
 void send_blockbench_fog(blockbench_renderer* br);
 void send_blockbench_time(blockbench_renderer* br);
 
-void render_blockbench_models(blockbench_renderer* br, sun* sun, FBO* shadow_map, world_mesh* packet);
+void render_blockbench_models(blockbench_renderer* br, sun* sun, FBO* shadow_map, float* model_data, int model_data_size);
 
 #endif

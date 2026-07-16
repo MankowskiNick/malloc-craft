@@ -1,7 +1,5 @@
 #include <blockbench_renderer.h>
 #include "block_renderer.h"
-#include "../../world/core/block.h"
-#include "../../world/core/world.h"
 #include <util.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -82,8 +80,8 @@ void send_blockbench_time(blockbench_renderer* br) {
     glUniform1f(glGetUniformLocation(br->program.id, "time"), current_time);
 }
 
-void render_blockbench_models(blockbench_renderer* br, sun* sun, FBO* shadow_map, world_mesh* packet) {
-    if (packet == NULL || packet->custom_model_data == NULL || packet->num_custom_verts == 0) {
+void render_blockbench_models(blockbench_renderer* br, sun* sun, FBO* shadow_map, float* model_data, int model_data_size) {
+    if (model_data == NULL || model_data_size == 0) {
         return;
     }
 
@@ -104,8 +102,8 @@ void render_blockbench_models(blockbench_renderer* br, sun* sun, FBO* shadow_map
 
     // Buffer vertex data
     use_vbo(br->vertex_vbo);
-    buffer_data(br->vertex_vbo, GL_DYNAMIC_DRAW, packet->custom_model_data, 
-                packet->num_custom_verts * FLOATS_PER_MODEL_VERT * sizeof(float));
+    buffer_data(br->vertex_vbo, GL_DYNAMIC_DRAW, model_data, 
+                model_data_size * FLOATS_PER_MODEL_VERT * sizeof(float));
 
     // Set vertex attributes
     // Position (location 0): 3 floats at offset 0
@@ -121,7 +119,7 @@ void render_blockbench_models(blockbench_renderer* br, sun* sun, FBO* shadow_map
     glEnableVertexAttribArray(2);
 
     // Draw all vertices
-    glDrawArrays(GL_TRIANGLES, 0, packet->num_custom_verts);
+    glDrawArrays(GL_TRIANGLES, 0, model_data_size);
 
     // Disable vertex attributes
     glDisableVertexAttribArray(0);

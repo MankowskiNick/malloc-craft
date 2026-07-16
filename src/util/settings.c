@@ -34,6 +34,7 @@ int LOD_SCALING_CONSTANT = 2;
 int MAX_LOD_BLOCK_SIZE = 4;
 int FOLIAGE_RENDER_DISTANCE = 16;
 int TRANSPARENT_RENDER_DISTANCE = 16;
+int ENTITY_SIMULATION_DISTANCE = 12;
 int CHUNK_SKIRT_DEPTH = 2;
 int SHADOW_MAP_WIDTH = 10000;
 int SHADOW_MAP_HEIGHT = 10000;
@@ -297,6 +298,11 @@ void parse_chunks_settings(json_object chunks_obj) {
     json_object transparent_render_distance = json_get_property(chunks_obj, "transparent_render_distance");
     if (transparent_render_distance.type == JSON_NUMBER) {
         TRANSPARENT_RENDER_DISTANCE = (int)transparent_render_distance.value.number;
+    }
+
+    json_object entity_simulation_distance = json_get_property(chunks_obj, "entity_simulation_distance");
+    if (entity_simulation_distance.type == JSON_NUMBER) {
+        ENTITY_SIMULATION_DISTANCE = (int)entity_simulation_distance.value.number;
     }
 
     json_object chunk_skirt_depth = json_get_property(chunks_obj, "chunk_skirt_depth");

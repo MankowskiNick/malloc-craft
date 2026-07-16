@@ -38,16 +38,6 @@ static bool cache_initialized = false;
 
 // Internal structures for parsing
 typedef struct {
-    float from[3];
-    float to[3];
-    float rotation_angle;
-    int rotation_axis;  // 0=x, 1=y, 2=z
-    float rotation_origin[3];
-    float face_uvs[6][4];  // [face][u1,v1,u2,v2] - north,east,south,west,up,down
-    bool has_face[6];
-} blockbench_element;
-
-typedef struct {
     int texture_size[2];
     blockbench_element* elements;
     int element_count;
@@ -234,6 +224,12 @@ parsed_blockbench* parse_blockbench_json(const char* json_string) {
     for (int i = 0; i < result->element_count; i++) {
         json_object element = elements_obj.value.list.items[i];
         blockbench_element* elem = &result->elements[i];
+        elem->name = NULL;
+
+        json_object name_obj = json_get_property(element, "name");
+        if (name_obj.type == JSON_STRING) {
+            elem->name = strdup(name_obj.value.string);
+        }
         
         // Parse from/to coordinates
         json_object from_obj = json_get_property(element, "from");
@@ -391,6 +387,34 @@ void generate_element_vertices(blockbench_element* elem, int texture_size[2],
     }
 }
 
+static bool copy_element(blockbench_element* dest, const blockbench_element* src) {
+    if (!dest || !src) {
+        return false;
+    }
+
+    dest->name = src->name ? strdup(src->name) : NULL;
+    if (src->name && !dest->name) {
+        return false;
+    }
+
+    for (int i = 0; i < 3; i++) {
+        dest->to[i] = src->to[i];
+        dest->from[i] = src->from[i];
+        dest->rotation_origin[i] = src->rotation_origin[i];
+    }
+
+    for (int j = 0; j < 6; j++) {
+        dest->has_face[j] = src->has_face[j];
+        for (int k = 0; k < 4; k++) {
+            dest->face_uvs[j][k] = src->face_uvs[j][k];
+        }
+    }
+
+    dest->rotation_angle = src->rotation_angle;
+    dest->rotation_axis = src->rotation_axis;
+    return true;
+}
+
 // Load and process Blockbench model from file
 blockbench_model* load_blockbench_model_from_file(const char* filepath) {
     // Construct full path relative to res/ folder
@@ -421,54 +445,33 @@ blockbench_model* load_blockbench_model_from_file(const char* filepath) {
     model->name = strdup(filepath); // Use filepath as name for now
     model->texture_size[0] = parsed->texture_size[0];
     model->texture_size[1] = parsed->texture_size[1];
+    model->xz_orientation = 0.0f;
     
     // Initialize bounds
     model->bounds_min[0] = model->bounds_min[1] = model->bounds_min[2] = INFINITY;
     model->bounds_max[0] = model->bounds_max[1] = model->bounds_max[2] = -INFINITY;
     
-    // Generate vertices for all elements
-    model->vertex_count = 0;
-    model->index_count = 0;
-    model->vertices = NULL;
-    model->indices = NULL;
+    // Copy parsed elements for later on-the-fly mesh generation.
+    model->elements = malloc(parsed->element_count * sizeof(blockbench_element));
+    model->element_count = parsed->element_count;
     
     for (int i = 0; i < parsed->element_count; i++) {
-        blockbench_vertex* elem_vertices;
-        unsigned int* elem_indices;
-        int elem_vertex_count, elem_index_count;
-        
-        generate_element_vertices(&parsed->elements[i], parsed->texture_size,
-                                &elem_vertices, &elem_indices, 
-                                &elem_vertex_count, &elem_index_count);
-        
-        // Append to model arrays
-        model->vertices = realloc(model->vertices, 
-            sizeof(blockbench_vertex) * (model->vertex_count + elem_vertex_count));
-        model->indices = realloc(model->indices,
-            sizeof(unsigned int) * (model->index_count + elem_index_count));
-        
-        // Copy vertices and update bounds
-        for (int v = 0; v < elem_vertex_count; v++) {
-            model->vertices[model->vertex_count + v] = elem_vertices[v];
-            
-            // Update bounding box
-            float* pos = elem_vertices[v].position;
-            for (int axis = 0; axis < 3; axis++) {
-                if (pos[axis] < model->bounds_min[axis]) model->bounds_min[axis] = pos[axis];
-                if (pos[axis] > model->bounds_max[axis]) model->bounds_max[axis] = pos[axis];
+        if (!copy_element(&model->elements[i], &parsed->elements[i])) {
+            for (int j = 0; j < i; j++) {
+                free(model->elements[j].name);
             }
+            free(model->elements);
+            free(model->name);
+            free(model->filepath);
+            free(model);
+            for (int j = i; j < parsed->element_count; j++) {
+                free(parsed->elements[j].name);
+            }
+            free(parsed->elements);
+            free(parsed);
+            return NULL;
         }
-        
-        // Copy indices with offset
-        for (int idx = 0; idx < elem_index_count; idx++) {
-            model->indices[model->index_count + idx] = elem_indices[idx] + model->vertex_count;
-        }
-        
-        model->vertex_count += elem_vertex_count;
-        model->index_count += elem_index_count;
-        
-        free(elem_vertices);
-        free(elem_indices);
+        free(parsed->elements[i].name);
     }
     
     // Cleanup parsed data
@@ -503,9 +506,102 @@ blockbench_model* get_blockbench_model(const char* filepath) {
     return model;
 }
 
+blockbench_model copy_blockbench_model(const blockbench_model* src) {
+    blockbench_model copy = {0};
+
+    if (src == NULL) {
+        return copy;
+    }
+
+    copy.name = src->name ? strdup(src->name) : NULL;
+    copy.filepath = src->filepath ? strdup(src->filepath) : NULL;
+
+    if ((src->name && !copy.name) || (src->filepath && !copy.filepath)) {
+        free(copy.name);
+        free(copy.filepath);
+        copy.name = NULL;
+        copy.filepath = NULL;
+        return copy;
+    }
+
+    copy.element_count = src->element_count;
+    copy.xz_orientation = src->xz_orientation;
+
+    for (int i = 0; i < 2; i++) {
+        copy.texture_size[i] = src->texture_size[i];
+    }
+
+    for (int i = 0; i < 3; i++) {
+        copy.bounds_min[i] = src->bounds_min[i];
+        copy.bounds_max[i] = src->bounds_max[i];
+    }
+
+    if (src->element_count > 0) {
+        copy.elements = calloc(src->element_count, sizeof(blockbench_element));
+        if (!copy.elements) {
+            free(copy.name);
+            free(copy.filepath);
+            copy.name = NULL;
+            copy.filepath = NULL;
+            copy.element_count = 0;
+            return copy;
+        }
+
+        for (int i = 0; i < src->element_count; i++) {
+            if (!copy_element(&copy.elements[i], &src->elements[i])) {
+                for (int j = 0; j < i; j++) {
+                    free(copy.elements[j].name);
+                }
+                free(copy.elements);
+                free(copy.name);
+                free(copy.filepath);
+                copy = (blockbench_model){0};
+                return copy;
+            }
+        }
+    }
+
+    return copy;
+}
+
+static void free_blockbench_model_contents(blockbench_model* model) {
+    if (model == NULL) {
+        return;
+    }
+
+    free(model->name);
+    free(model->filepath);
+
+    if (model->elements != NULL) {
+        for (int i = 0; i < model->element_count; i++) {
+            free(model->elements[i].name);
+        }
+
+        free(model->elements);
+    }
+
+    model->name = NULL;
+    model->filepath = NULL;
+    model->elements = NULL;
+    model->element_count = 0;
+}
+
+void free_blockbench_model(blockbench_model* model) {
+    free_blockbench_model_contents(model);
+}
+
 void blockbench_cleanup() {
     if (cache_initialized) {
-        // TODO: Free all cached models and their data
+        for (size_t i = 0; i < model_cache_map.capacity; i++) {
+            model_cache_entry* current = model_cache_map.buckets[i];
+            while (current != NULL) {
+                free(current->key);
+                free_blockbench_model(current->value);
+                free(current->value);
+                current = current->next;
+            }
+        }
+
         model_cache_free(&model_cache_map);
         cache_initialized = false;
     }

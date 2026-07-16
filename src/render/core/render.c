@@ -121,7 +121,8 @@ void render(game_data* args, renderer* r, world_mesh* packet, int num_packets) {
 
         profile_begin_section(PROFILE_SECTION_RENDER_WORLD);
         render_solids(&(r->wr), &(r->s), &(r->shadow_map), packet);
-        render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet);
+        render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet->custom_model_data, packet->num_custom_verts);
+        render_blockbench_models(&(r->br), &(r->s), &(r->shadow_map), packet->entity_data, packet->num_entity_verts);
         if (args->player.is_underwater) {
             render_foliage(&(r->fr), &(r->s), &(r->shadow_map), packet);
             render_transparent(&(r->wr), &(r->s), &(r->shadow_map), packet);
