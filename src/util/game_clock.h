@@ -7,6 +7,7 @@ typedef struct {
 } g_clock;
 
 g_clock create_clock(char* name);
+void reset_clock(g_clock* clock);
 long get_time(g_clock* clock);
 
 #endif 

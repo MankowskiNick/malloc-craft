@@ -5,9 +5,10 @@
 #include <server/client.h>
 #include <util.h>
 
+#include "../../mesh/core/mesh.h"
 #include "../../world/core/world.h"
 #include "../compression/compression.h"
-#include "../../mesh/core/mesh.h"
+#include "client_thread_manager.h"
 
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -50,7 +51,7 @@ static void process_chunk_broadcast(int fd) {
 void* run_client_recv_thread(void* args) {
     (void)args;
 
-    int fd = acquire_server_fd();
+    int fd = get_thread_fd();
     if (fd < 0) {
         printf("ERROR: Client recv thread could not connect to server\n");
         return NULL;

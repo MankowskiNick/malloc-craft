@@ -99,14 +99,14 @@
   "world_generation": {
     "seed": 42069,
     "biome_generation": {
-      "frequency": 0.02,
-      "amplitude": 4.0,
-      "octaves": 8
+      "frequency": 0.2,
+      "amplitude": 2.0,
+      "octaves": 2
     },
     "terrain": {
-      "blockheight_modifier": 96.0,
+      "blockheight_modifier": 48.0,
       "base_terrain_height": 64,
-      "water_level": 155,
+      "water_level": 70,
       "blockheight_frequency": 0.04,
       "blockheight_amplitude": 10.0,
       "blockheight_octaves": 8
@@ -115,7 +115,7 @@
   "game_data": {
     "block_file": "res/blocks.json",
     "player_file": "res/player.json",
-    "time_scale": 0.000001047,
+    "time_scale": 0.00001047,
     "animation_scaler": 0.001
   },
   "shaders": {
