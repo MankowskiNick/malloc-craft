@@ -23,6 +23,17 @@ uniform mat4 sunView;
 uniform mat4 sunProj;
 uniform vec3 ambientLight;
 
+float calculateTransparency(float distFromCamera) {
+    // Fade out last 10% of the the render distance
+    float fadeDistance = fogDistance * 0.9f;
+    if (distFromCamera <= fadeDistance) {
+        return 1.0;
+    }
+
+    float t = 1.0f - (distFromCamera - fadeDistance) / (0.1f * fadeDistance);
+    return t;
+}
+
 vec3 getShadowIntensity(vec2 coord) {
     vec3 fragLightPos = vec3(sunProj * sunView * vec4(fragPos, 1.0));
 
@@ -72,7 +83,6 @@ void main() {
     vec3 lightIntensity = ambientLight + (sunColor * intensity * shadowFactor);
     
     vec4 baseColor = vec4(texColor.rgb * lightIntensity, texColor.a);
-    FragColor = mix(baseColor, 
-        vec4(1.0, 1.0, 1.0, 1.0), 
-        clamp(dist / fogDistance, 0.0, 1.0));
+    float transparency = calculateTransparency(dist);
+    FragColor = vec4(baseColor.r, baseColor.g, baseColor.b, transparency);
 }

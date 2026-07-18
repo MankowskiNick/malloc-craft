@@ -33,6 +33,17 @@ uniform vec3 cameraPos;
 uniform mat4 view;
 uniform mat4 proj;
 
+float calculateTransparency(float distFromCamera) {
+    // Fade out last 10% of the the render distance
+    float fadeDistance = fogDistance * 0.9f;
+    if (distFromCamera <= fadeDistance) {
+        return 1.0;
+    }
+
+    float t = 1.0f - (distFromCamera - fadeDistance) / (0.1f * fadeDistance);
+    return t;
+}
+
 float getDiffuse(vec3 normal, vec3 lightDir) {
     return max(dot(normal, lightDir), 0.0);
 }
@@ -120,9 +131,6 @@ void main() {
     vec3 finalColor = baseColor.rgb;
     finalColor += shadowFactor * sunColor * spec;
     
-    vec4 colorWithFog = mix(vec4(finalColor, baseColor.a),
-        vec4(1.0, 1.0, 1.0, 1.0),
-        clamp(dist / fogDistance, 0.0, 1.0));
-
-    FragColor = colorWithFog;
+    float transparency = calculateTransparency(dist);
+    FragColor = vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a * transparency);
 }

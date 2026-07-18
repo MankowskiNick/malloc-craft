@@ -78,8 +78,6 @@ void render_shadow_map(FBO* map, sun* s, world_mesh* packet) {
     glViewport(0, 0, map->width, map->height);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(SHADOW_POLYGON_OFFSET_FACTOR, SHADOW_POLYGON_OFFSET_UNITS);
 
@@ -96,8 +94,6 @@ void render_shadow_map(FBO* map, sun* s, world_mesh* packet) {
     }
 
     glDisable(GL_POLYGON_OFFSET_FILL);
-    glCullFace(GL_BACK);
-    glDisable(GL_CULL_FACE);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
