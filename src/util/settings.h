@@ -10,6 +10,7 @@ extern int HEIGHT;
 extern char* TITLE;
 
 extern float TIME_SCALE;
+extern float ANIMATION_SCALER;
 
 // CHUNK SETTINGS
 

@@ -115,7 +115,8 @@
   "game_data": {
     "block_file": "res/blocks.json",
     "player_file": "res/player.json",
-    "time_scale": 0.000001047
+    "time_scale": 0.000001047,
+    "animation_scaler": 0.001
   },
   "shaders": {
     "world_vertex": "res/shaders/world/world.vert",

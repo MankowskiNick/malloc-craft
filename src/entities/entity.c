@@ -1,36 +1,27 @@
 #include "entity.h"
 
+#include "animation/player_animation.h"
+
 #include <assert.h>
 #include <cglm/cglm.h>
 #include <game_data.h>
-#include <math.h>
-#include <string.h>
 #include <stdlib.h>
 
 void free_entity(entity* ent) {
 	free(ent);
 }
 
-void update_head_orientation(entity* ent) {
-	blockbench_element* head = NULL;
-	for (int i = 0; i < ent->model.element_count; i++) {
-		if (strcmp(ent->model.elements[i].name, "head") == 0) {
-			head = &(ent->model.elements[i]);
-		}
-	}
-
-	if (head == NULL) {
-		return;
-	}
-
-	// head rotates w.r.t. z axis to look up and down
-	head->rotation_axis = 2;
-	head->rotation_angle = ent->head_angle;
-}
-
 void update_model(entity* ent) {
+	assert(ent != NULL && "ERROR: Cannot update NULL entity in update_model().\n");
 	ent->model.xz_orientation = ent->xz_orientation;
-	update_head_orientation(ent);
+
+	switch(ent->type) {
+		case (int)PLAYER:
+			update_player_model(ent);
+			break;
+		default:
+			break;
+	}
 }
 
 static void get_entity_model_transformation(mat4 transform, entity* ent) {

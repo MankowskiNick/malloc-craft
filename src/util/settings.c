@@ -1,5 +1,6 @@
 #include "settings.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +14,7 @@ int HEIGHT = 900;
 char* TITLE = "malloc-craft";
 // 0.0001047 represents 2π / (60000 ms), giving a full day cycle in ~60 seconds
 float TIME_SCALE = 0.0001047f;
+float ANIMATION_SCALER = 1.0f;
 int WORKER_THREADS = 4;
 int CHUNK_LOAD_PER_FRAME = 1;
 int CHUNK_CACHE_SIZE = 1024;
@@ -777,6 +779,11 @@ void parse_game_data_settings(json_object gamedata_obj) {
     if (time_scale.type == JSON_NUMBER) {
         TIME_SCALE = time_scale.value.number;
     }
+
+    json_object animation_scaler = json_get_property(gamedata_obj, "animation_scaler");
+    if (animation_scaler.type == JSON_NUMBER) {
+        ANIMATION_SCALER = animation_scaler.value.number;
+    }
 }
 
 void parse_ui_settings(json_object ui_obj) {
@@ -1029,6 +1036,8 @@ void read_settings(const char* filename) {
     if (server_obj.type != JSON_NULL) {
         parse_server_settings(server_obj);
     }
+
+    assert(ANIMATION_SCALER != 0.0f);
 
     // Clean up memory
     free(settings_json);
