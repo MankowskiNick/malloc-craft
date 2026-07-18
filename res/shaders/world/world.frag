@@ -84,5 +84,5 @@ void main() {
     vec4 baseColor = vec4(textureColor.rgb * lightIntensity, textureColor.a);
 
     float transparency = calculateTransparency(dist);
-    FragColor = vec4(baseColor.r, baseColor.g, baseColor.b, transparency);
+    FragColor = vec4(baseColor.r, baseColor.g, baseColor.b, baseColor.a * transparency);
 }

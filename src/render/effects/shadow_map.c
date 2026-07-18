@@ -89,8 +89,9 @@ void render_shadow_map(FBO* map, sun* s, world_mesh* packet) {
     send_cube_vbo(map->vao, map->cube_vbo);
 
     if (packet != NULL) {
-        render_depth(map, packet->opaque_data, packet->num_opaque_sides);
+        render_depth(map, packet->foliage_data, packet->num_foliage_sides);
         render_depth(map, packet->transparent_data, packet->num_transparent_sides);
+        render_depth(map, packet->opaque_data, packet->num_opaque_sides);
     }
 
     glDisable(GL_POLYGON_OFFSET_FILL);
