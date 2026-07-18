@@ -41,8 +41,8 @@
     "shadow_map_width": 10000,
     "shadow_map_height": 10000,
     "shadow_render_dist": 256.0,
-    "shadow_softness": 3.0,
-    "shadow_samples": 8,
+    "shadow_softness": 2.0,
+    "shadow_samples": 4,
     "shadow_bias": 0.0025
   },
   "reflections": {

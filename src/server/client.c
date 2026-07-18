@@ -8,19 +8,18 @@
 
 #include <stdio.h>
 
-// TODO: convert this to use send_data
 void send_chunk_request(int fd, int x, int z) {
   if (!send_msg_header(CHUNK_REQ, fd)) {
     return;
   }
+  
+  int coords[2] = { x, z };
+  byte* req = malloc(2 * sizeof(int));
+  memcpy(req, coords, sizeof(coords));
 
-  chunk_request req = {.x = x, .z = z};
-  if (send(fd, &req, sizeof(req), MSG_NOSIGNAL) < 0) {
-    fprintf(stderr, "ERROR: Failed to send chunk request to server\n");
-    return;
+  if (!send_data(fd, req, 2 * sizeof(int))) {
+    printf("ERROR: Failed to send chunk request to client (fd %d)\n", fd);
   }
-
-  return;
 }
 
 byte *receive_chunk(int fd, int *packet_size) {
